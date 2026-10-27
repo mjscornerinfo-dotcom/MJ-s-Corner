@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MJ's Corner — Admin Dashboard</title>
+  <meta name="description" content="Admin portal for managing MJ's Corner orders, menu items, pricing, and promotions.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+  <script src="auth.js"></script>
+  <script>
+    (function() {
+      const auth = window.MJAuth || (typeof MJAuth !== 'undefined' ? MJAuth : null);
+      if (!auth) return;
+      const user = auth.getCurrentUser();
+      if (!user || !auth.isAdmin(user)) {
+        window.location.replace('login.html?portal=admin');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <!-- ========== HEADER ========== -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="admin-menu-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+        <a href="index.html" class="logo" style="text-decoration:none;">
+          <div class="logo-icon">🔥</div>
+          MJ's Corner
+        </a>
+        <span style="font-size:0.72rem;padding:3px 10px;background:var(--accent-soft);color:var(--accent);border-radius:var(--radius-full);font-weight:700;letter-spacing:0.05em;text-transform:uppercase;">Admin</span>
+      </div>
+      <div class="header-actions">
+        <a href="index.html" class="btn-ghost-nav">🍽️ Store</a>
+        <div class="user-auth-wrap" id="adminUserWrap"></div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== ADMIN LAYOUT ========== -->
+  <div class="admin-layout">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="admin-sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <nav class="admin-sidebar" id="sidebar">
+      <div class="admin-nav-item active" data-page="dashboard" id="navDashboard">
+        <span class="icon">📊</span> Dashboard
+      </div>
+      <div class="admin-nav-item" data-page="orders" id="navOrders">
+        <span class="icon">📋</span> Orders
+      </div>
+      <div class="admin-nav-item" data-page="menu-editor" id="navMenuEditor">
+        <span class="icon">🍔</span> Menu & Pricing
+      </div>
+      <div class="admin-nav-item" data-page="promotions" id="navPromotions">
+        <span class="icon">🎁</span> Promotions
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="admin-content" id="adminContent">
+
+      <!-- ===== Dashboard Page ===== -->
+      <div class="admin-page" id="pageDashboard">
+        <h1 class="admin-page-title">📊 Dashboard</h1>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-icon red">📦</div>
+            <div class="stat-value" id="statTotalOrders">0</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">💰</div>
+            <div class="stat-value" id="statRevenue">₹0</div>
+            <div class="stat-label">Revenue</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon yellow">⏳</div>
+            <div class="stat-value" id="statPending">0</div>
+            <div class="stat-label">Pending</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">🍽️</div>
+            <div class="stat-value" id="statMenuItems">0</div>
+            <div class="stat-label">Menu Items</div>
+          </div>
+        </div>
+
+        <!-- Recent Orders Table -->
+        <div class="admin-table-wrap">
+          <div class="admin-table-header">
+            <h3>Recent Orders</h3>
+            <button class="btn-admin secondary" id="btnRefreshOrders">🔄 Refresh</button>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Type</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardOrdersBody">
+                <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-tertiary);">No orders yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Orders Page ===== -->
+      <div class="admin-page hidden" id="pageOrders">
+        <h1 class="admin-page-title">📋 Order Management</h1>
+
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+          <button class="btn-admin secondary active" data-filter="all" id="filterAll">All</button>
+          <button class="btn-admin secondary" data-filter="pending" id="filterPending">⏳ Pending</button>
+          <button class="btn-admin secondary" data-filter="preparing" id="filterPreparing">👨‍🍳 Preparing</button>
+          <button class="btn-admin secondary" data-filter="ready" id="filterReady">✅ Ready</button>
+          <button class="btn-admin secondary" data-filter="delivered" id="filterDelivered">🚗 Delivered</button>
+        </div>
+
+        <div class="admin-table-wrap">
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Type</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Time</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ordersBody">
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-tertiary);">No orders yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Menu & Pricing Editor ===== -->
+      <div class="admin-page hidden" id="pageMenuEditor">
+        <h1 class="admin-page-title">🍔 Menu & Pricing Editor</h1>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <p style="color:var(--text-secondary);margin:0;">Edit item prices, offer percentages, local photos, and availability. Changes sync to the customer portal in real-time.</p>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-admin secondary" id="btnOpenNewItemModal" style="padding:10px 18px;">
+              ➕ Add New Item
+            </button>
+            <button class="btn-admin primary" id="btnSaveMenu" style="padding:10px 22px;">
+              💾 Save All Changes
+            </button>
+          </div>
+        </div>
+
+        <div id="menuEditorList">
+          <!-- Rendered by JS -->
+        </div>
+
+        <button class="btn-admin primary" id="btnSaveMenuBottom" style="margin-top:20px;padding:12px 32px;font-size:0.95rem;">
+          💾 Save All Changes
+        </button>
+      </div>
+
+      <!-- ===== Add New Menu Item Modal ===== -->
+      <div class="modal-overlay" id="newItemModal">
+        <div class="modal" style="max-width:520px;">
+          <div class="modal-header">
+            <h2>🍔 Add New Menu Item</h2>
+            <button class="cart-close-btn" id="closeNewItemModalBtn">✕</button>
+          </div>
+          <div class="modal-body">
+            <form id="newItemForm">
+              <div class="form-group">
+                <label for="newItemName">Item Name *</label>
+                <input type="text" id="newItemName" placeholder="e.g. Truffle Mushroom Burger" required>
+              </div>
+              <div class="form-group">
+                <label for="newItemCategory">Category *</label>
+                <select id="newItemCategory" style="width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);" required>
+                  <option value="Burgers">Burgers</option>
+                  <option value="Pizza">Pizza</option>
+                  <option value="Pasta">Pasta</option>
+                  <option value="Sides">Sides</option>
+                  <option value="Salads">Salads</option>
+                  <option value="Drinks">Drinks</option>
+                  <option value="Desserts">Desserts</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="newItemDesc">Description</label>
+                <textarea id="newItemDesc" rows="2" placeholder="Ingredients and details"></textarea>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                <div class="form-group">
+                  <label for="newItemMrp">MRP (₹) *</label>
+                  <input type="number" id="newItemMrp" placeholder="399" min="1" required>
+                </div>
+                <div class="form-group">
+                  <label for="newItemOfferPct">Offer %</label>
+                  <input type="number" id="newItemOfferPct" placeholder="25" min="0" max="100" value="20">
+                </div>
+                <div class="form-group">
+                  <label for="newItemOfferPrice">Offer Price (₹)</label>
+                  <input type="number" id="newItemOfferPrice" placeholder="299" min="1" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Photo (Upload from local device) *</label>
+                <div style="display:flex;align-items:center;gap:14px;margin-top:6px;">
+                  <img id="newItemImgPreview" src="images/burger.jpg" alt="Preview" style="width:60px;height:60px;border-radius:var(--radius-md);object-fit:cover;border:1px solid var(--border);">
+                  <label class="btn-file-upload">
+                    <span>📁 Choose Image File</span>
+                    <input type="file" id="newItemFileInput" accept="image/*" class="file-input-hidden">
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="newItemBadge">Badge (Optional)</label>
+                <input type="text" id="newItemBadge" placeholder="e.g. Chef's Special, New, Bestseller">
+              </div>
+              <button type="submit" class="btn-admin primary" style="width:100%;padding:14px;margin-top:8px;">
+                ✓ Add Item to Menu
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Promotions Page ===== -->
+      <div class="admin-page hidden" id="pagePromotions">
+        <h1 class="admin-page-title">🎁 Promotions</h1>
+
+        <!-- Popup Toggle -->
+        <div class="promo-card" style="margin-bottom:24px;">
+          <div class="promo-card-header">
+            <div>
+              <div class="promo-card-title">Promotional Pop-up</div>
+              <p style="font-size:0.82rem;color:var(--text-tertiary);margin-top:2px;">Show promotional popup to customers when they open the menu</p>
+            </div>
+            <label class="toggle-switch" id="promoPopupToggle">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 style="font-weight:700;">Active Promotions</h3>
+          <button class="btn-admin primary" id="btnAddPromo">+ Add Promotion</button>
+        </div>
+
+        <div id="promoList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========== TOAST CONTAINER ========== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="data.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

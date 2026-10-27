@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MJ's Corner — Fresh Food Menu & Ordering</title>
+  <meta name="description" content="Order handcrafted burgers, pizzas, pasta, and desserts directly from MJ's Corner.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+  <!-- Auth Guard: Ensure non-logged-in customers land directly on the login page -->
+  <script src="auth.js"></script>
+  <script>
+    (function() {
+      const auth = window.MJAuth || (typeof MJAuth !== 'undefined' ? MJAuth : null);
+      if (!auth) return;
+      const user = auth.getCurrentUser();
+      if (!user) {
+        window.location.replace('login.html');
+      }
+    })();
+  </script>
+</head>
+<body>
+  <!-- ========== HEADER ========== -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <div class="logo" id="logo" style="cursor:pointer;">
+        <div class="logo-icon">🔥</div>
+        MJ's Corner
+      </div>
+      <div class="header-actions">
+        <!-- Customer Profile Section Button -->
+        <button class="user-profile-btn" id="btnHeaderProfile" aria-label="Open profile">
+          <span class="user-avatar-circle" id="headerUserAvatar">U</span>
+          <span id="headerUserName">Profile</span>
+          <span style="font-size:0.75rem;">👤</span>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+
+        <!-- Cart Button -->
+        <button class="cart-btn-header" id="cartBtnHeader" aria-label="Open cart">
+          🛒
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== MAIN (DIRECTLY ON MENU PAGE) ========== -->
+  <main class="main" id="mainContent">
+    <section id="menuSection">
+      <!-- Category Navigation -->
+      <nav class="category-nav" id="categoryNav">
+        <div class="category-nav-inner" id="categoryNavInner">
+          <!-- Rendered by JS -->
+        </div>
+      </nav>
+
+      <!-- Menu Items Container -->
+      <div id="menuContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ========== FLOATING "GO TO CHECKOUT" BAR ========== -->
+  <div class="floating-checkout-bar hidden" id="floatingCheckoutBar">
+    <div class="floating-bar-info" id="floatingBarInfo" title="Click to view cart details">
+      <div class="floating-bar-badge" id="floatingBarBadge">
+        <span>🛒</span> <span id="floatingItemCount">0 items</span>
+      </div>
+      <div class="floating-bar-price">
+        <span id="floatingTotal">₹0</span>
+        <span class="floating-bar-savings" id="floatingSavings">Saved ₹0</span>
+      </div>
+    </div>
+    <button class="btn-floating-checkout" id="btnFloatingCheckout">
+      Go to Checkout →
+    </button>
+  </div>
+
+  <!-- ========== CART DRAWER ========== -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h2>🛒 Your Cart</h2>
+      <button class="cart-close-btn" id="cartCloseBtn">✕</button>
+    </div>
+    <div class="cart-body" id="cartBody">
+      <div class="cart-empty" id="cartEmpty">
+        <span class="icon">🛒</span>
+        <p>Your cart is empty</p>
+        <p style="font-size:0.82rem;">Add delicious items from the menu to get started</p>
+      </div>
+      <div id="cartItemsList"></div>
+    </div>
+    <div class="cart-footer hidden" id="cartFooter">
+      <div class="cart-summary-row">
+        <span>Subtotal</span>
+        <span id="cartSubtotal">₹0</span>
+      </div>
+      <div class="cart-summary-row">
+        <span>You Save</span>
+        <span class="savings" id="cartSavings">₹0</span>
+      </div>
+      <div class="cart-summary-row total">
+        <span>Total</span>
+        <span id="cartTotal">₹0</span>
+      </div>
+      <button class="btn-checkout" id="btnCheckout">Go to Checkout →</button>
+    </div>
+  </aside>
+
+  <!-- ========== CHECKOUT MODAL ========== -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>📋 Checkout</h2>
+        <button class="cart-close-btn" id="checkoutCloseBtn">✕</button>
+      </div>
+      <div class="modal-body" id="checkoutBody">
+        <form id="checkoutForm">
+
+          <!-- 1. Dining Options: Dine-in, Pickup, Delivery -->
+          <div class="checkout-type-container">
+            <label class="form-section-label">Dining Option</label>
+            <div class="order-type-grid" id="checkoutOrderTypeGrid">
+              <div class="order-type-card selected" data-type="dine-in" id="typeDineIn">
+                <span class="icon">🍽️</span>
+                <span class="label">Dine-In</span>
+              </div>
+              <div class="order-type-card" data-type="pickup" id="typePickup">
+                <span class="icon">🥡</span>
+                <span class="label">Pickup</span>
+              </div>
+              <div class="order-type-card" data-type="delivery" id="typeDelivery">
+                <span class="icon">🚗</span>
+                <span class="label">Delivery</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Dynamic Option Information -->
+          <!-- Dine-In Note (Table No option removed) -->
+          <div class="form-group" id="dineInNoticeGroup">
+            <div class="dine-in-info-banner">
+              <span style="font-size:1.4rem;">🍽️</span>
+              <div>
+                <strong>Dine-In Order:</strong> Sit back and relax! Our culinary team will prepare your meal fresh and serve directly at your table.
+              </div>
+            </div>
+          </div>
+
+          <!-- Pickup Note -->
+          <div class="form-group hidden" id="pickupInfoGroup">
+            <div class="pickup-info-box">
+              <span class="pickup-icon">⏱️</span>
+              <div>
+                <strong>Express Counter Pickup:</strong> Ready in ~15–20 minutes. Collect at MJ's pickup counter by showing your Order ID.
+              </div>
+            </div>
+          </div>
+
+          <!-- Delivery: Saved Addresses according to account -->
+          <div class="form-group hidden" id="deliveryAddressGroup">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <label class="form-section-label" style="margin-bottom:0;">Select Delivery Address</label>
+              <button type="button" class="btn-add-address-toggle" id="btnToggleAddAddress">
+                <span>➕</span> Add New Address
+              </button>
+            </div>
+
+            <!-- Saved Addresses Radio Cards (per account) -->
+            <div class="saved-addresses-list" id="savedAddressesList">
+              <!-- Rendered by JS per logged-in user -->
+            </div>
+
+            <!-- Inline "+ Add New Address" Form -->
+            <div class="add-address-panel hidden" id="newAddressPanel">
+              <div style="font-weight:700;font-size:0.88rem;margin-bottom:8px;color:var(--text-primary);">📍 Add Address to Account</div>
+              <div class="form-group" style="margin-bottom:10px;">
+                <label for="newAddrTitle" style="font-size:0.75rem;">Label (e.g. Home, Office, Other)</label>
+                <input type="text" id="newAddrTitle" placeholder="e.g. Home">
+              </div>
+              <div class="form-group" style="margin-bottom:10px;">
+                <label for="newAddrFull" style="font-size:0.75rem;">Complete Address *</label>
+                <textarea id="newAddrFull" rows="2" placeholder="House/Flat No., Building, Street, Landmark"></textarea>
+              </div>
+              <button type="button" class="btn-admin primary" id="btnSaveNewAddress" style="padding:8px 16px;font-size:0.82rem;">
+                ✓ Save Address to Account
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Customer Contact Info -->
+          <div class="form-group">
+            <label for="custName">Contact Name *</label>
+            <input type="text" id="custName" placeholder="Enter your name" required>
+          </div>
+          <div class="form-group">
+            <label for="custPhone">Phone Number *</label>
+            <input type="tel" id="custPhone" placeholder="Enter your phone number" required>
+          </div>
+          <div class="form-group">
+            <label for="custNotes">Kitchen & Special Instructions (Optional)</label>
+            <textarea id="custNotes" rows="2" placeholder="E.g., Extra napkins, no onions, mild spicy"></textarea>
+          </div>
+
+          <!-- 4. Apply Coupon / Promo Code -->
+          <div class="checkout-promo-box">
+            <label class="form-section-label" style="font-size:0.85rem;margin-bottom:4px;">🎟️ Apply Coupon / Promo Code</label>
+            <div class="promo-input-group">
+              <input type="text" id="checkoutPromoInput" placeholder="Enter coupon code (e.g. MJOPEN)">
+              <button type="button" id="btnApplyCheckoutPromo">Apply</button>
+            </div>
+            <!-- Clickable chips of active promos -->
+            <div class="promo-chips-list" id="checkoutPromoChips">
+              <!-- Rendered by JS -->
+            </div>
+            <!-- Applied tag -->
+            <div class="applied-coupon-tag hidden" id="appliedCouponTag">
+              <span id="appliedCouponText">🎉 Coupon applied</span>
+              <button type="button" class="btn-remove-coupon" id="btnRemoveCoupon" title="Remove coupon">✕</button>
+            </div>
+          </div>
+
+          <!-- 5. Order Totals Breakdown -->
+          <div class="cart-summary-row" style="margin-top:16px;">
+            <span>Subtotal</span>
+            <span id="checkoutSubtotal">₹0</span>
+          </div>
+          <div class="cart-summary-row hidden" id="checkoutCouponRow" style="color:var(--success);">
+            <span id="checkoutCouponLabel">Coupon Discount</span>
+            <span id="checkoutCouponDiscount">-₹0</span>
+          </div>
+          <div class="cart-summary-row total" style="margin-bottom: 18px">
+            <span>Total Payable</span>
+            <span id="checkoutTotal">₹0</span>
+          </div>
+
+          <button type="submit" class="btn-submit-order" id="btnPlaceOrder">Confirm & Place Order</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CUSTOMER PROFILE MODAL ========== -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal profile-modal">
+      <div class="modal-header">
+        <h2>👤 My Account & Profile</h2>
+        <button class="cart-close-btn" id="profileCloseBtn">✕</button>
+      </div>
+      <!-- Profile Tabs -->
+      <div class="profile-nav-tabs">
+        <button class="profile-tab active" data-tab="details" id="tabProfileDetails">
+          <span>📝</span> Personal Details
+        </button>
+        <button class="profile-tab" data-tab="addresses" id="tabProfileAddresses">
+          <span>📍</span> Saved Addresses
+        </button>
+        <button class="profile-tab" data-tab="orders" id="tabProfileOrders">
+          <span>📦</span> My Orders
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding:0;">
+        <!-- Tab 1: Personal Details -->
+        <div class="profile-tab-content active" id="profileDetailsContent">
+          <form id="profileDetailsForm">
+            <div class="form-group">
+              <label for="profName">Full Name</label>
+              <input type="text" id="profName" required>
+            </div>
+            <div class="form-group">
+              <label for="profEmail">Email Address (Registered)</label>
+              <input type="email" id="profEmail" readonly disabled style="opacity:0.75;cursor:not-allowed;">
+            </div>
+            <div class="form-group">
+              <label for="profPhone">Phone Number</label>
+              <input type="tel" id="profPhone" required>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:20px;">
+              <button type="submit" class="btn-admin primary">💾 Update Profile</button>
+              <button type="button" class="btn-admin danger" id="btnProfileSignOut">🚪 Sign Out</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab 2: Saved Addresses -->
+        <div class="profile-tab-content" id="profileAddressesContent">
+          <div style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin:0;">Addresses saved specifically for this account:</p>
+            <button type="button" class="btn-admin primary" id="btnProfileAddAddress" style="padding:6px 14px;font-size:0.8rem;">
+              ➕ Add Address
+            </button>
+          </div>
+
+          <div id="profileAddressList">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Add Address Form in Profile -->
+          <div class="add-address-panel hidden" id="profileAddAddressPanel">
+            <h4 style="font-size:0.9rem;margin-bottom:10px;">Add New Address</h4>
+            <div class="form-group">
+              <label style="font-size:0.75rem;">Address Title (e.g. Home, Office, Beach House)</label>
+              <input type="text" id="profileNewAddrTitle" placeholder="e.g. Home">
+            </div>
+            <div class="form-group">
+              <label style="font-size:0.75rem;">Full Address *</label>
+              <textarea id="profileNewAddrFull" rows="2" placeholder="House, Street, Area, City, Pin"></textarea>
+            </div>
+            <button type="button" class="btn-admin primary" id="btnProfileSaveNewAddress">Save Address</button>
+          </div>
+        </div>
+
+        <!-- Tab 3: Order History -->
+        <div class="profile-tab-content" id="profileOrdersContent">
+          <div id="profileOrdersList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ORDER SUCCESS MODAL ========== -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal">
+      <div class="order-success" id="orderSuccessContent">
+        <div class="checkmark">✓</div>
+        <h2>Order Placed!</h2>
+        <p>Your order has been received and sent to the kitchen.</p>
+        <p style="font-weight:700;color:var(--accent);font-size:1.15rem;" id="orderIdDisplay">#MJ-0001</p>
+        <div id="orderSuccessTypeDisplay" style="margin: 8px 0; font-size: 0.92rem; color: var(--text-secondary);"></div>
+        <div id="orderSuccessPromoDisplay" style="margin-bottom: 12px; font-size: 0.88rem; color: var(--success); font-weight: 600;"></div>
+        <button class="btn-submit-order" id="btnNewOrder" style="margin-top:20px">Order More Food</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PROMO POPUP ========== -->
+  <div class="promo-popup-overlay" id="promoPopupOverlay">
+    <div class="promo-popup" style="position:relative;">
+      <button class="promo-popup-close" id="promoPopupClose">✕</button>
+      <div class="promo-popup-banner">
+        <h3 id="promoTitle">🎉 Special Offer!</h3>
+        <p id="promoSubtitle">Limited time deal</p>
+      </div>
+      <div class="promo-popup-body">
+        <div class="code" id="promoCode">MJOPEN</div>
+        <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;" id="promoDesc">Get 25% off on your order</p>
+        <button class="dismiss" id="promoDismiss">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TOAST CONTAINER ========== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
