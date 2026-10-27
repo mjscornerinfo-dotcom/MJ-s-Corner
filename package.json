@@ -1,0 +1,15 @@
+{
+  "name": "mjs-corner",
+  "version": "1.0.0",
+  "description": "MJ's Corner — Food Ordering & Restaurant Management Web Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
