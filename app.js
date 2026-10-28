@@ -453,12 +453,62 @@
     document.body.style.overflow = '';
   }
 
+  // 2-minute cancellation timer constants & helpers
+  const CANCEL_WINDOW_SECONDS = 120; // 2 minutes
+
+  function getOrderCancelRemainingSeconds(order) {
+    if (!order || !order.timestamp || order.status !== 'pending') return 0;
+    const elapsedSeconds = Math.floor((Date.now() - new Date(order.timestamp).getTime()) / 1000);
+    return Math.max(0, CANCEL_WINDOW_SECONDS - elapsedSeconds);
+  }
+
+  function formatCountdownTime(totalSeconds) {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+
+  function updateCancelTimers() {
+    const countdownEls = document.querySelectorAll('.cancel-countdown[data-order-id]');
+    if (countdownEls.length === 0) return;
+
+    const allOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
+    let needsRerender = false;
+
+    countdownEls.forEach(el => {
+      const orderId = el.dataset.orderId;
+      const order = allOrders.find(o => o.id === orderId);
+      const remaining = getOrderCancelRemainingSeconds(order);
+      if (remaining > 0) {
+        el.textContent = formatCountdownTime(remaining);
+      } else {
+        needsRerender = true;
+      }
+    });
+
+    if (needsRerender) {
+      if (els.ordersModal && els.ordersModal.classList.contains('open')) {
+        renderCustomerOrders(els.customerOrdersList);
+      }
+      if (els.profileModal && els.profileModal.classList.contains('open') && els.tabProfileOrders && els.tabProfileOrders.classList.contains('active')) {
+        renderProfileOrders();
+      }
+    }
+  }
+
   function cancelCustomerOrder(orderId) {
     const allOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
     const order = allOrders.find(o => o.id === orderId);
     if (!order) return;
     if (order.status !== 'pending') {
       showToast('This order can no longer be cancelled as it is already being prepared.', 'error');
+      return;
+    }
+    const remainingSecs = getOrderCancelRemainingSeconds(order);
+    if (remainingSecs <= 0) {
+      showToast('The 2-minute cancellation timer has expired. Your order is confirmed with the kitchen.', 'error');
+      renderCustomerOrders(els.customerOrdersList);
+      renderProfileOrders();
       return;
     }
     order.status = 'cancelled';
@@ -550,11 +600,31 @@
         `;
       }
 
-      // Can cancel if still pending
-      const canCancel = order.status === 'pending';
-      const cancelBtnHtml = canCancel
-        ? `<button type="button" class="btn-cancel-cust-order" data-cancel-order="${order.id}">❌ Cancel Order</button>`
-        : '';
+      // 2-minute cancellation timer logic
+      const remainingCancelSecs = getOrderCancelRemainingSeconds(order);
+      const canCancel = order.status === 'pending' && remainingCancelSecs > 0;
+
+      let cancelSectionHtml = '';
+      if (order.status === 'pending') {
+        if (canCancel) {
+          cancelSectionHtml = `
+            <div class="cancel-timer-wrap">
+              <span class="cancel-timer-text" title="2-minute cancellation window">
+                ⏱️ Cancel in: <strong class="cancel-countdown" data-order-id="${order.id}">${formatCountdownTime(remainingCancelSecs)}</strong>
+              </span>
+              <button type="button" class="btn-cancel-cust-order" data-cancel-order="${order.id}">
+                ❌ Cancel Order
+              </button>
+            </div>
+          `;
+        } else {
+          cancelSectionHtml = `
+            <div class="cancel-window-expired-tag" title="Cancellation window closed after 2 minutes">
+              🔒 Cancel window closed (Kitchen preparing)
+            </div>
+          `;
+        }
+      }
 
       return `
         <div class="customer-order-card" id="cust-order-${order.id}">
@@ -619,7 +689,7 @@
               <div class="customer-order-total-amount">Total: ₹${order.total}</div>
             </div>
             <div>
-              ${cancelBtnHtml}
+              ${cancelSectionHtml}
             </div>
           </div>
         </div>
@@ -1181,9 +1251,9 @@
       els.orderSuccessTypeDisplay.textContent = typeLabels[order.type] || order.type;
 
       if (order.coupon) {
-        els.orderSuccessPromoDisplay.textContent = `🎟️ Promo applied: ${order.coupon.code} (Saved ₹${order.coupon.discountAmount})`;
+        els.orderSuccessPromoDisplay.textContent = `🎟️ Promo applied: ${order.coupon.code} (Saved ₹${order.coupon.discountAmount}) · ⏱️ 2-min cancel window active`;
       } else {
-        els.orderSuccessPromoDisplay.textContent = '';
+        els.orderSuccessPromoDisplay.textContent = '⏱️ 2-minute cancellation timer active. You can cancel from "My Orders".';
       }
 
       els.successModal.classList.add('open');
@@ -1413,6 +1483,9 @@
         renderCustomerOrders(els.customerOrdersList);
       }
     }, 4000);
+
+    // Live 1-second ticking countdown timer for 2-minute order cancellation window
+    setInterval(updateCancelTimers, 1000);
 
     // Show promo popup once after a short delay
     if (state.promoPopupEnabled) {

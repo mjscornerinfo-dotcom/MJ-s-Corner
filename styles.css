@@ -2218,3 +2218,45 @@ input, select, textarea {
   border-color: var(--danger);
   transform: translateY(-1px);
 }
+
+/* Customer 2-Minute Cancellation Timer */
+.cancel-timer-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cancel-timer-text {
+  font-size: 0.8rem;
+  color: #b45309;
+  background: var(--warning-light);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.cancel-countdown {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  font-size: 0.88rem;
+  color: #b45309;
+}
+
+.cancel-window-expired-tag {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
