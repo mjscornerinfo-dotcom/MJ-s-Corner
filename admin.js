@@ -124,6 +124,31 @@
       case 'menu-editor': renderMenuEditor(); break;
       case 'promotions': renderPromotions(); break;
     }
+
+    // Refresh live orders from MongoDB Atlas
+    fetchOrdersFromDb();
+  }
+
+  async function fetchOrdersFromDb() {
+    try {
+      const res = await fetch('/api/orders');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.orders)) {
+          state.orders = data.orders;
+          localStorage.setItem('mj_orders', JSON.stringify(data.orders));
+          if (state.currentPage === 'dashboard') {
+            renderMetrics();
+            renderStats();
+            renderRecentOrders();
+          } else if (state.currentPage === 'orders') {
+            renderOrders();
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Orders sync note:', e);
+    }
   }
 
   function escapeHtml(str) {
@@ -298,6 +323,13 @@
       window.dispatchEvent(new Event('mj_orders_changed'));
       loadData();
       showToast(`Order ${orderId} status set to '${newStatus}'`);
+
+      // Persist status change to MongoDB Atlas
+      fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      }).catch(err => console.warn('Could not update order status in MongoDB:', err));
     }
   }
 
@@ -1238,6 +1270,9 @@
     initAdminAuth();
     loadData();
     bindEvents();
+    // Live orders sync from MongoDB Atlas every 8 seconds
+    setInterval(fetchOrdersFromDb, 8000);
+    window.addEventListener('focus', fetchOrdersFromDb);
   }
 
   document.addEventListener('DOMContentLoaded', init);

@@ -11,7 +11,7 @@
     {
       id: 1, name: 'Classic Smash Burger', category: 'Burgers',
       description: 'Double-stacked beef patties with melted cheese, special sauce, and brioche bun',
-      image: 'images/burger.jpg', mrp: 349, offerPrice: 249,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 349, offerPrice: 249,
       badge: 'Bestseller', available: true,
       sizes: [
         { name: 'Single Patty', price: 249 },
@@ -26,7 +26,7 @@
     {
       id: 2, name: 'BBQ Bacon Burger', category: 'Burgers',
       description: 'Smoky BBQ sauce, crispy bacon, caramelized onions, and pepper jack cheese',
-      image: 'images/burger.jpg', mrp: 399, offerPrice: 329,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 399, offerPrice: 329,
       badge: '', available: true,
       sizes: [
         { name: 'Single Patty', price: 329 },
@@ -40,7 +40,7 @@
     {
       id: 3, name: 'Spicy Chicken Burger', category: 'Burgers',
       description: 'Crispy fried chicken fillet with sriracha mayo and pickled jalapeños',
-      image: 'images/burger.jpg', mrp: 329, offerPrice: 269,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 329, offerPrice: 269,
       badge: '🌶️ Spicy', available: true,
       sizes: [
         { name: 'Single Fillet', price: 269 },
@@ -55,7 +55,7 @@
     {
       id: 4, name: 'Margherita Pizza', category: 'Pizza',
       description: 'San Marzano tomatoes, fresh mozzarella, basil, and extra-virgin olive oil',
-      image: 'images/pizza.jpg', mrp: 449, offerPrice: 349,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 449, offerPrice: 349,
       badge: 'Popular', available: true,
       sizes: [
         { name: 'Regular (8")', price: 349 },
@@ -71,7 +71,7 @@
     {
       id: 5, name: 'Pepperoni Feast', category: 'Pizza',
       description: 'Loaded with spicy pepperoni, mozzarella, and our signature tomato sauce',
-      image: 'images/pizza.jpg', mrp: 549, offerPrice: 449,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 549, offerPrice: 449,
       badge: '', available: true,
       sizes: [
         { name: 'Regular (8")', price: 449 },
@@ -86,7 +86,7 @@
     {
       id: 6, name: 'BBQ Chicken Pizza', category: 'Pizza',
       description: 'Grilled chicken, BBQ sauce, red onions, and smoked gouda cheese',
-      image: 'images/pizza.jpg', mrp: 599, offerPrice: 479,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 599, offerPrice: 479,
       badge: 'New', available: true,
       sizes: [
         { name: 'Regular (8")', price: 479 },
@@ -102,7 +102,7 @@
     {
       id: 7, name: 'Chicken Alfredo', category: 'Pasta',
       description: 'Creamy fettuccine with grilled chicken, parmesan, and fresh herbs',
-      image: 'images/pasta.jpg', mrp: 399, offerPrice: 329,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 399, offerPrice: 329,
       badge: 'Chef\'s Pick', available: true,
       sizes: [],
       addons: []
@@ -110,7 +110,7 @@
     {
       id: 8, name: 'Penne Arrabbiata', category: 'Pasta',
       description: 'Spicy tomato sauce with garlic, chili flakes, and fresh basil',
-      image: 'images/pasta.jpg', mrp: 349, offerPrice: 279,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 349, offerPrice: 279,
       badge: '', available: true,
       sizes: [],
       addons: []
@@ -119,7 +119,7 @@
     {
       id: 9, name: 'Loaded Cheese Fries', category: 'Sides',
       description: 'Crispy fries topped with melted cheese sauce, herbs, and spices',
-      image: 'images/fries.jpg', mrp: 249, offerPrice: 179,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219724/mjs_corner/food/fries.jpg', mrp: 249, offerPrice: 179,
       badge: 'Fan Fav', available: true,
       sizes: [],
       addons: []
@@ -127,7 +127,7 @@
     {
       id: 10, name: 'Buffalo Wings', category: 'Sides',
       description: 'Glazed buffalo wings with blue cheese dip and celery sticks',
-      image: 'images/wings.jpg', mrp: 379, offerPrice: 299,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219729/mjs_corner/food/wings.jpg', mrp: 379, offerPrice: 299,
       badge: '', available: true,
       sizes: [],
       addons: []
@@ -135,7 +135,7 @@
     {
       id: 11, name: 'Chicken Shawarma Wrap', category: 'Sides',
       description: 'Grilled chicken with pickled vegetables, tahini, and fresh lettuce',
-      image: 'images/wrap.jpg', mrp: 279, offerPrice: 229,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219730/mjs_corner/food/wrap.jpg', mrp: 279, offerPrice: 229,
       badge: '', available: true,
       sizes: [],
       addons: []
@@ -144,7 +144,7 @@
     {
       id: 12, name: 'Mediterranean Bowl', category: 'Salads',
       description: 'Grilled chicken, feta, olives, tomatoes, cucumber, and lemon vinaigrette',
-      image: 'images/salad.jpg', mrp: 349, offerPrice: 289,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219727/mjs_corner/food/salad.jpg', mrp: 349, offerPrice: 289,
       badge: 'Healthy', available: true,
       sizes: [],
       addons: []
@@ -153,7 +153,7 @@
     {
       id: 13, name: 'Mango Smoothie', category: 'Drinks',
       description: 'Fresh tropical mango blended with yogurt and a hint of mint',
-      image: 'images/smoothie.jpg', mrp: 199, offerPrice: 149,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 199, offerPrice: 149,
       badge: '', available: true,
       sizes: [],
       addons: []
@@ -161,7 +161,7 @@
     {
       id: 14, name: 'Berry Blast Smoothie', category: 'Drinks',
       description: 'Mixed berries, banana, and honey blended to perfection',
-      image: 'images/smoothie.jpg', mrp: 229, offerPrice: 179,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 229, offerPrice: 179,
       badge: 'New', available: true,
       sizes: [],
       addons: []
@@ -170,7 +170,7 @@
     {
       id: 15, name: 'Molten Brownie Sundae', category: 'Desserts',
       description: 'Warm chocolate brownie with vanilla ice cream and chocolate drizzle',
-      image: 'images/brownie.jpg', mrp: 299, offerPrice: 229,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 299, offerPrice: 229,
       badge: '🍫 Indulge', available: true,
       sizes: [],
       addons: []
@@ -178,12 +178,27 @@
     {
       id: 16, name: 'Classic Cheesecake', category: 'Desserts',
       description: 'New York style cheesecake with berry compote',
-      image: 'images/brownie.jpg', mrp: 349, offerPrice: 269,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 349, offerPrice: 269,
       badge: '', available: true,
       sizes: [],
       addons: []
     }
   ];
+
+  // ========== USER ISOLATION HELPERS ==========
+  function getCartStorageKey(user) {
+    const cur = user !== undefined ? user : (window.MJAuth ? MJAuth.getCurrentUser() : null);
+    if (!cur || !cur.phone) return 'mj_cart_guest';
+    const raw = cur.phone.replace(/\D/g, '').slice(-10);
+    return `mj_cart_${raw}`;
+  }
+
+  function getOrdersStorageKey(user) {
+    const cur = user !== undefined ? user : (window.MJAuth ? MJAuth.getCurrentUser() : null);
+    if (!cur || !cur.phone) return 'mj_orders_guest';
+    const raw = cur.phone.replace(/\D/g, '').slice(-10);
+    return `mj_orders_${raw}`;
+  }
 
   // ========== STATE ==========
   let state = {
@@ -198,15 +213,25 @@
     selectedDeliveryAddressId: null
   };
 
-  // Load from localStorage via shared MJData
+  // Load from localStorage & MongoDB Atlas
   function loadState() {
     try {
       state.menu = window.MJData ? MJData.getMenu() : (JSON.parse(localStorage.getItem('mj_menu')) || [...DEFAULT_MENU]);
       state.promos = window.MJData ? MJData.getPromos() : (JSON.parse(localStorage.getItem('mj_promos')) || []);
       state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
-      const savedCart = localStorage.getItem('mj_cart');
-      state.cart = savedCart ? JSON.parse(savedCart) : [];
-      // Ensure existing cart items have cartKey
+      loadCartForUser();
+    } catch (e) {
+      state.menu = window.MJData ? MJData.getMenu() : [];
+      state.cart = [];
+    }
+  }
+
+  function loadCartForUser(user) {
+    const cur = user !== undefined ? user : (window.MJAuth ? MJAuth.getCurrentUser() : null);
+    const key = getCartStorageKey(cur);
+    try {
+      const saved = localStorage.getItem(key);
+      state.cart = saved ? JSON.parse(saved) : [];
       state.cart.forEach(c => {
         if (!c.cartKey) {
           const sName = c.selectedSize ? c.selectedSize.name : '';
@@ -215,13 +240,52 @@
         }
       });
     } catch (e) {
-      state.menu = window.MJData ? MJData.getMenu() : [];
       state.cart = [];
+    }
+
+    // Sync user cart with MongoDB Atlas if customer is signed in
+    if (cur && cur.phone) {
+      fetch(`/api/user/cart/${encodeURIComponent(cur.phone)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.cart)) {
+            // If local was empty and DB has cart, populate it
+            if (state.cart.length === 0 && data.cart.length > 0) {
+              state.cart = data.cart;
+              state.cart.forEach(c => {
+                if (!c.cartKey) {
+                  const sName = c.selectedSize ? c.selectedSize.name : '';
+                  const aNames = (c.selectedAddons || []).map(a => a.name).sort().join('|');
+                  c.cartKey = `${c.id}__${sName}__${aNames}`;
+                }
+              });
+              localStorage.setItem(key, JSON.stringify(state.cart));
+              updateCartUI();
+              renderMenu();
+            }
+          }
+        })
+        .catch(() => {});
     }
   }
 
-  function saveCart() {
-    localStorage.setItem('mj_cart', JSON.stringify(state.cart));
+  let cartSyncTimer = null;
+  function saveCart(syncToDb = true) {
+    const cur = window.MJAuth ? MJAuth.getCurrentUser() : null;
+    const key = getCartStorageKey(cur);
+    localStorage.setItem(key, JSON.stringify(state.cart));
+
+    // Debounced sync to MongoDB Atlas for logged-in customer
+    if (syncToDb && cur && cur.phone) {
+      clearTimeout(cartSyncTimer);
+      cartSyncTimer = setTimeout(() => {
+        fetch('/api/user/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: cur.phone, cart: state.cart })
+        }).catch(err => console.warn('Could not save user cart to MongoDB:', err));
+      }, 400);
+    }
   }
 
   // ========== DOM REFERENCES ==========
@@ -523,18 +587,39 @@
     });
   }
 
+  async function fetchCustomerOrders() {
+    const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+    if (!user || !user.phone) return [];
+    try {
+      const res = await fetch(`/api/orders?phone=${encodeURIComponent(user.phone)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.orders)) {
+          localStorage.setItem(getOrdersStorageKey(user), JSON.stringify(data.orders));
+          return data.orders;
+        }
+      }
+    } catch (e) {
+      console.warn('Orders fetch note:', e);
+    }
+    return JSON.parse(localStorage.getItem(getOrdersStorageKey(user)) || '[]');
+  }
+
   function updateHeaderOrdersBadge() {
     if (!els.headerOrdersCount) return;
-    const user = MJAuth.getCurrentUser();
-    if (!user) {
+    const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+    if (!user || !user.phone) {
       els.headerOrdersCount.classList.add('hidden');
       return;
     }
-    const allOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
-    const activeUserOrders = allOrders.filter(o => 
-      ((o.customer && o.customer.userId === user.id) || (o.customer && o.customer.email === user.email)) &&
-      ['pending', 'preparing', 'ready'].includes(o.status)
-    );
+    const userLast10 = user.phone.replace(/\D/g, '').slice(-10);
+    const userOrders = JSON.parse(localStorage.getItem(getOrdersStorageKey(user)) || '[]');
+    const activeUserOrders = userOrders.filter(o => {
+      if (!o.customer) return false;
+      const orderPhone = (o.customer.phone || '').replace(/\D/g, '').slice(-10);
+      return (orderPhone === userLast10 || o.customer.userId === user.id) &&
+             ['pending', 'preparing', 'ready'].includes(o.status);
+    });
     if (activeUserOrders.length > 0) {
       els.headerOrdersCount.textContent = activeUserOrders.length;
       els.headerOrdersCount.classList.remove('hidden');
@@ -547,6 +632,12 @@
     renderCustomerOrders(els.customerOrdersList);
     els.ordersModal.classList.add('open');
     document.body.style.overflow = 'hidden';
+    // Refresh customer orders in background from MongoDB
+    fetchCustomerOrders().then(orders => {
+      if (els.ordersModal.classList.contains('open')) {
+        renderCustomerOrders(els.customerOrdersList);
+      }
+    });
   }
 
   function closeOrdersModal() {
@@ -573,12 +664,13 @@
     const countdownEls = document.querySelectorAll('.cancel-countdown[data-order-id]');
     if (countdownEls.length === 0) return;
 
-    const allOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
+    const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+    const userOrders = JSON.parse(localStorage.getItem(getOrdersStorageKey(user)) || '[]');
     let needsRerender = false;
 
     countdownEls.forEach(el => {
       const orderId = el.dataset.orderId;
-      const order = allOrders.find(o => o.id === orderId);
+      const order = userOrders.find(o => o.id === orderId);
       const remaining = getOrderCancelRemainingSeconds(order);
       if (remaining > 0) {
         el.textContent = formatCountdownTime(remaining);
@@ -597,9 +689,11 @@
     }
   }
 
-  function cancelCustomerOrder(orderId) {
-    const allOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
-    const order = allOrders.find(o => o.id === orderId);
+  async function cancelCustomerOrder(orderId) {
+    const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+    const ordersKey = getOrdersStorageKey(user);
+    const userOrders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
+    const order = userOrders.find(o => o.id === orderId);
     if (!order) return;
     if (order.status !== 'pending') {
       showToast('This order can no longer be cancelled as it is already being prepared.', 'error');
@@ -613,31 +707,59 @@
       return;
     }
     order.status = 'cancelled';
-    localStorage.setItem('mj_orders', JSON.stringify(allOrders));
+    localStorage.setItem(ordersKey, JSON.stringify(userOrders));
     window.dispatchEvent(new Event('mj_orders_changed'));
     renderCustomerOrders(els.customerOrdersList);
     renderProfileOrders();
     updateHeaderOrdersBadge();
+
+    // Persist cancel status in MongoDB Atlas
+    try {
+      await fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'cancelled' })
+      });
+    } catch (e) {
+      console.warn('Could not update cancelled status in MongoDB:', e);
+    }
+
     showToast(`Order ${orderId} has been cancelled successfully.`, 'info');
   }
 
   function renderCustomerOrders(container) {
     if (!container) return;
-    const user = MJAuth.getCurrentUser();
-    if (!user) return;
+    const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+    if (!user) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary);">
+          <div style="font-size:3.5rem;margin-bottom:12px;">🔒</div>
+          <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Sign In to View Orders</h3>
+          <p style="font-size:0.88rem;max-width:320px;margin:0 auto 18px;">Please log in with your mobile OTP to view your isolated order history and track deliveries.</p>
+          <a href="login.html" class="btn-admin primary" style="display:inline-block;padding:10px 22px;border-radius:var(--radius-full);text-decoration:none;">
+            📱 Login with Mobile OTP
+          </a>
+        </div>
+      `;
+      return;
+    }
 
-    const allOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
-    const myOrders = allOrders.filter(o => 
-      (o.customer && o.customer.userId === user.id) || 
-      (o.customer && o.customer.email === user.email)
-    );
+    const userLast10 = (user.phone || '').replace(/\D/g, '').slice(-10);
+    const userOrders = JSON.parse(localStorage.getItem(getOrdersStorageKey(user)) || '[]');
+    const myOrders = userOrders.filter(o => {
+      if (!o.customer) return false;
+      const orderPhone = (o.customer.phone || '').replace(/\D/g, '').slice(-10);
+      return (userLast10 && orderPhone === userLast10) || 
+             (user.id && o.customer.userId === user.id) ||
+             (user.email && o.customer.email === user.email);
+    });
 
     if (myOrders.length === 0) {
       container.innerHTML = `
         <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary);">
           <div style="font-size:3.5rem;margin-bottom:12px;">🍽️</div>
           <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">No Orders Yet</h3>
-          <p style="font-size:0.88rem;max-width:320px;margin:0 auto 18px;">You haven't placed any orders yet. Discover our fresh meals and order now!</p>
+          <p style="font-size:0.88rem;max-width:320px;margin:0 auto 18px;">You haven't placed any orders yet on this account. Discover our fresh meals and order now!</p>
           <button type="button" class="btn-admin primary" id="btnExploreMenuFromOrders" style="padding:10px 22px;border-radius:var(--radius-full);">
             🍴 Browse Menu
           </button>
@@ -2085,6 +2207,10 @@
     const discount = state.appliedPromo ? state.appliedPromo.discountAmount : 0;
     const finalTotal = Math.max(0, totals.total - discount);
 
+    const customerPhone = els.custPhone.value.trim() || (user ? user.phone : '');
+    const rawDigits = customerPhone.replace(/\D/g, '');
+    const last10 = rawDigits.slice(-10);
+
     const order = {
       id: orderId,
       type: state.orderType,
@@ -2094,9 +2220,10 @@
       coupon: state.appliedPromo ? { ...state.appliedPromo } : null,
       customer: {
         userId: user ? user.id : 'guest',
-        name: els.custName.value.trim(),
-        phone: els.custPhone.value.trim(),
-        email: user ? user.email : '',
+        name: els.custName.value.trim() || (user ? user.name : 'Customer'),
+        phone: customerPhone,
+        rawPhone: last10,
+        email: user ? (user.email || '') : '',
         address: deliveryAddress,
         notes: els.custNotes.value.trim()
       },
@@ -2104,13 +2231,22 @@
       timestamp: new Date().toISOString()
     };
 
-    const orders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
-    orders.unshift(order);
-    localStorage.setItem('mj_orders', JSON.stringify(orders));
+    // Save order strictly for this user account
+    const ordersKey = getOrdersStorageKey(user);
+    const userOrders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
+    userOrders.unshift(order);
+    localStorage.setItem(ordersKey, JSON.stringify(userOrders));
     window.dispatchEvent(new Event('mj_orders_changed'));
     updateHeaderOrdersBadge();
 
-    // Clear cart & coupon
+    // Persist order to MongoDB Atlas
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    }).catch(err => console.warn('Could not save order to MongoDB Atlas:', err));
+
+    // Clear cart & coupon locally and MongoDB
     state.cart = [];
     state.appliedPromo = null;
     saveCart();
@@ -2368,8 +2504,26 @@
     });
 
     window.addEventListener('mj_auth_changed', () => {
+      const cur = window.MJAuth ? MJAuth.getCurrentUser() : null;
+      if (!cur) {
+        // Completely clear in-memory cart on logout so it never leaks to another user
+        state.cart = [];
+        state.appliedPromo = null;
+        localStorage.removeItem('mj_cart_guest');
+      } else {
+        // Load the isolated cart strictly for this authenticated customer
+        loadCartForUser(cur);
+      }
       initHeaderProfile();
+      updateCartUI();
+      renderMenu();
       updateHeaderOrdersBadge();
+      if (els.ordersModal && els.ordersModal.classList.contains('open')) {
+        renderCustomerOrders(els.customerOrdersList);
+      }
+      if (els.profileModal && els.profileModal.classList.contains('open') && els.tabProfileOrders && els.tabProfileOrders.classList.contains('active')) {
+        renderProfileOrders();
+      }
     });
   }
 
@@ -2385,13 +2539,21 @@
     updateCartUI();
     bindEvents();
 
-    // Periodic check for order status updates from admin (poll every 4s)
+    // Periodic live orders sync with MongoDB Atlas (poll every 5s if logged in)
     setInterval(() => {
-      updateHeaderOrdersBadge();
-      if (els.ordersModal && els.ordersModal.classList.contains('open')) {
-        renderCustomerOrders(els.customerOrdersList);
+      const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+      if (user && user.phone) {
+        fetchCustomerOrders().then(() => {
+          updateHeaderOrdersBadge();
+          if (els.ordersModal && els.ordersModal.classList.contains('open')) {
+            renderCustomerOrders(els.customerOrdersList);
+          }
+          if (els.profileModal && els.profileModal.classList.contains('open') && els.tabProfileOrders && els.tabProfileOrders.classList.contains('active')) {
+            renderProfileOrders();
+          }
+        });
       }
-    }, 4000);
+    }, 5000);
 
     // Live 1-second ticking countdown timer for 2-minute order cancellation window
     setInterval(updateCancelTimers, 1000);

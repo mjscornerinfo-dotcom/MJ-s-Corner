@@ -15,7 +15,7 @@ var MJData = (function () {
     {
       id: 1, name: 'Classic Smash Burger', category: 'Burgers',
       description: 'Double-stacked beef patties with melted cheese, special sauce, and brioche bun',
-      image: 'images/burger.jpg', mrp: 349, offerPrice: 249,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 349, offerPrice: 249,
       badge: 'Bestseller', available: true,
       sizes: [
         { name: 'Single Patty', price: 249 },
@@ -30,7 +30,7 @@ var MJData = (function () {
     {
       id: 2, name: 'BBQ Bacon Burger', category: 'Burgers',
       description: 'Smoky BBQ sauce, crispy bacon, caramelized onions, and pepper jack cheese',
-      image: 'images/burger.jpg', mrp: 399, offerPrice: 329,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 399, offerPrice: 329,
       badge: '', available: true,
       sizes: [
         { name: 'Single Patty', price: 329 },
@@ -44,7 +44,7 @@ var MJData = (function () {
     {
       id: 3, name: 'Spicy Chicken Burger', category: 'Burgers',
       description: 'Crispy fried chicken fillet with sriracha mayo and pickled jalapeños',
-      image: 'images/burger.jpg', mrp: 329, offerPrice: 269,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 329, offerPrice: 269,
       badge: '🌶️ Spicy', available: true,
       sizes: [
         { name: 'Single Fillet', price: 269 },
@@ -59,7 +59,7 @@ var MJData = (function () {
     {
       id: 4, name: 'Margherita Pizza', category: 'Pizza',
       description: 'San Marzano tomatoes, fresh mozzarella, basil, and extra-virgin olive oil',
-      image: 'images/pizza.jpg', mrp: 449, offerPrice: 349,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 449, offerPrice: 349,
       badge: 'Popular', available: true,
       sizes: [
         { name: 'Regular (8")', price: 349 },
@@ -75,7 +75,7 @@ var MJData = (function () {
     {
       id: 5, name: 'Pepperoni Feast', category: 'Pizza',
       description: 'Loaded with spicy pepperoni, mozzarella, and our signature tomato sauce',
-      image: 'images/pizza.jpg', mrp: 549, offerPrice: 449,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 549, offerPrice: 449,
       badge: '', available: true,
       sizes: [
         { name: 'Regular (8")', price: 449 },
@@ -90,7 +90,7 @@ var MJData = (function () {
     {
       id: 6, name: 'BBQ Chicken Pizza', category: 'Pizza',
       description: 'Grilled chicken, BBQ sauce, red onions, and smoked gouda cheese',
-      image: 'images/pizza.jpg', mrp: 599, offerPrice: 479,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 599, offerPrice: 479,
       badge: 'New', available: true,
       sizes: [
         { name: 'Regular (8")', price: 479 },
@@ -106,7 +106,7 @@ var MJData = (function () {
     {
       id: 7, name: 'Chicken Alfredo', category: 'Pasta',
       description: 'Creamy fettuccine with grilled chicken, parmesan, and fresh herbs',
-      image: 'images/pasta.jpg', mrp: 399, offerPrice: 329,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 399, offerPrice: 329,
       badge: 'Chef\'s Pick', available: true,
       sizes: [],
       addons: []
@@ -114,7 +114,7 @@ var MJData = (function () {
     {
       id: 8, name: 'Penne Arrabbiata', category: 'Pasta',
       description: 'Spicy tomato sauce with garlic, chili flakes, and fresh basil',
-      image: 'images/pasta.jpg', mrp: 349, offerPrice: 279,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 349, offerPrice: 279,
       badge: '', available: true,
       sizes: [],
       addons: []
@@ -123,7 +123,7 @@ var MJData = (function () {
     {
       id: 9, name: 'Loaded Cheese Fries', category: 'Sides',
       description: 'Crispy fries topped with melted cheese sauce, herbs, and spices',
-      image: 'images/fries.jpg', mrp: 249, offerPrice: 179,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219724/mjs_corner/food/fries.jpg', mrp: 249, offerPrice: 179,
       badge: 'Fan Fav', available: true,
       sizes: [],
       addons: []
@@ -131,7 +131,7 @@ var MJData = (function () {
     {
       id: 10, name: 'Buffalo Wings', category: 'Sides',
       description: 'Glazed buffalo wings with blue cheese dip and celery sticks',
-      image: 'images/wings.jpg', mrp: 379, offerPrice: 299,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219729/mjs_corner/food/wings.jpg', mrp: 379, offerPrice: 299,
       badge: '', available: true,
       sizes: [],
       addons: []
@@ -139,7 +139,7 @@ var MJData = (function () {
     {
       id: 11, name: 'Chicken Shawarma Wrap', category: 'Sides',
       description: 'Grilled chicken with pickled vegetables, tahini, and fresh lettuce',
-      image: 'images/wrap.jpg', mrp: 279, offerPrice: 229,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219730/mjs_corner/food/wrap.jpg', mrp: 279, offerPrice: 229,
       badge: '', available: true,
       sizes: [],
       addons: []
@@ -148,7 +148,7 @@ var MJData = (function () {
     {
       id: 12, name: 'Mediterranean Bowl', category: 'Salads',
       description: 'Grilled chicken, feta, olives, tomatoes, cucumber, and lemon vinaigrette',
-      image: 'images/salad.jpg', mrp: 349, offerPrice: 289,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219727/mjs_corner/food/salad.jpg', mrp: 349, offerPrice: 289,
       badge: 'Healthy', available: true,
       sizes: [],
       addons: []
@@ -157,7 +157,7 @@ var MJData = (function () {
     {
       id: 13, name: 'Mango Smoothie', category: 'Drinks',
       description: 'Fresh tropical mango blended with yogurt and a hint of mint',
-      image: 'images/smoothie.jpg', mrp: 199, offerPrice: 149,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 199, offerPrice: 149,
       badge: '', available: true,
       sizes: [],
       addons: []
@@ -165,7 +165,7 @@ var MJData = (function () {
     {
       id: 14, name: 'Berry Blast Smoothie', category: 'Drinks',
       description: 'Mixed berries, banana, and honey blended to perfection',
-      image: 'images/smoothie.jpg', mrp: 229, offerPrice: 179,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 229, offerPrice: 179,
       badge: 'New', available: true,
       sizes: [],
       addons: []
@@ -174,7 +174,7 @@ var MJData = (function () {
     {
       id: 15, name: 'Molten Brownie Sundae', category: 'Desserts',
       description: 'Warm chocolate brownie with vanilla ice cream and chocolate drizzle',
-      image: 'images/brownie.jpg', mrp: 299, offerPrice: 229,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 299, offerPrice: 229,
       badge: '🍫 Indulge', available: true,
       sizes: [],
       addons: []
@@ -182,7 +182,7 @@ var MJData = (function () {
     {
       id: 16, name: 'Classic Cheesecake', category: 'Desserts',
       description: 'New York style cheesecake with berry compote',
-      image: 'images/brownie.jpg', mrp: 349, offerPrice: 269,
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 349, offerPrice: 269,
       badge: '', available: true,
       sizes: [],
       addons: []
@@ -252,24 +252,30 @@ var MJData = (function () {
     }
   ];
 
-  // Seed storage if never initialized
+  // Seed storage if never initialized and migrate images to Cloudinary
   function initStorage() {
     if (localStorage.getItem(STORAGE_KEY_MENU) === null) {
       localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(DEFAULT_MENU));
     } else {
-      // Migrate existing menu items to have sizes & addons if missing
+      // Migrate existing menu items to have Cloudinary URLs, sizes & addons
       try {
         const stored = JSON.parse(localStorage.getItem(STORAGE_KEY_MENU));
         if (Array.isArray(stored)) {
           let modified = false;
           stored.forEach(item => {
+            const def = DEFAULT_MENU.find(d => d.id === item.id);
+            // Replace local images with Cloudinary URLs
+            if (item.image && item.image.startsWith('images/')) {
+              if (def) {
+                item.image = def.image;
+                modified = true;
+              }
+            }
             if (item.sizes === undefined) {
-              const def = DEFAULT_MENU.find(d => d.id === item.id);
               item.sizes = def && def.sizes ? JSON.parse(JSON.stringify(def.sizes)) : [];
               modified = true;
             }
             if (item.addons === undefined) {
-              const def = DEFAULT_MENU.find(d => d.id === item.id);
               item.addons = def && def.addons ? JSON.parse(JSON.stringify(def.addons)) : [];
               modified = true;
             }
@@ -288,7 +294,6 @@ var MJData = (function () {
         const stored = JSON.parse(localStorage.getItem(STORAGE_KEY_PROMOS));
         if (Array.isArray(stored)) {
           let modified = false;
-          // If stored promos are only the old 3 default promos without combo, merge in combo promos
           const hasCombo = stored.some(p => p.scope === 'combo' || p.code === 'PIZZADRINK');
           if (!hasCombo) {
             const pizzaCombo = DEFAULT_PROMOS.find(p => p.code === 'PIZZADRINK');
@@ -354,6 +359,13 @@ var MJData = (function () {
   function saveMenu(menu) {
     localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(menu));
     window.dispatchEvent(new Event('mj_data_changed'));
+
+    // Persist to MongoDB Atlas
+    fetch('/api/menu', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ menu })
+    }).catch(err => console.warn('Could not save menu to MongoDB:', err));
   }
 
   function getPromos() {
@@ -369,6 +381,13 @@ var MJData = (function () {
   function savePromos(promos) {
     localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(promos));
     window.dispatchEvent(new Event('mj_data_changed'));
+
+    // Persist to MongoDB Atlas
+    fetch('/api/promotions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ promotions: promos })
+    }).catch(err => console.warn('Could not save promos to MongoDB:', err));
   }
 
   function isPromoPopupEnabled() {
@@ -384,6 +403,13 @@ var MJData = (function () {
   function setPromoPopupEnabled(val) {
     localStorage.setItem(STORAGE_KEY_POPUP, JSON.stringify(val));
     window.dispatchEvent(new Event('mj_data_changed'));
+
+    // Persist to MongoDB Atlas
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ promoPopupEnabled: val })
+    }).catch(err => console.warn('Could not save settings to MongoDB:', err));
   }
 
   function resetToDefaults() {
@@ -391,9 +417,54 @@ var MJData = (function () {
     localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOS));
     localStorage.setItem(STORAGE_KEY_POPUP, 'true');
     window.dispatchEvent(new Event('mj_data_changed'));
+
+    fetch('/api/menu/reset', { method: 'POST' })
+      .catch(err => console.warn('Could not reset menu in MongoDB:', err));
+  }
+
+  // Sync menu, promos, and settings from MongoDB Atlas
+  async function syncFromDb() {
+    try {
+      // 1. Menu
+      const menuResp = await fetch('/api/menu');
+      if (menuResp.ok) {
+        const menuData = await menuResp.json();
+        if (menuData.success && Array.isArray(menuData.menu) && menuData.menu.length > 0) {
+          localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(menuData.menu));
+        }
+      }
+
+      // 2. Promotions
+      const promoResp = await fetch('/api/promotions');
+      if (promoResp.ok) {
+        const promoData = await promoResp.json();
+        if (promoData.success && Array.isArray(promoData.promotions) && promoData.promotions.length > 0) {
+          localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(promoData.promotions));
+        }
+      }
+
+      // 3. Settings
+      const setResp = await fetch('/api/settings');
+      if (setResp.ok) {
+        const setData = await setResp.json();
+        if (setData.success && setData.settings) {
+          if (setData.settings.promoPopupEnabled !== undefined) {
+            localStorage.setItem(STORAGE_KEY_POPUP, JSON.stringify(setData.settings.promoPopupEnabled));
+          }
+        }
+      }
+
+      window.dispatchEvent(new Event('mj_data_changed'));
+    } catch (e) {
+      console.warn('MongoDB sync note (working offline / cache):', e.message);
+    }
   }
 
   initStorage();
+  // Background initial sync
+  if (typeof window !== 'undefined' && typeof fetch === 'function') {
+    setTimeout(syncFromDb, 100);
+  }
 
   return {
     getMenu,
@@ -403,6 +474,7 @@ var MJData = (function () {
     isPromoPopupEnabled,
     setPromoPopupEnabled,
     resetToDefaults,
+    syncFromDb,
     DEFAULT_MENU,
     DEFAULT_PROMOS
   };
