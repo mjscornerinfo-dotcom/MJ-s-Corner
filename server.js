@@ -23,21 +23,17 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 app.use(express.static(path.join(__dirname, '.')));
 
 // ========== HELPER FUNCTIONS ==========
-function fetchJsonFromUrl(url) {
-  return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          resolve(json);
-        } catch (e) {
-          reject(new Error('Invalid JSON from Phone.Email: ' + e.message));
-        }
-      });
-    }).on('error', reject);
+async function fetchJsonFromUrl(url) {
+  const resp = await fetch(url, {
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'MJsCorner-Auth/1.0'
+    }
   });
+  if (!resp.ok) {
+    throw new Error(`Phone.Email server returned HTTP ${resp.status}`);
+  }
+  return await resp.json();
 }
 
 function getAdminPhonesList() {

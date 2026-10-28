@@ -105,10 +105,14 @@
               <small class="form-help-text">We'll verify your number securely via SMS OTP</small>
             </div>
 
-            <!-- Phone.Email Official Sign In Button Container -->
-            <div id="pheIncludedContent" class="pe_signin_button"></div>
+            <!-- Official Phone.Email Sign In Button Container -->
+            <div class="pe-button-wrapper" style="display:flex;justify-content:center;margin:16px 0 10px 0;">
+              <div class="pe_signin_button" data-client-id="11976801478974448261">
+                <script src="https://www.phone.email/sign_in_button_v1.js" async></script>
+              </div>
+            </div>
 
-            <!-- Phone.Email Trigger Button -->
+            <!-- Alternative / Custom Trigger Button -->
             <button type="button" class="btn-phone-email" id="btnPhoneEmailLogin">
               <span class="btn-icon">🛡️</span>
               <span class="btn-label">Verify with Phone.Email OTP</span>

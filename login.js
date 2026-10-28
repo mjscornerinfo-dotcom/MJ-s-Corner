@@ -9,7 +9,7 @@
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
 
-  let phoneEmailClientId = '';
+  let phoneEmailClientId = '11976801478974448261';
 
   const els = {
     themeToggle: $('#themeToggle'),
@@ -23,8 +23,7 @@
     btnDemoAdmin: $('#btnDemoAdmin'),
     adminNoticeBanner: $('#adminNoticeBanner'),
     adminNoticeText: $('#adminNoticeText'),
-    toastContainer: $('#toastContainer'),
-    pheIncludedContent: $('#pheIncludedContent')
+    toastContainer: $('#toastContainer')
   };
 
   // ========== THEME ==========
@@ -91,11 +90,8 @@
       const res = await fetch('/api/config');
       if (res.ok) {
         const data = await res.json();
-        phoneEmailClientId = data.phoneEmailClientId || '';
-        
-        // If client ID is present, initialize Phone.Email button
-        if (phoneEmailClientId && els.pheIncludedContent) {
-          els.pheIncludedContent.setAttribute('data-client-id', phoneEmailClientId);
+        if (data.phoneEmailClientId) {
+          phoneEmailClientId = data.phoneEmailClientId;
         }
       }
     } catch (e) {
@@ -124,66 +120,67 @@
   // ========== GLOBAL PHONE.EMAIL LISTENER CALLBACK ==========
   // Phone.Email invokes this window function upon OTP success in the popup
   window.phoneEmailListener = async function (userObj) {
-    if (!userObj || !userObj.user_json_url) {
+    console.log('[Phone.Email] Callback triggered with:', userObj);
+    const user_json_url = typeof userObj === 'string' ? userObj : (userObj && userObj.user_json_url);
+
+    if (!user_json_url) {
       showToast('Phone.Email verification failed: No verification URL returned', 'error');
       return;
     }
 
-    showToast('Phone verified via Phone.Email! Authenticating...', 'info');
+    showToast('Phone verified via Phone.Email! Authenticating with MongoDB...', 'info');
 
-    const name = (els.custName && els.custName.value.trim()) || 'Customer';
+    const name = (els.custName && els.custName.value.trim()) || '';
     const phone = (els.custPhone && els.custPhone.value.trim()) || '';
 
-    const res = await MJAuth.loginWithPhoneEmail({
-      name,
-      phone,
-      user_json_url: userObj.user_json_url
-    });
+    try {
+      const res = await MJAuth.loginWithPhoneEmail({
+        name,
+        phone,
+        user_json_url
+      });
 
-    if (res.success) {
-      handleLoginSuccess(res.user);
-    } else {
-      showToast(res.message || 'Authentication failed', 'error');
+      if (res.success) {
+        handleLoginSuccess(res.user);
+      } else {
+        showToast(res.message || 'Authentication failed', 'error');
+      }
+    } catch (err) {
+      showToast('Authentication error: ' + err.message, 'error');
     }
   };
 
   // Launch Phone.Email verification popup
   function launchPhoneEmailPopup() {
     const name = (els.custName.value || '').trim();
-    const phone = (els.custPhone.value || '').trim().replace(/\D/g, '');
-
     if (!name) {
       showToast('Please enter your full name', 'error');
       els.custName.focus();
       return;
     }
 
-    if (phone.length < 10) {
-      showToast('Please enter a valid 10-digit mobile number', 'error');
-      els.custPhone.focus();
+    // If official Phone.Email button element exists, trigger its click
+    const officialBtn = document.querySelector('.pe_signin_button button') || 
+                        document.querySelector('.pe_signin_button a') ||
+                        document.querySelector('.pe_signin_button iframe');
+    if (officialBtn && officialBtn.click) {
+      officialBtn.click();
       return;
     }
 
-    if (phoneEmailClientId) {
-      // Centered popup window for Phone.Email
-      const redirectUri = window.location.origin + '/login.html';
-      const authUrl = `https://www.phone.email/auth/log-in?client_id=${phoneEmailClientId}&redirect_url=${encodeURIComponent(redirectUri)}`;
-      const w = 500;
-      const h = 580;
-      const left = (screen.width - w) / 2;
-      const top = (screen.height - h) / 2;
+    const clientId = phoneEmailClientId || '11976801478974448261';
+    const redirectUri = window.location.origin + '/login.html';
+    const authUrl = `https://www.phone.email/auth/log-in?client_id=${clientId}&redirect_url=${encodeURIComponent(redirectUri)}`;
+    const w = 500;
+    const h = 580;
+    const left = (screen.width - w) / 2;
+    const top = (screen.height - h) / 2;
 
-      window.open(
-        authUrl,
-        'peLoginWindow',
-        `toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,width=${w},height=${h},top=${top},left=${left}`
-      );
-    } else {
-      // If PHONE_EMAIL_CLIENT_ID is not yet configured, provide helpful guidance & test OTP
-      showToast('Phone.Email Client ID not yet set in .env. Test OTP mode activated (use 123456)', 'info');
-      els.custOtp.value = '123456';
-      els.custOtp.focus();
-    }
+    window.open(
+      authUrl,
+      'peLoginWindow',
+      `toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,width=${w},height=${h},top=${top},left=${left}`
+    );
   }
 
   // ========== DIRECT OTP SUBMIT ==========
