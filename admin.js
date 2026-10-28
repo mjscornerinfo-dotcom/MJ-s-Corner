@@ -715,7 +715,8 @@
 
       const badgeLabel = discountType === 'percentage' ? `${discountValue}% OFF` : `₹${discountValue} OFF`;
       let scopeLabel = 'Entire Order';
-      if (scope === 'combo') scopeLabel = `Combo: ${comboCats.join(' + ')}`;
+      if (scope === 'all_items') scopeLabel = 'All Items';
+      else if (scope === 'combo') scopeLabel = `Combo: ${comboCats.join(' + ')}`;
       else if (scope === 'category') scopeLabel = `Category: ${promo.targetCategory || 'All'}`;
       else if (scope === 'item') {
         const itemObj = state.menu.find(m => m.id === parseInt(promo.targetItemId));
@@ -784,6 +785,7 @@
             <label>Offer Target / Scope *</label>
             <select data-promo-field="scope" data-promo-id="${promo.id}">
               <option value="order" ${scope === 'order' ? 'selected' : ''}>Entire Order (Cart Discount)</option>
+              <option value="all_items" ${scope === 'all_items' ? 'selected' : ''}>All Items (Storewide Item Offer)</option>
               <option value="category" ${scope === 'category' ? 'selected' : ''}>Specific Category</option>
               <option value="combo" ${scope === 'combo' ? 'selected' : ''}>Combo Offer (e.g. Pizza + Drinks)</option>
               <option value="item" ${scope === 'item' ? 'selected' : ''}>Specific Menu Item</option>
@@ -798,6 +800,13 @@
         </div>
 
         <!-- Conditional Scope Details -->
+        ${scope === 'all_items' ? `
+          <div class="promo-scope-config-box">
+            <div style="font-size:0.84rem;color:var(--text-secondary);line-height:1.4;">
+              ✨ <strong>All Items Offer:</strong> Applies to every single menu item. Deal badges will automatically display on all menu cards, on-add toasts, and inside the cart.
+            </div>
+          </div>
+        ` : ''}
         ${scope === 'category' ? `
           <div class="promo-scope-config-box">
             <div class="form-group" style="margin-bottom:0;">

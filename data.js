@@ -199,7 +199,7 @@ var MJData = (function () {
       active: true,
       discountType: 'percentage', // 'percentage' | 'flat'
       discountValue: 25,
-      scope: 'order', // 'order' | 'category' | 'combo' | 'item'
+      scope: 'order', // 'order' | 'all_items' | 'category' | 'combo' | 'item'
       targetCategory: 'All',
       targetItemId: null,
       comboCategories: [],

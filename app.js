@@ -1069,8 +1069,78 @@
     }
     const customSummary = descParts.length > 0 ? ` (${descParts.join(' ')})` : '';
 
-    showToast(`Added ${item.name}${customSummary} to cart!`);
+    notifyActivePromosForItem(item, customSummary);
     closeCustomizationModal();
+  }
+
+  function notifyActivePromosForItem(menuItem, customSummary = '') {
+    if (!menuItem) return;
+
+    // Check all categories currently in cart
+    const cartCategories = new Set();
+    state.cart.forEach(c => {
+      const m = state.menu.find(i => i.id === c.id);
+      if (m && m.category) cartCategories.add(m.category);
+    });
+
+    const activePromos = (state.promos || []).filter(p => p.active);
+
+    // 1. Combo offer check
+    const comboPromo = activePromos.find(p => 
+      p.scope === 'combo' && 
+      Array.isArray(p.comboCategories) && 
+      p.comboCategories.includes(menuItem.category)
+    );
+
+    if (comboPromo) {
+      const cat1 = comboPromo.comboCategories[0];
+      const cat2 = comboPromo.comboCategories[1];
+      const hasBoth = cartCategories.has(cat1) && cartCategories.has(cat2);
+      const discountLabel = comboPromo.discountType === 'percentage' 
+        ? `${comboPromo.discountValue}% OFF` 
+        : `₹${comboPromo.discountValue} OFF`;
+
+      if (hasBoth) {
+        showToast(`Added ${menuItem.name}! 🎉 Combo Unlocked: Open cart to apply '${comboPromo.code}' for ${discountLabel}!`, 'success');
+        return;
+      } else {
+        const missing = cartCategories.has(cat1) ? cat2 : cat1;
+        showToast(`Added ${menuItem.name}${customSummary}! 💡 Combo Deal: Add any ${missing} to get ${discountLabel} with '${comboPromo.code}'!`, 'info');
+        return;
+      }
+    }
+
+    // 2. Category offer check
+    const catPromo = activePromos.find(p => p.scope === 'category' && p.targetCategory === menuItem.category);
+    if (catPromo) {
+      const discountLabel = catPromo.discountType === 'percentage' 
+        ? `${catPromo.discountValue}% OFF` 
+        : `₹${catPromo.discountValue} OFF`;
+      showToast(`Added ${menuItem.name}${customSummary}! 🏷️ Offer available: Use code '${catPromo.code}' in cart for ${discountLabel}!`, 'success');
+      return;
+    }
+
+    // 3. Item offer check
+    const itemPromo = activePromos.find(p => p.scope === 'item' && parseInt(p.targetItemId) === menuItem.id);
+    if (itemPromo) {
+      const discountLabel = itemPromo.discountType === 'percentage' 
+        ? `${itemPromo.discountValue}% OFF` 
+        : `₹${itemPromo.discountValue} OFF`;
+      showToast(`Added ${menuItem.name}${customSummary}! ⚡ Use code '${itemPromo.code}' for ${discountLabel}!`, 'success');
+      return;
+    }
+
+    // 4. All Items offer check
+    const allItemsPromo = activePromos.find(p => p.scope === 'all_items');
+    if (allItemsPromo) {
+      const discountLabel = allItemsPromo.discountType === 'percentage' 
+        ? `${allItemsPromo.discountValue}% OFF` 
+        : `₹${allItemsPromo.discountValue} OFF`;
+      showToast(`Added ${menuItem.name}${customSummary}! ✨ Storewide Deal: Use code '${allItemsPromo.code}' for ${discountLabel}!`, 'success');
+      return;
+    }
+
+    showToast(`Added ${menuItem.name}${customSummary} to cart!`);
   }
 
   function renderMenuItem(item) {
@@ -1132,20 +1202,45 @@
       }
     }
 
-    // Check if item belongs to a category with an active combo offer
-    const comboOffer = (state.promos || []).find(p => 
-      p.active && 
+    // Check for any active promotions applicable to this item or its category
+    const activePromos = (state.promos || []).filter(p => p.active);
+    let promoBadgesHtml = '';
+
+    // 1. Item-specific offer
+    const itemPromo = activePromos.find(p => p.scope === 'item' && parseInt(p.targetItemId) === item.id);
+    if (itemPromo) {
+      const offLabel = itemPromo.discountType === 'percentage' ? `${itemPromo.discountValue}% OFF` : `₹${itemPromo.discountValue} OFF`;
+      promoBadgesHtml += `<div class="menu-promo-badge item-deal">⚡ Deal: <strong>${offLabel}</strong> with code <strong>${escapeHtml(itemPromo.code)}</strong></div>`;
+    }
+
+    // 2. Category-specific offer
+    const catPromo = activePromos.find(p => p.scope === 'category' && p.targetCategory === item.category);
+    if (catPromo) {
+      const offLabel = catPromo.discountType === 'percentage' ? `${catPromo.discountValue}% OFF` : `₹${catPromo.discountValue} OFF`;
+      promoBadgesHtml += `<div class="menu-promo-badge category-deal">🏷️ Offer: <strong>${offLabel}</strong> with code <strong>${escapeHtml(catPromo.code)}</strong></div>`;
+    }
+
+    // 3. Combo offer
+    const comboOffer = activePromos.find(p => 
       p.scope === 'combo' && 
       Array.isArray(p.comboCategories) && 
       p.comboCategories.includes(item.category)
     );
-    let comboBadgeHtml = '';
     if (comboOffer) {
       const otherCat = (comboOffer.comboCategories || []).find(c => c !== item.category) || 'Drink';
       const offLabel = comboOffer.discountType === 'percentage' 
         ? `${comboOffer.discountValue}% OFF` 
         : `₹${comboOffer.discountValue} OFF`;
-      comboBadgeHtml = `<div class="menu-combo-tag">✨ Pair with <strong>${escapeHtml(otherCat)}</strong> for ${offLabel}!</div>`;
+      promoBadgesHtml += `<div class="menu-promo-badge combo-deal">🍕🥤 Combo: Pair with <strong>${escapeHtml(otherCat)}</strong> for <strong>${offLabel}</strong> (${escapeHtml(comboOffer.code)})</div>`;
+    }
+
+    // 4. All Items offer
+    const allItemsOffer = activePromos.find(p => p.scope === 'all_items');
+    if (allItemsOffer) {
+      const offLabel = allItemsOffer.discountType === 'percentage' 
+        ? `${allItemsOffer.discountValue}% OFF` 
+        : `₹${allItemsOffer.discountValue} OFF`;
+      promoBadgesHtml += `<div class="menu-promo-badge all-items-deal">✨ Storewide Deal: <strong>${offLabel}</strong> with code <strong>${escapeHtml(allItemsOffer.code)}</strong></div>`;
     }
 
     return `
@@ -1159,7 +1254,7 @@
           <h3 class="menu-card-title">${item.name}</h3>
           <p class="menu-card-desc">${item.description}</p>
           ${pricingHtml}
-          ${comboBadgeHtml}
+          ${promoBadgesHtml}
           <div class="menu-card-actions">
             ${actionsHtml}
           </div>
@@ -1257,7 +1352,7 @@
     }
 
     addItemToCart(menuItem, null, [], 1);
-    showToast(`Added ${menuItem.name} to cart!`);
+    notifyActivePromosForItem(menuItem);
   }
 
   function updateCartQty(keyOrId, delta) {
@@ -1420,6 +1515,7 @@
     state.cart.forEach(c => {
       const m = state.menu.find(i => i.id === c.id);
       if (m && m.category) cartCategories.add(m.category);
+      else if (c.category) cartCategories.add(c.category);
     });
 
     const activePromos = (state.promos || []).filter(p => p.active);
@@ -1459,15 +1555,30 @@
         else if (has1 || has2) {
           const presentCat = has1 ? cat1 : cat2;
           const missingCat = has1 ? cat2 : cat1;
+          const quickAddOptions = state.menu.filter(m => m.category === missingCat && m.available).slice(0, 3);
+          const quickAddHtml = quickAddOptions.length > 0 ? `
+            <div class="combo-quick-add-strip">
+              <span class="quick-add-label">Quick add ${escapeHtml(missingCat)}:</span>
+              <div class="quick-add-buttons">
+                ${quickAddOptions.map(q => `
+                  <button type="button" class="btn-quick-add-item" data-quick-add-id="${q.id}">
+                    + ${escapeHtml(q.name)} (₹${q.offerPrice})
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          ` : '';
+
           html += `
             <div class="cart-combo-card teaser">
               <div class="combo-card-left">
                 <div class="combo-badge-pill teaser">💡 COMBO OFFER AVAILABLE</div>
                 <div class="combo-card-title">Add a <strong>${escapeHtml(missingCat)}</strong> to get <strong>${discountLabel}</strong>!</div>
                 <div class="combo-card-desc">Pair your ${escapeHtml(presentCat)} with any ${escapeHtml(missingCat)} to unlock promo <strong>${escapeHtml(promo.code)}</strong>.</div>
+                ${quickAddHtml}
               </div>
               <button type="button" class="btn-combo-action browse" data-jump-cat="${escapeHtml(missingCat)}">
-                + Add ${escapeHtml(missingCat)} 🥤
+                Browse ${escapeHtml(missingCat)} ➔
               </button>
             </div>
           `;
@@ -1488,6 +1599,38 @@
             </div>
           `;
         }
+      } else if (promo.scope === 'item') {
+        const targetItem = state.menu.find(m => m.id === parseInt(promo.targetItemId));
+        const hasItem = state.cart.some(c => c.id === parseInt(promo.targetItemId));
+        if (hasItem && targetItem) {
+          html += `
+            <div class="cart-combo-card unlocked">
+              <div class="combo-card-left">
+                <div class="combo-badge-pill item">⚡ ${escapeHtml(targetItem.name)} DEAL</div>
+                <div class="combo-card-title">${escapeHtml(promo.title || promo.code)}</div>
+                <div class="combo-card-desc">Save <strong>${discountLabel}</strong> on ${escapeHtml(targetItem.name)}.</div>
+              </div>
+              <button type="button" class="btn-combo-action ${isApplied ? 'applied' : ''}" data-apply-promo="${escapeHtml(promo.code)}">
+                ${isApplied ? '✓ Applied' : 'Apply 🏷️'}
+              </button>
+            </div>
+          `;
+        }
+      } else if (promo.scope === 'all_items') {
+        if (state.cart.length > 0) {
+          html += `
+            <div class="cart-combo-card unlocked">
+              <div class="combo-card-left">
+                <div class="combo-badge-pill all-items">✨ ALL ITEMS OFFER</div>
+                <div class="combo-card-title">${escapeHtml(promo.title || promo.code)}</div>
+                <div class="combo-card-desc">Save <strong>${discountLabel}</strong> across all menu items!</div>
+              </div>
+              <button type="button" class="btn-combo-action ${isApplied ? 'applied' : ''}" data-apply-promo="${escapeHtml(promo.code)}">
+                ${isApplied ? '✓ Applied' : 'Apply Deal 🏷️'}
+              </button>
+            </div>
+          `;
+        }
       }
     });
 
@@ -1498,6 +1641,23 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         applyCheckoutCoupon(btn.dataset.applyPromo);
+      });
+    });
+
+    // Bind quick add buttons
+    els.cartPromoBanners.querySelectorAll('[data-quick-add-id]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const itemId = parseInt(btn.dataset.quickAddId);
+        const qItem = state.menu.find(i => i.id === itemId);
+        if (!qItem) return;
+        if (hasCustomizations(qItem)) {
+          closeCart();
+          openCustomizationModal(qItem);
+        } else {
+          addItemToCart(qItem, null, [], 1);
+          notifyActivePromosForItem(qItem);
+        }
       });
     });
 
@@ -1521,6 +1681,14 @@
 
   function updateCartUI() {
     const totals = getCartTotals();
+
+    // Map categories in cart
+    const cartCategories = new Set();
+    state.cart.forEach(c => {
+      const m = state.menu.find(i => i.id === c.id);
+      if (m && m.category) cartCategories.add(m.category);
+      else if (c.category) cartCategories.add(c.category);
+    });
 
     // Re-validate applied coupon against current cart contents
     if (state.appliedPromo) {
@@ -1584,6 +1752,8 @@
     els.cartSavings.textContent = `₹${totalSavings}`;
     els.cartTotal.textContent = `₹${finalTotal}`;
 
+    const activePromos = (state.promos || []).filter(p => p.active);
+
     els.cartItemsList.innerHTML = state.cart.map(item => {
       const sizeTag = item.selectedSize ? `<span class="cart-item-option-pill">📏 ${escapeHtml(item.selectedSize.name)}</span>` : '';
       const addonsTag = item.selectedAddons && item.selectedAddons.length > 0
@@ -1591,11 +1761,62 @@
         : '';
       const keyAttr = escapeHtml(item.cartKey || String(item.id));
 
+      // Determine promo badge for this cart item
+      const menuItem = state.menu.find(m => m.id === item.id);
+      const itemCat = (menuItem && menuItem.category) || item.category;
+      let itemPromoTag = '';
+
+      if (state.appliedPromo) {
+        const p = state.promos.find(x => x.code === state.appliedPromo.code);
+        if (p) {
+          if (p.scope === 'combo' && Array.isArray(p.comboCategories) && p.comboCategories.includes(itemCat)) {
+            itemPromoTag = `<span class="cart-item-deal-badge applied">🎉 Combo Deal Applied</span>`;
+          } else if (p.scope === 'category' && p.targetCategory === itemCat) {
+            itemPromoTag = `<span class="cart-item-deal-badge applied">🏷️ Category Deal Applied</span>`;
+          } else if (p.scope === 'item' && parseInt(p.targetItemId) === item.id) {
+            itemPromoTag = `<span class="cart-item-deal-badge applied">⚡ Item Deal Applied</span>`;
+          } else if (p.scope === 'all_items') {
+            itemPromoTag = `<span class="cart-item-deal-badge applied">✨ Storewide Deal Applied</span>`;
+          }
+        }
+      }
+
+      if (!itemPromoTag) {
+        const comboP = activePromos.find(p => p.scope === 'combo' && Array.isArray(p.comboCategories) && p.comboCategories.includes(itemCat));
+        if (comboP) {
+          const cat1 = comboP.comboCategories[0];
+          const cat2 = comboP.comboCategories[1];
+          const hasBoth = cartCategories.has(cat1) && cartCategories.has(cat2);
+          if (hasBoth) {
+            itemPromoTag = `<span class="cart-item-deal-badge combo">🎉 Combo Unlocked (${escapeHtml(comboP.code)})</span>`;
+          } else {
+            const missing = cartCategories.has(cat1) ? cat2 : cat1;
+            itemPromoTag = `<span class="cart-item-deal-badge eligible">💡 Add ${escapeHtml(missing)} for offer</span>`;
+          }
+        } else {
+          const catP = activePromos.find(p => p.scope === 'category' && p.targetCategory === itemCat);
+          if (catP) {
+            itemPromoTag = `<span class="cart-item-deal-badge eligible">🏷️ ${escapeHtml(catP.code)} eligible</span>`;
+          } else {
+            const itemP = activePromos.find(p => p.scope === 'item' && parseInt(p.targetItemId) === item.id);
+            if (itemP) {
+              itemPromoTag = `<span class="cart-item-deal-badge eligible">⚡ ${escapeHtml(itemP.code)} eligible</span>`;
+            } else {
+              const allP = activePromos.find(p => p.scope === 'all_items');
+              if (allP) {
+                itemPromoTag = `<span class="cart-item-deal-badge eligible">✨ ${escapeHtml(allP.code)} eligible</span>`;
+              }
+            }
+          }
+        }
+      }
+
       return `
       <div class="cart-item">
         <img src="${item.image}" alt="${escapeHtml(item.name)}" class="cart-item-img">
         <div class="cart-item-info">
           <div class="cart-item-name">${escapeHtml(item.name)}</div>
+          ${itemPromoTag ? `<div class="cart-item-promo-row">${itemPromoTag}</div>` : ''}
           ${sizeTag ? `<div>${sizeTag}</div>` : ''}
           ${addonsTag ? `<div>${addonsTag}</div>` : ''}
           <div class="cart-item-price">₹${item.offerPrice}</div>
@@ -1757,6 +1978,11 @@
         scopeLabel = ` • Combo: ${cats}`;
       } else if (promo.scope === 'category') {
         scopeLabel = ` • On ${promo.targetCategory || 'Category'}`;
+      } else if (promo.scope === 'all_items') {
+        scopeLabel = ' • All Items';
+      } else if (promo.scope === 'item') {
+        const targetItem = state.menu.find(m => m.id === parseInt(promo.targetItemId));
+        scopeLabel = targetItem ? ` • On ${targetItem.name}` : ' • Specific Item';
       }
 
       return `
