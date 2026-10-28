@@ -73,7 +73,7 @@
 
       <!-- Main Unified Auth Card -->
       <div class="auth-card">
-        <div class="auth-panel active" style="padding: 32px 26px;">
+        <div class="auth-panel active" style="padding: 34px 28px;">
           
           <div class="auth-header">
             <div class="auth-brand-pill">🍔 Fast Food & Quick Bites</div>
@@ -81,14 +81,14 @@
             <p>Sign in with your Name and Mobile Number via OTP</p>
           </div>
 
-          <!-- Mobile + OTP Login Form -->
-          <form id="phoneLoginForm" class="auth-form">
+          <!-- Mobile + Phone.Email OTP Login Form -->
+          <form id="phoneLoginForm" class="auth-form" onsubmit="return false;">
             <!-- Full Name -->
             <div class="form-group">
               <label for="custName">Full Name *</label>
               <div class="input-with-icon">
                 <span class="input-prefix-icon">👤</span>
-                <input type="text" id="custName" placeholder="Enter your full name" required autocomplete="name" value="Rahul Sharma">
+                <input type="text" id="custName" placeholder="Enter your full name" required autocomplete="name">
               </div>
             </div>
 
@@ -100,85 +100,25 @@
                   <span>🇮🇳</span>
                   <strong>+91</strong>
                 </div>
-                <input type="tel" id="custPhone" placeholder="Enter 10-digit mobile number" maxlength="10" pattern="[0-9]{10}" required autocomplete="tel" value="9876543210">
+                <input type="tel" id="custPhone" placeholder="Enter 10-digit mobile number" maxlength="10" pattern="[0-9]{10}" required autocomplete="tel">
               </div>
               <small class="form-help-text">We'll verify your number securely via SMS OTP</small>
             </div>
 
             <!-- Official Phone.Email Sign In Button Container -->
-            <div class="pe-button-wrapper" style="display:flex;justify-content:center;margin:16px 0 10px 0;">
+            <div class="pe-button-wrapper" style="display:flex;justify-content:center;margin:18px 0 10px 0;">
               <div class="pe_signin_button" data-client-id="11976801478974448261">
                 <script src="https://www.phone.email/sign_in_button_v1.js" async></script>
               </div>
             </div>
 
-            <!-- Alternative / Custom Trigger Button -->
+            <!-- Custom Trigger Button -->
             <button type="button" class="btn-phone-email" id="btnPhoneEmailLogin">
               <span class="btn-icon">🛡️</span>
-              <span class="btn-label">Verify with Phone.Email OTP</span>
-              <span class="btn-badge">Free SMS</span>
+              <span class="btn-label">Verify & Sign In with Phone.Email</span>
             </button>
-
-            <div class="auth-divider">
-              <span>or enter OTP code directly</span>
-            </div>
-
-            <!-- Direct OTP Field -->
-            <div class="otp-card-section" id="otpCardSection">
-              <div class="form-group" style="margin-bottom:12px;">
-                <label for="custOtp">6-Digit OTP Code</label>
-                <div class="input-with-icon">
-                  <span class="input-prefix-icon">🔑</span>
-                  <input type="text" id="custOtp" placeholder="Enter 6-digit OTP (e.g. 123456)" maxlength="6" inputmode="numeric">
-                </div>
-              </div>
-              <button type="submit" class="btn-auth-submit" id="btnVerifyOtp">
-                Verify OTP & Sign In →
-              </button>
-            </div>
-
-            <!-- Quick Testing Demo Buttons -->
-            <div class="demo-box" style="margin-top:20px;">
-              <span class="demo-label">⚡ Fast Testing Shortcuts</span>
-              <div class="demo-btn-group">
-                <button type="button" class="btn-demo customer" id="btnDemoCustomer">
-                  👤 Test Customer (+91 98765 43210)
-                </button>
-                <button type="button" class="btn-demo admin" id="btnDemoAdmin">
-                  👑 Test Admin Account (+91 99999 88888)
-                </button>
-              </div>
-              <small style="display:block;margin-top:6px;font-size:0.72rem;color:var(--text-tertiary);">
-                Tip: Admins are assigned directly via MongoDB Atlas <code>role: 'admin'</code>
-              </small>
-            </div>
           </form>
 
-        </div>
-      </div>
-
-      <!-- Feature highlights under auth card -->
-      <div class="auth-highlights">
-        <div class="highlight-item">
-          <span class="icon">⚡</span>
-          <div>
-            <strong>Instant Mobile Login</strong>
-            <span>No passwords to remember</span>
-          </div>
-        </div>
-        <div class="highlight-item">
-          <span class="icon">🛡️</span>
-          <div>
-            <strong>Verified by Phone.Email</strong>
-            <span>Secure free SMS OTP</span>
-          </div>
-        </div>
-        <div class="highlight-item">
-          <span class="icon">👑</span>
-          <div>
-            <strong>MongoDB Role Security</strong>
-            <span>Admin access managed from database</span>
-          </div>
         </div>
       </div>
 

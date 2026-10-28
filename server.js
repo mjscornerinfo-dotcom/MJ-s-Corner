@@ -141,42 +141,7 @@ app.post('/api/auth/verify-phone-email', async (req, res) => {
   }
 });
 
-// Direct OTP Verification (Test Mode or Direct Verification)
-app.post('/api/auth/verify-otp', async (req, res) => {
-  try {
-    const { name, phone, otp } = req.body;
-    if (!phone) {
-      return res.status(400).json({ success: false, message: 'Please provide a valid mobile number' });
-    }
 
-    const cleanOtp = String(otp || '').trim();
-    if (!cleanOtp) {
-      return res.status(400).json({ success: false, message: 'Please enter the OTP' });
-    }
-
-    const digitsOnly = phone.replace(/\D/g, '');
-    const last10 = digitsOnly.slice(-10);
-    if (last10.length !== 10) {
-      return res.status(400).json({ success: false, message: 'Please enter a valid 10-digit mobile number' });
-    }
-
-    const fullPhone = `+91 ${last10}`;
-    const user = await findOrCreateUser({
-      name: (name && name.trim()) || 'Customer',
-      phone: fullPhone,
-      countryCode: '+91'
-    });
-
-    return res.json({
-      success: true,
-      message: 'OTP verified successfully!',
-      user
-    });
-  } catch (err) {
-    console.error('OTP verification error:', err);
-    return res.status(500).json({ success: false, message: err.message || 'OTP verification failed' });
-  }
-});
 
 // Sync or fetch fresh user role & profile from MongoDB
 app.get('/api/auth/user/:phone', async (req, res) => {

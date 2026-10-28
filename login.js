@@ -1,5 +1,5 @@
 /* ============================================
-   MJ's Corner — Unified Mobile OTP Login Logic
+   MJ's Corner — Mobile OTP Login Logic
    Powered by Phone.Email & MongoDB Roles
    ============================================ */
 
@@ -16,11 +16,7 @@
     phoneLoginForm: $('#phoneLoginForm'),
     custName: $('#custName'),
     custPhone: $('#custPhone'),
-    custOtp: $('#custOtp'),
     btnPhoneEmailLogin: $('#btnPhoneEmailLogin'),
-    btnVerifyOtp: $('#btnVerifyOtp'),
-    btnDemoCustomer: $('#btnDemoCustomer'),
-    btnDemoAdmin: $('#btnDemoAdmin'),
     adminNoticeBanner: $('#adminNoticeBanner'),
     adminNoticeText: $('#adminNoticeText'),
     toastContainer: $('#toastContainer')
@@ -159,7 +155,7 @@
       return;
     }
 
-    // If official Phone.Email button element exists, trigger its click
+    // If official Phone.Email button element exists inside container, trigger its click
     const officialBtn = document.querySelector('.pe_signin_button button') || 
                         document.querySelector('.pe_signin_button a') ||
                         document.querySelector('.pe_signin_button iframe');
@@ -183,52 +179,6 @@
     );
   }
 
-  // ========== DIRECT OTP SUBMIT ==========
-  async function handleDirectOtpSubmit(e) {
-    if (e) e.preventDefault();
-
-    const name = (els.custName.value || '').trim();
-    const phone = (els.custPhone.value || '').trim();
-    const otp = (els.custOtp.value || '').trim();
-
-    if (!name) {
-      showToast('Please enter your full name', 'error');
-      els.custName.focus();
-      return;
-    }
-
-    const cleanDigits = phone.replace(/\D/g, '');
-    if (cleanDigits.length < 10) {
-      showToast('Please enter a valid 10-digit mobile number', 'error');
-      els.custPhone.focus();
-      return;
-    }
-
-    if (!otp) {
-      showToast('Please enter the 6-digit OTP (e.g. 123456)', 'error');
-      els.custOtp.focus();
-      return;
-    }
-
-    els.btnVerifyOtp.disabled = true;
-    els.btnVerifyOtp.textContent = 'Verifying OTP...';
-
-    const res = await MJAuth.loginWithPhoneOtp({
-      name,
-      phone: `+91 ${cleanDigits.slice(-10)}`,
-      otp
-    });
-
-    els.btnVerifyOtp.disabled = false;
-    els.btnVerifyOtp.textContent = 'Verify OTP & Sign In →';
-
-    if (res.success) {
-      handleLoginSuccess(res.user);
-    } else {
-      showToast(res.message || 'OTP verification failed', 'error');
-    }
-  }
-
   // ========== EVENT LISTENERS ==========
   function bindEvents() {
     if (els.themeToggle) {
@@ -237,33 +187,6 @@
 
     if (els.btnPhoneEmailLogin) {
       els.btnPhoneEmailLogin.addEventListener('click', launchPhoneEmailPopup);
-    }
-
-    if (els.phoneLoginForm) {
-      els.phoneLoginForm.addEventListener('submit', handleDirectOtpSubmit);
-    }
-
-    // Testing Shortcuts
-    if (els.btnDemoCustomer) {
-      els.btnDemoCustomer.addEventListener('click', async () => {
-        els.custName.value = 'Alex Johnson';
-        els.custPhone.value = '9876543210';
-        els.custOtp.value = '123456';
-        showToast('Demo Customer selected! Signing in...', 'info');
-        const user = await MJAuth.demoLoginCustomer();
-        handleLoginSuccess(user);
-      });
-    }
-
-    if (els.btnDemoAdmin) {
-      els.btnDemoAdmin.addEventListener('click', async () => {
-        els.custName.value = 'Restaurant Admin';
-        els.custPhone.value = '9999988888';
-        els.custOtp.value = '123456';
-        showToast('Demo Admin selected! Signing in...', 'info');
-        const admin = await MJAuth.demoLoginAdmin();
-        handleLoginSuccess(admin);
-      });
     }
   }
 

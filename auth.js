@@ -81,66 +81,8 @@ var MJAuth = (function () {
     }
   }
 
-  // Login via OTP (Direct or local/test OTP)
-  async function loginWithPhoneOtp({ name, phone, otp }) {
-    try {
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, otp })
-      });
-
-      const data = await res.json();
-      if (!data.success) {
-        return { success: false, message: data.message || 'OTP verification failed' };
-      }
-
-      setCurrentUser(data.user);
-      return { success: true, user: data.user, message: data.message };
-    } catch (err) {
-      return { success: false, message: 'Server communication error: ' + err.message };
-    }
-  }
-
   function logout() {
     setCurrentUser(null);
-  }
-
-  // Quick Demo Logins for fast testing
-  async function demoLogin(phone, name, role) {
-    const res = await loginWithPhoneOtp({ name, phone, otp: '123456' });
-    if (res.success) {
-      if (role && res.user.role !== role) {
-        res.user.role = role;
-        setCurrentUser(res.user);
-      }
-      return res.user;
-    }
-    // Fallback if offline
-    const fallbackUser = {
-      id: 'usr_' + Date.now(),
-      name: name,
-      phone: phone,
-      role: role || 'customer',
-      addresses: [
-        {
-          id: 'addr_demo_1',
-          title: 'Home',
-          fullAddress: 'Apartment 4B, Hill View Residency, Park Avenue',
-          isDefault: true
-        }
-      ]
-    };
-    setCurrentUser(fallbackUser);
-    return fallbackUser;
-  }
-
-  function demoLoginCustomer() {
-    return demoLogin('+91 98765 43210', 'Alex Johnson', 'customer');
-  }
-
-  function demoLoginAdmin() {
-    return demoLogin('+91 99999 88888', 'Restaurant Admin', 'admin');
   }
 
   // ========== ADDRESS MANAGEMENT (PER USER ACCOUNT) ==========
@@ -222,12 +164,9 @@ var MJAuth = (function () {
     getCurrentUser,
     setCurrentUser,
     isAdmin,
-    loginWithPhoneOtp,
     loginWithPhoneEmail,
     refreshCurrentUserRoleFromDb,
     logout,
-    demoLoginCustomer,
-    demoLoginAdmin,
     getUserAddresses,
     addUserAddress,
     deleteUserAddress,
