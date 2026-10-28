@@ -214,6 +214,21 @@
                 </select>
               </div>
               <div class="form-group">
+                <label>Dietary Classification *</label>
+                <div style="display:flex;gap:14px;margin-top:6px;">
+                  <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;padding:8px 16px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-secondary);">
+                    <input type="radio" name="newItemDietary" value="veg" checked>
+                    <span class="dietary-mini-badge veg"><span class="dietary-dot"></span></span>
+                    <span style="font-weight:600;font-size:0.88rem;color:var(--text-primary);">Pure Veg</span>
+                  </label>
+                  <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;padding:8px 16px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-secondary);">
+                    <input type="radio" name="newItemDietary" value="non-veg">
+                    <span class="dietary-mini-badge non-veg"><span class="dietary-dot"></span></span>
+                    <span style="font-weight:600;font-size:0.88rem;color:var(--text-primary);">Non-Veg</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
                 <label for="newItemDesc">Description</label>
                 <textarea id="newItemDesc" rows="2" placeholder="Ingredients and details"></textarea>
               </div>

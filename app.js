@@ -13,6 +13,7 @@
       description: 'Double-stacked beef patties with melted cheese, special sauce, and brioche bun',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 349, offerPrice: 249,
       badge: 'Bestseller', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Single Patty', price: 249 },
         { name: 'Double Patty', price: 329 }
@@ -28,6 +29,7 @@
       description: 'Smoky BBQ sauce, crispy bacon, caramelized onions, and pepper jack cheese',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 399, offerPrice: 329,
       badge: '', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Single Patty', price: 329 },
         { name: 'Double Patty', price: 399 }
@@ -42,6 +44,7 @@
       description: 'Crispy fried chicken fillet with sriracha mayo and pickled jalapeños',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 329, offerPrice: 269,
       badge: '🌶️ Spicy', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Single Fillet', price: 269 },
         { name: 'Double Fillet', price: 349 }
@@ -57,6 +60,7 @@
       description: 'San Marzano tomatoes, fresh mozzarella, basil, and extra-virgin olive oil',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 449, offerPrice: 349,
       badge: 'Popular', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [
         { name: 'Regular (8")', price: 349 },
         { name: 'Medium (10")', price: 479 },
@@ -73,6 +77,7 @@
       description: 'Loaded with spicy pepperoni, mozzarella, and our signature tomato sauce',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 549, offerPrice: 449,
       badge: '', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Regular (8")', price: 449 },
         { name: 'Medium (10")', price: 599 },
@@ -88,6 +93,7 @@
       description: 'Grilled chicken, BBQ sauce, red onions, and smoked gouda cheese',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 599, offerPrice: 479,
       badge: 'New', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Regular (8")', price: 479 },
         { name: 'Medium (10")', price: 629 },
@@ -104,6 +110,7 @@
       description: 'Creamy fettuccine with grilled chicken, parmesan, and fresh herbs',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 399, offerPrice: 329,
       badge: 'Chef\'s Pick', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [],
       addons: []
     },
@@ -112,6 +119,7 @@
       description: 'Spicy tomato sauce with garlic, chili flakes, and fresh basil',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 349, offerPrice: 279,
       badge: '', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -121,6 +129,7 @@
       description: 'Crispy fries topped with melted cheese sauce, herbs, and spices',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219724/mjs_corner/food/fries.jpg', mrp: 249, offerPrice: 179,
       badge: 'Fan Fav', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -129,6 +138,7 @@
       description: 'Glazed buffalo wings with blue cheese dip and celery sticks',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219729/mjs_corner/food/wings.jpg', mrp: 379, offerPrice: 299,
       badge: '', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [],
       addons: []
     },
@@ -137,6 +147,7 @@
       description: 'Grilled chicken with pickled vegetables, tahini, and fresh lettuce',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219730/mjs_corner/food/wrap.jpg', mrp: 279, offerPrice: 229,
       badge: '', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [],
       addons: []
     },
@@ -146,6 +157,7 @@
       description: 'Grilled chicken, feta, olives, tomatoes, cucumber, and lemon vinaigrette',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219727/mjs_corner/food/salad.jpg', mrp: 349, offerPrice: 289,
       badge: 'Healthy', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [],
       addons: []
     },
@@ -155,6 +167,7 @@
       description: 'Fresh tropical mango blended with yogurt and a hint of mint',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 199, offerPrice: 149,
       badge: '', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -163,6 +176,7 @@
       description: 'Mixed berries, banana, and honey blended to perfection',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 229, offerPrice: 179,
       badge: 'New', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -172,6 +186,7 @@
       description: 'Warm chocolate brownie with vanilla ice cream and chocolate drizzle',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 299, offerPrice: 229,
       badge: '🍫 Indulge', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -180,6 +195,7 @@
       description: 'New York style cheesecake with berry compote',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 349, offerPrice: 269,
       badge: '', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     }
@@ -206,6 +222,7 @@
     cart: [],
     orderType: 'dine-in', // 'dine-in' | 'pickup' | 'delivery'
     activeCategory: 'All',
+    dietaryFilter: 'all', // 'all' | 'veg' | 'non-veg'
     orderCounter: parseInt(localStorage.getItem('mj_orderCounter') || '0'),
     promos: [],
     promoPopupEnabled: true,
@@ -462,9 +479,16 @@
 
     const isAdm = auth.isAdmin(user);
 
+    // Official logo exclusively used in header profile avatar
+    if (els.headerUserAvatar) {
+      if (els.headerUserAvatar.tagName === 'IMG') {
+        els.headerUserAvatar.src = 'LOGO.jpg';
+      } else {
+        els.headerUserAvatar.textContent = isAdm ? '👑' : (user.name ? user.name.charAt(0).toUpperCase() : 'U');
+      }
+    }
+
     if (isAdm) {
-      els.headerUserAvatar.textContent = '👑';
-      els.headerUserAvatar.style.background = 'linear-gradient(135deg, #d97706, #ef4444)';
       els.headerUserName.textContent = 'Admin';
 
       let adminLink = $('#headerAdminLink');
@@ -478,11 +502,7 @@
         els.btnHeaderProfile.parentNode.insertBefore(adminLink, els.btnHeaderProfile);
       }
     } else {
-      const firstLetter = user.name ? user.name.charAt(0).toUpperCase() : 'U';
       const firstName = user.name ? user.name.split(' ')[0] : 'Profile';
-
-      els.headerUserAvatar.textContent = firstLetter;
-      els.headerUserAvatar.style.background = 'linear-gradient(135deg, var(--accent), #ff6b6b)';
       els.headerUserName.textContent = firstName;
 
       const adminLink = $('#headerAdminLink');
@@ -733,7 +753,7 @@
     if (!user) {
       container.innerHTML = `
         <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary);">
-          <div style="font-size:3.5rem;margin-bottom:12px;">🔒</div>
+          <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:68px;height:68px;border-radius:50%;object-fit:cover;margin:0 auto 16px;border:2px solid var(--accent);box-shadow:0 4px 14px rgba(0,0,0,0.15);display:block;">
           <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Sign In to View Orders</h3>
           <p style="font-size:0.88rem;max-width:320px;margin:0 auto 18px;">Please log in with your mobile OTP to view your isolated order history and track deliveries.</p>
           <a href="login.html" class="btn-admin primary" style="display:inline-block;padding:10px 22px;border-radius:var(--radius-full);text-decoration:none;">
@@ -757,7 +777,7 @@
     if (myOrders.length === 0) {
       container.innerHTML = `
         <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary);">
-          <div style="font-size:3.5rem;margin-bottom:12px;">🍽️</div>
+          <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 16px;border:2px solid var(--accent);box-shadow:0 4px 14px rgba(0,0,0,0.15);display:block;">
           <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">No Orders Yet</h3>
           <p style="font-size:0.88rem;max-width:320px;margin:0 auto 18px;">You haven't placed any orders yet on this account. Discover our fresh meals and order now!</p>
           <button type="button" class="btn-admin primary" id="btnExploreMenuFromOrders" style="padding:10px 22px;border-radius:var(--radius-full);">
@@ -852,9 +872,12 @@
       return `
         <div class="customer-order-card" id="cust-order-${order.id}">
           <div class="customer-order-header">
-            <div class="customer-order-id-group">
-              <span class="customer-order-id">${order.id}</span>
-              <span class="customer-order-type-badge">${typeIcons[order.type] || order.type}</span>
+            <div class="customer-order-id-group" style="display:flex;align-items:center;gap:8px;">
+              <img src="LOGO.jpg" alt="MJ's Corner" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid var(--accent);flex-shrink:0;">
+              <div>
+                <span class="customer-order-id">${order.id}</span>
+                <span class="customer-order-type-badge">${typeIcons[order.type] || order.type}</span>
+              </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
               <span class="status-badge ${order.status}">${order.status.toUpperCase()}</span>
@@ -1005,10 +1028,20 @@
       : [state.activeCategory];
 
     let html = '';
+    let renderedCount = 0;
 
     categories.forEach(cat => {
-      const items = state.menu.filter(i => i.category === cat && i.available);
+      let items = state.menu.filter(i => i.category === cat && i.available);
+
+      // Filter by dietary preference ('all' | 'veg' | 'non-veg')
+      if (state.dietaryFilter === 'veg') {
+        items = items.filter(i => i.isVeg === true || i.dietary === 'veg');
+      } else if (state.dietaryFilter === 'non-veg') {
+        items = items.filter(i => i.isVeg === false || i.dietary === 'non-veg');
+      }
+
       if (items.length === 0) return;
+      renderedCount += items.length;
 
       html += `
         <section class="menu-section" id="category-${cat}">
@@ -1023,7 +1056,31 @@
       `;
     });
 
+    if (renderedCount === 0) {
+      const filterLabel = state.dietaryFilter === 'veg' ? 'Pure Veg' : (state.dietaryFilter === 'non-veg' ? 'Non-Veg' : '');
+      html = `
+        <div style="text-align:center;padding:70px 20px;color:var(--text-tertiary);">
+          <div style="font-size:3rem;margin-bottom:12px;">${state.dietaryFilter === 'veg' ? '🥗' : '🍗'}</div>
+          <h3 style="font-size:1.2rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">No ${filterLabel} Items in ${state.activeCategory === 'All' ? 'Menu' : state.activeCategory}</h3>
+          <p style="max-width:380px;margin:0 auto 16px;font-size:0.88rem;">Try selecting 'All' or a different category to see available items.</p>
+          <button type="button" class="btn-admin secondary" id="btnResetDietaryFilter" style="padding:8px 20px;border-radius:var(--radius-full);">
+            Show All Items
+          </button>
+        </div>
+      `;
+    }
+
     els.menuContainer.innerHTML = html;
+
+    const btnReset = els.menuContainer.querySelector('#btnResetDietaryFilter');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        state.dietaryFilter = 'all';
+        updateDietaryFilterUI();
+        renderMenu();
+      });
+    }
+
     bindMenuActions();
   }
 
@@ -1056,7 +1113,15 @@
     }
 
     if (els.customItemImg) els.customItemImg.src = item.image || 'images/burger.jpg';
-    if (els.customItemTitle) els.customItemTitle.textContent = item.name;
+    if (els.customItemTitle) {
+      const isVeg = item.isVeg !== undefined ? item.isVeg : (item.dietary === 'veg');
+      els.customItemTitle.innerHTML = `
+        <span class="dietary-mini-badge ${isVeg ? 'veg' : 'non-veg'}" style="margin-right:8px;" title="${isVeg ? 'Pure Veg' : 'Non-Veg'}">
+          <span class="dietary-dot"></span>
+        </span>
+        <span>${escapeHtml(item.name)}</span>
+      `;
+    }
     if (els.customItemCategory) els.customItemCategory.textContent = item.category;
     if (els.customItemDesc) els.customItemDesc.textContent = item.description || '';
 
@@ -1365,9 +1430,16 @@
       promoBadgesHtml += `<div class="menu-promo-badge all-items-deal">✨ Storewide Deal: <strong>${offLabel}</strong> with code <strong>${escapeHtml(allItemsOffer.code)}</strong></div>`;
     }
 
+    const isVeg = item.isVeg !== undefined ? item.isVeg : (item.dietary === 'veg');
+    const dietaryClass = isVeg ? 'veg' : 'non-veg';
+    const dietaryTitle = isVeg ? 'Pure Veg' : 'Non-Veg';
+
     return `
       <div class="menu-card ${customizable ? 'is-customizable' : ''}" data-id="${item.id}">
         <div class="menu-card-img-wrap">
+          <div class="dietary-badge ${dietaryClass}" title="${dietaryTitle}">
+            <span class="dietary-dot"></span>
+          </div>
           <img src="${item.image}" alt="${item.name}" loading="lazy">
           ${item.badge ? `<span class="menu-card-badge">${item.badge}</span>` : ''}
           ${discount > 0 ? `<span class="discount-pill">${discount}% OFF</span>` : ''}
@@ -2527,6 +2599,27 @@
     });
   }
 
+  // ========== DIETARY FILTER CONTROLS ==========
+  function initDietaryFilters() {
+    const filterBar = $('#dietaryFilterBar');
+    if (!filterBar) return;
+    filterBar.querySelectorAll('.dietary-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.dietaryFilter = btn.dataset.dietary || 'all';
+        updateDietaryFilterUI();
+        renderMenu();
+      });
+    });
+  }
+
+  function updateDietaryFilterUI() {
+    const filterBar = $('#dietaryFilterBar');
+    if (!filterBar) return;
+    filterBar.querySelectorAll('.dietary-filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.dietary === state.dietaryFilter);
+    });
+  }
+
   // ========== INIT ==========
   function init() {
     loadState();
@@ -2534,6 +2627,7 @@
     initHeaderProfile();
     updateHeaderOrdersBadge();
     initCheckoutOrderType();
+    initDietaryFilters();
     renderCategories();
     renderMenu();
     updateCartUI();

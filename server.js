@@ -29,6 +29,7 @@ const DEFAULT_MENU = [
     description: 'Double-stacked beef patties with melted cheese, special sauce, and brioche bun',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 349, offerPrice: 249,
     badge: 'Bestseller', available: true,
+    isVeg: false, dietary: 'non-veg',
     sizes: [
       { name: 'Single Patty', price: 249 },
       { name: 'Double Patty', price: 329 }
@@ -44,6 +45,7 @@ const DEFAULT_MENU = [
     description: 'Smoky BBQ sauce, crispy bacon, caramelized onions, and pepper jack cheese',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 399, offerPrice: 329,
     badge: '', available: true,
+    isVeg: false, dietary: 'non-veg',
     sizes: [
       { name: 'Single Patty', price: 329 },
       { name: 'Double Patty', price: 399 }
@@ -58,6 +60,7 @@ const DEFAULT_MENU = [
     description: 'Crispy fried chicken fillet with sriracha mayo and pickled jalapeños',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 329, offerPrice: 269,
     badge: '🌶️ Spicy', available: true,
+    isVeg: false, dietary: 'non-veg',
     sizes: [
       { name: 'Single Fillet', price: 269 },
       { name: 'Double Fillet', price: 349 }
@@ -72,6 +75,7 @@ const DEFAULT_MENU = [
     description: 'San Marzano tomatoes, fresh mozzarella, basil, and extra-virgin olive oil',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 449, offerPrice: 349,
     badge: 'Popular', available: true,
+    isVeg: true, dietary: 'veg',
     sizes: [
       { name: 'Regular (8")', price: 349 },
       { name: 'Medium (10")', price: 479 },
@@ -88,6 +92,7 @@ const DEFAULT_MENU = [
     description: 'Loaded with spicy pepperoni, mozzarella, and our signature tomato sauce',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 549, offerPrice: 449,
     badge: '', available: true,
+    isVeg: false, dietary: 'non-veg',
     sizes: [
       { name: 'Regular (8")', price: 449 },
       { name: 'Medium (10")', price: 599 },
@@ -103,6 +108,7 @@ const DEFAULT_MENU = [
     description: 'Grilled chicken, BBQ sauce, red onions, and smoked gouda cheese',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 599, offerPrice: 479,
     badge: 'New', available: true,
+    isVeg: false, dietary: 'non-veg',
     sizes: [
       { name: 'Regular (8")', price: 479 },
       { name: 'Medium (10")', price: 629 },
@@ -118,6 +124,7 @@ const DEFAULT_MENU = [
     description: 'Creamy fettuccine with grilled chicken, parmesan, and fresh herbs',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 399, offerPrice: 329,
     badge: 'Chef\'s Pick', available: true,
+    isVeg: false, dietary: 'non-veg',
     sizes: [],
     addons: []
   },
@@ -126,6 +133,7 @@ const DEFAULT_MENU = [
     description: 'Spicy tomato sauce with garlic, chili flakes, and fresh basil',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 349, offerPrice: 279,
     badge: '', available: true,
+    isVeg: true, dietary: 'veg',
     sizes: [],
     addons: []
   },
@@ -134,6 +142,7 @@ const DEFAULT_MENU = [
     description: 'Crispy fries topped with melted cheese sauce, herbs, and spices',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219724/mjs_corner/food/fries.jpg', mrp: 249, offerPrice: 179,
     badge: 'Fan Fav', available: true,
+    isVeg: true, dietary: 'veg',
     sizes: [],
     addons: []
   },
@@ -142,6 +151,7 @@ const DEFAULT_MENU = [
     description: 'Glazed buffalo wings with blue cheese dip and celery sticks',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219729/mjs_corner/food/wings.jpg', mrp: 379, offerPrice: 299,
     badge: '', available: true,
+    isVeg: false, dietary: 'non-veg',
     sizes: [],
     addons: []
   },
@@ -150,6 +160,7 @@ const DEFAULT_MENU = [
     description: 'Grilled chicken with pickled vegetables, tahini, and fresh lettuce',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219730/mjs_corner/food/wrap.jpg', mrp: 279, offerPrice: 229,
     badge: '', available: true,
+    isVeg: false, dietary: 'non-veg',
     sizes: [],
     addons: []
   },
@@ -158,6 +169,7 @@ const DEFAULT_MENU = [
     description: 'Grilled chicken, feta, olives, tomatoes, cucumber, and lemon vinaigrette',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219727/mjs_corner/food/salad.jpg', mrp: 349, offerPrice: 289,
     badge: 'Healthy', available: true,
+    isVeg: false, dietary: 'non-veg',
     sizes: [],
     addons: []
   },
@@ -166,6 +178,7 @@ const DEFAULT_MENU = [
     description: 'Fresh tropical mango blended with yogurt and a hint of mint',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 199, offerPrice: 149,
     badge: '', available: true,
+    isVeg: true, dietary: 'veg',
     sizes: [],
     addons: []
   },
@@ -174,6 +187,7 @@ const DEFAULT_MENU = [
     description: 'Mixed berries, banana, and honey blended to perfection',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 229, offerPrice: 179,
     badge: 'New', available: true,
+    isVeg: true, dietary: 'veg',
     sizes: [],
     addons: []
   },
@@ -182,6 +196,7 @@ const DEFAULT_MENU = [
     description: 'Warm chocolate brownie with vanilla ice cream and chocolate drizzle',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 299, offerPrice: 229,
     badge: '🍫 Indulge', available: true,
+    isVeg: true, dietary: 'veg',
     sizes: [],
     addons: []
   },
@@ -190,6 +205,7 @@ const DEFAULT_MENU = [
     description: 'New York style cheesecake with berry compote',
     image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 349, offerPrice: 269,
     badge: '', available: true,
+    isVeg: true, dietary: 'veg',
     sizes: [],
     addons: []
   }
@@ -274,6 +290,33 @@ async function seedDefaultDataIfEmpty() {
       if (match) {
         await db.collection('menu').updateOne({ _id: item._id }, { $set: { image: match.image } });
       }
+    }
+
+    function isItemNameVeg(name) {
+      if (!name) return false;
+      const n = name.toLowerCase();
+      if (n.includes('chicken') || n.includes('bacon') || n.includes('beef') || n.includes('meat') || n.includes('pork') || n.includes('fish') || n.includes('egg') || n.includes('wings') || n.includes('shawarma') || n.includes('pepperoni')) {
+        return false;
+      }
+      if (n.includes('veg') || n.includes('paneer') || n.includes('cheese') || n.includes('margherita') || n.includes('mushroom') || n.includes('corn') || n.includes('farmhouse') || n.includes('pasta') || n.includes('smoothie') || n.includes('shake') || n.includes('brownie') || n.includes('cake') || n.includes('fries') || n.includes('salad')) {
+        return true;
+      }
+      return false;
+    }
+
+    // Ensure all items in MongoDB have isVeg and dietary fields
+    const allCurrent = await db.collection('menu').find({}).toArray();
+    for (const item of allCurrent) {
+      const match = DEFAULT_MENU.find(d => d.id === item.id);
+      let isVegVal = item.isVeg !== undefined ? item.isVeg : (match ? match.isVeg : isItemNameVeg(item.name));
+      if (item.name && item.name.toLowerCase().includes('farmhouse') && item.isVeg === false) {
+        isVegVal = true;
+      }
+      const dietaryVal = isVegVal ? 'veg' : 'non-veg';
+      await db.collection('menu').updateOne(
+        { _id: item._id },
+        { $set: { isVeg: isVegVal, dietary: dietaryVal } }
+      );
     }
   }
 

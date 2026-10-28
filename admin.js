@@ -502,12 +502,24 @@
               </label>
             </div>
             <div class="edit-card-info" style="flex:1;">
-              <div class="edit-card-name" style="font-size:1rem;font-weight:700;">${item.name}</div>
+              <div class="edit-card-name" style="font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px;">
+                <span class="dietary-mini-badge ${item.isVeg ? 'veg' : 'non-veg'}" title="${item.isVeg ? 'Pure Veg' : 'Non-Veg'}">
+                  <span class="dietary-dot"></span>
+                </span>
+                <span>${item.name}</span>
+              </div>
               <div class="edit-card-category" style="margin-bottom:8px;">
                 ${item.category} ${item.badge ? `· <span style="font-weight:600;color:var(--accent);">${item.badge}</span>` : ''} 
                 · <span class="offer-pct-badge" id="badge-pct-${item.id}">${discount}% OFF</span>
               </div>
               <div class="edit-card-fields" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;">
+                <div>
+                  <label style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:2px;">Dietary</label>
+                  <select data-field="dietary" data-id="${item.id}" style="width:100%;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-size:0.82rem;font-weight:600;">
+                    <option value="veg" ${item.isVeg ? 'selected' : ''}>🟢 Pure Veg</option>
+                    <option value="non-veg" ${!item.isVeg ? 'selected' : ''}>🔴 Non-Veg</option>
+                  </select>
+                </div>
                 <div>
                   <label style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:2px;">MRP (₹)</label>
                   <input type="number" value="${item.mrp}" data-field="mrp" data-id="${item.id}" min="0">
@@ -668,7 +680,20 @@
         });
       }
 
-      // 4. Badge & Availability
+      // 4. Dietary, Badge & Availability
+      const dietarySelect = card.querySelector('select[data-field="dietary"]');
+      if (dietarySelect) {
+        dietarySelect.addEventListener('change', () => {
+          item.dietary = dietarySelect.value;
+          item.isVeg = (dietarySelect.value === 'veg');
+          const badgeEl = card.querySelector('.edit-card-name .dietary-mini-badge');
+          if (badgeEl) {
+            badgeEl.className = `dietary-mini-badge ${item.isVeg ? 'veg' : 'non-veg'}`;
+            badgeEl.title = item.isVeg ? 'Pure Veg' : 'Non-Veg';
+          }
+        });
+      }
+
       if (badgeInput) {
         badgeInput.addEventListener('change', () => {
           item.badge = badgeInput.value.trim();
@@ -1138,6 +1163,9 @@
         const mrp = parseInt(newItemMrp.value) || 0;
         const offerPrice = parseInt(newItemOfferPrice.value) || mrp;
         const badge = $('#newItemBadge').value.trim();
+        const dietaryRadio = document.querySelector('input[name="newItemDietary"]:checked');
+        const dietary = dietaryRadio ? dietaryRadio.value : 'veg';
+        const isVeg = dietary === 'veg';
 
         const newItem = {
           id: Date.now(),
@@ -1149,6 +1177,8 @@
           offerPrice,
           badge,
           available: true,
+          isVeg,
+          dietary,
           sizes: [],
           addons: []
         };

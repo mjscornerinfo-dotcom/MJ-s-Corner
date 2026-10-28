@@ -39,16 +39,15 @@
       <div class="header-actions">
         <!-- My Orders Section Button -->
         <button class="my-orders-btn-header" id="btnHeaderOrders" aria-label="Open My Orders" title="Track your orders and live status">
-          <span>📦</span>
+          <img src="LOGO.jpg" alt="MJ's Corner" class="user-avatar-logo">
           <span style="font-weight:700;">My Orders</span>
           <span class="orders-badge-count hidden" id="headerOrdersCount">0</span>
         </button>
 
         <!-- Customer Profile Section Button -->
         <button class="user-profile-btn" id="btnHeaderProfile" aria-label="Open profile">
-          <span class="user-avatar-circle" id="headerUserAvatar">U</span>
+          <img src="LOGO.jpg" alt="MJ's Corner" class="user-avatar-logo" id="headerUserAvatar">
           <span id="headerUserName">Profile</span>
-          <span style="font-size:0.75rem;">👤</span>
         </button>
 
         <!-- Theme Toggle -->
@@ -66,10 +65,28 @@
   <!-- ========== MAIN (DIRECTLY ON MENU PAGE) ========== -->
   <main class="main" id="mainContent">
     <section id="menuSection">
-      <!-- Category Navigation -->
+      <!-- Category & Dietary Navigation -->
       <nav class="category-nav" id="categoryNav">
-        <div class="category-nav-inner" id="categoryNavInner">
-          <!-- Rendered by JS -->
+        <div class="category-nav-container">
+          <!-- Dietary Filters (All / Pure Veg / Non-Veg) -->
+          <div class="dietary-filter-bar" id="dietaryFilterBar">
+            <button class="dietary-filter-btn active" data-dietary="all" aria-label="Show all items">
+              <span>🍽️ All</span>
+            </button>
+            <button class="dietary-filter-btn veg" data-dietary="veg" aria-label="Show Pure Veg items only">
+              <span class="dietary-mini-badge veg"><span class="dietary-dot"></span></span>
+              <span>Pure Veg</span>
+            </button>
+            <button class="dietary-filter-btn non-veg" data-dietary="non-veg" aria-label="Show Non-Veg items only">
+              <span class="dietary-mini-badge non-veg"><span class="dietary-dot"></span></span>
+              <span>Non-Veg</span>
+            </button>
+          </div>
+
+          <!-- Category Navigation Bar -->
+          <div class="category-nav-inner" id="categoryNavInner">
+            <!-- Rendered by JS -->
+          </div>
         </div>
       </nav>
 
@@ -322,7 +339,10 @@
   <div class="modal-overlay" id="profileModal">
     <div class="modal profile-modal">
       <div class="modal-header">
-        <h2>👤 My Account & Profile</h2>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);">
+          <h2 style="margin:0;">My Account & Profile</h2>
+        </div>
         <button class="cart-close-btn" id="profileCloseBtn">✕</button>
       </div>
       <!-- Profile Tabs -->
@@ -334,7 +354,7 @@
           <span>📍</span> Saved Addresses
         </button>
         <button class="profile-tab" data-tab="orders" id="tabProfileOrders">
-          <span>📦</span> My Orders
+          <img src="LOGO.jpg" alt="Logo" style="width:16px;height:16px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px;"> My Orders
         </button>
       </div>
 
@@ -403,8 +423,8 @@
   <div class="modal-overlay" id="ordersModal">
     <div class="modal my-orders-modal">
       <div class="modal-header">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:1.5rem;">📦</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);box-shadow:0 2px 8px rgba(0,0,0,0.15);">
           <div>
             <h2 style="font-size:1.2rem;margin:0;">My Orders</h2>
             <p style="font-size:0.75rem;color:var(--text-tertiary);margin:0;">Live status tracking & order history</p>

@@ -17,6 +17,7 @@ var MJData = (function () {
       description: 'Double-stacked beef patties with melted cheese, special sauce, and brioche bun',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 349, offerPrice: 249,
       badge: 'Bestseller', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Single Patty', price: 249 },
         { name: 'Double Patty', price: 329 }
@@ -32,6 +33,7 @@ var MJData = (function () {
       description: 'Smoky BBQ sauce, crispy bacon, caramelized onions, and pepper jack cheese',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 399, offerPrice: 329,
       badge: '', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Single Patty', price: 329 },
         { name: 'Double Patty', price: 399 }
@@ -46,6 +48,7 @@ var MJData = (function () {
       description: 'Crispy fried chicken fillet with sriracha mayo and pickled jalapeños',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 329, offerPrice: 269,
       badge: '🌶️ Spicy', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Single Fillet', price: 269 },
         { name: 'Double Fillet', price: 349 }
@@ -61,6 +64,7 @@ var MJData = (function () {
       description: 'San Marzano tomatoes, fresh mozzarella, basil, and extra-virgin olive oil',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 449, offerPrice: 349,
       badge: 'Popular', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [
         { name: 'Regular (8")', price: 349 },
         { name: 'Medium (10")', price: 479 },
@@ -77,6 +81,7 @@ var MJData = (function () {
       description: 'Loaded with spicy pepperoni, mozzarella, and our signature tomato sauce',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 549, offerPrice: 449,
       badge: '', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Regular (8")', price: 449 },
         { name: 'Medium (10")', price: 599 },
@@ -92,6 +97,7 @@ var MJData = (function () {
       description: 'Grilled chicken, BBQ sauce, red onions, and smoked gouda cheese',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 599, offerPrice: 479,
       badge: 'New', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [
         { name: 'Regular (8")', price: 479 },
         { name: 'Medium (10")', price: 629 },
@@ -108,6 +114,7 @@ var MJData = (function () {
       description: 'Creamy fettuccine with grilled chicken, parmesan, and fresh herbs',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 399, offerPrice: 329,
       badge: 'Chef\'s Pick', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [],
       addons: []
     },
@@ -116,6 +123,7 @@ var MJData = (function () {
       description: 'Spicy tomato sauce with garlic, chili flakes, and fresh basil',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219725/mjs_corner/food/pasta.jpg', mrp: 349, offerPrice: 279,
       badge: '', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -125,6 +133,7 @@ var MJData = (function () {
       description: 'Crispy fries topped with melted cheese sauce, herbs, and spices',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219724/mjs_corner/food/fries.jpg', mrp: 249, offerPrice: 179,
       badge: 'Fan Fav', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -133,6 +142,7 @@ var MJData = (function () {
       description: 'Glazed buffalo wings with blue cheese dip and celery sticks',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219729/mjs_corner/food/wings.jpg', mrp: 379, offerPrice: 299,
       badge: '', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [],
       addons: []
     },
@@ -141,6 +151,7 @@ var MJData = (function () {
       description: 'Grilled chicken with pickled vegetables, tahini, and fresh lettuce',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219730/mjs_corner/food/wrap.jpg', mrp: 279, offerPrice: 229,
       badge: '', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [],
       addons: []
     },
@@ -150,6 +161,7 @@ var MJData = (function () {
       description: 'Grilled chicken, feta, olives, tomatoes, cucumber, and lemon vinaigrette',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219727/mjs_corner/food/salad.jpg', mrp: 349, offerPrice: 289,
       badge: 'Healthy', available: true,
+      isVeg: false, dietary: 'non-veg',
       sizes: [],
       addons: []
     },
@@ -159,6 +171,7 @@ var MJData = (function () {
       description: 'Fresh tropical mango blended with yogurt and a hint of mint',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 199, offerPrice: 149,
       badge: '', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -167,6 +180,7 @@ var MJData = (function () {
       description: 'Mixed berries, banana, and honey blended to perfection',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219728/mjs_corner/food/smoothie.jpg', mrp: 229, offerPrice: 179,
       badge: 'New', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -176,6 +190,7 @@ var MJData = (function () {
       description: 'Warm chocolate brownie with vanilla ice cream and chocolate drizzle',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 299, offerPrice: 229,
       badge: '🍫 Indulge', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     },
@@ -184,6 +199,7 @@ var MJData = (function () {
       description: 'New York style cheesecake with berry compote',
       image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 349, offerPrice: 269,
       badge: '', available: true,
+      isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
     }
@@ -254,6 +270,7 @@ var MJData = (function () {
 
   // Seed storage if never initialized and migrate images to Cloudinary
   function initStorage() {
+    if (typeof localStorage === 'undefined') return;
     if (localStorage.getItem(STORAGE_KEY_MENU) === null) {
       localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(DEFAULT_MENU));
     } else {
@@ -277,6 +294,14 @@ var MJData = (function () {
             }
             if (item.addons === undefined) {
               item.addons = def && def.addons ? JSON.parse(JSON.stringify(def.addons)) : [];
+              modified = true;
+            }
+            if (item.isVeg === undefined) {
+              item.isVeg = def ? def.isVeg : false;
+              modified = true;
+            }
+            if (!item.dietary) {
+              item.dietary = def ? def.dietary : (item.isVeg ? 'veg' : 'non-veg');
               modified = true;
             }
           });
@@ -480,4 +505,9 @@ var MJData = (function () {
   };
 })();
 
-window.MJData = MJData;
+if (typeof window !== 'undefined') {
+  window.MJData = MJData;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = MJData;
+}
