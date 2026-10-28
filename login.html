@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MJ's Corner — Sign In with Mobile & OTP</title>
-  <meta name="description" content="Sign in to MJ's Corner using your mobile number and OTP verified via Phone.Email.">
+  <title>MJ's Corner — Sign In</title>
+  <meta name="description" content="Sign in to MJ's Corner.">
   <link rel="shortcut icon" href="/favicon.ico">
   <meta name="theme-color" content="#e63946">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="auth.css">
   
-  <!-- Auth Guard: If already logged in, redirect to store or admin -->
   <script src="auth.js"></script>
   <script>
     (function() {
@@ -31,7 +30,7 @@
     })();
   </script>
 
-  <!-- Official Phone.Email Sign In Script (https://www.phone.email/) -->
+  <!-- Official Phone.Email Script -->
   <script src="https://www.phone.email/sign_in_button_v1.js" async></script>
 
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -60,63 +59,43 @@
   <main class="auth-main">
     <div class="auth-container">
 
-      <!-- Admin Role Restriction Banner (if non-admin attempted to visit /admin) -->
-      <div id="adminNoticeBanner" class="auth-notice-banner hidden">
-        <div class="banner-icon">🛡️</div>
-        <div class="banner-content">
-          <strong>Admin Privileges Required</strong>
-          <p id="adminNoticeText">
-            Accounts receive Admin privileges when assigned <code>role: 'admin'</code> in MongoDB Atlas or listed in <code>ADMIN_PHONES</code>.
-          </p>
-        </div>
-      </div>
-
       <!-- Main Unified Auth Card -->
       <div class="auth-card">
-        <div class="auth-panel active" style="padding: 34px 28px;">
+        <div class="auth-panel active" style="padding: 36px 30px;">
           
-          <div class="auth-header">
-            <div class="auth-brand-pill">🍔 Fast Food & Quick Bites</div>
-            <h1>Welcome to MJ's Corner</h1>
-            <p>Sign in with your Name and Mobile Number via OTP</p>
+          <div class="auth-header" style="margin-bottom: 24px;">
+            <h1 style="margin: 0;">Sign In</h1>
           </div>
 
-          <!-- Mobile + Phone.Email OTP Login Form -->
+          <!-- Login Form -->
           <form id="phoneLoginForm" class="auth-form" onsubmit="return false;">
             <!-- Full Name -->
             <div class="form-group">
-              <label for="custName">Full Name *</label>
+              <label for="custName">Full Name</label>
               <div class="input-with-icon">
                 <span class="input-prefix-icon">👤</span>
-                <input type="text" id="custName" placeholder="Enter your full name" required autocomplete="name">
+                <input type="text" id="custName" placeholder="Enter your name" required autocomplete="name">
               </div>
             </div>
 
             <!-- Mobile Number -->
             <div class="form-group">
-              <label for="custPhone">Mobile Number *</label>
+              <label for="custPhone">Mobile Number</label>
               <div class="phone-input-row">
                 <div class="country-code-pill">
                   <span>🇮🇳</span>
                   <strong>+91</strong>
                 </div>
-                <input type="tel" id="custPhone" placeholder="Enter 10-digit mobile number" maxlength="10" pattern="[0-9]{10}" required autocomplete="tel">
+                <input type="tel" id="custPhone" placeholder="Enter mobile number" maxlength="10" pattern="[0-9]{10}" autocomplete="tel">
               </div>
-              <small class="form-help-text">We'll verify your number securely via SMS OTP</small>
             </div>
 
-            <!-- Official Phone.Email Sign In Button Container -->
-            <div class="pe-button-wrapper" style="display:flex;justify-content:center;margin:18px 0 10px 0;">
+            <!-- Official Phone.Email Button -->
+            <div class="pe-button-wrapper" style="display:flex;justify-content:center;margin-top:24px;">
               <div class="pe_signin_button" data-client-id="11976801478974448261">
                 <script src="https://www.phone.email/sign_in_button_v1.js" async></script>
               </div>
             </div>
-
-            <!-- Custom Trigger Button -->
-            <button type="button" class="btn-phone-email" id="btnPhoneEmailLogin">
-              <span class="btn-icon">🛡️</span>
-              <span class="btn-label">Verify & Sign In with Phone.Email</span>
-            </button>
           </form>
 
         </div>

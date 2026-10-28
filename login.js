@@ -7,18 +7,13 @@
   'use strict';
 
   const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => document.querySelectorAll(sel);
 
   let phoneEmailClientId = '11976801478974448261';
 
   const els = {
     themeToggle: $('#themeToggle'),
-    phoneLoginForm: $('#phoneLoginForm'),
     custName: $('#custName'),
     custPhone: $('#custPhone'),
-    btnPhoneEmailLogin: $('#btnPhoneEmailLogin'),
-    adminNoticeBanner: $('#adminNoticeBanner'),
-    adminNoticeText: $('#adminNoticeText'),
     toastContainer: $('#toastContainer')
   };
 
@@ -61,26 +56,7 @@
     return params.get('redirect') || defaultUrl;
   }
 
-  // Check URL parameters for access alerts
-  function checkUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    const denied = params.get('denied');
-    const portal = params.get('portal');
-
-    if (denied === 'admin' || portal === 'admin') {
-      if (els.adminNoticeBanner) {
-        els.adminNoticeBanner.classList.remove('hidden');
-        if (els.adminNoticeText) {
-          els.adminNoticeText.innerHTML = `
-            <strong>Admin Access Restricted:</strong> There is no separate login page for Admin.
-            Simply log in with your Name and Mobile Number. If your account has <code>role: 'admin'</code> in MongoDB Atlas or is listed in <code>ADMIN_PHONES</code>, you will automatically gain access to the Admin Dashboard.
-          `;
-        }
-      }
-    }
-  }
-
-  // Load server configuration (Phone.Email Client ID)
+  // Load server configuration
   async function loadConfig() {
     try {
       const res = await fetch('/api/config');
@@ -114,7 +90,6 @@
   }
 
   // ========== GLOBAL PHONE.EMAIL LISTENER CALLBACK ==========
-  // Phone.Email invokes this window function upon OTP success in the popup
   window.phoneEmailListener = async function (userObj) {
     console.log('[Phone.Email] Callback triggered with:', userObj);
     const user_json_url = typeof userObj === 'string' ? userObj : (userObj && userObj.user_json_url);
@@ -124,7 +99,7 @@
       return;
     }
 
-    showToast('Phone verified via Phone.Email! Authenticating with MongoDB...', 'info');
+    showToast('Phone verified! Signing in...', 'info');
 
     const name = (els.custName && els.custName.value.trim()) || '';
     const phone = (els.custPhone && els.custPhone.value.trim()) || '';
@@ -146,47 +121,10 @@
     }
   };
 
-  // Launch Phone.Email verification popup
-  function launchPhoneEmailPopup() {
-    const name = (els.custName.value || '').trim();
-    if (!name) {
-      showToast('Please enter your full name', 'error');
-      els.custName.focus();
-      return;
-    }
-
-    // If official Phone.Email button element exists inside container, trigger its click
-    const officialBtn = document.querySelector('.pe_signin_button button') || 
-                        document.querySelector('.pe_signin_button a') ||
-                        document.querySelector('.pe_signin_button iframe');
-    if (officialBtn && officialBtn.click) {
-      officialBtn.click();
-      return;
-    }
-
-    const clientId = phoneEmailClientId || '11976801478974448261';
-    const redirectUri = window.location.origin + '/login.html';
-    const authUrl = `https://www.phone.email/auth/log-in?client_id=${clientId}&redirect_url=${encodeURIComponent(redirectUri)}`;
-    const w = 500;
-    const h = 580;
-    const left = (screen.width - w) / 2;
-    const top = (screen.height - h) / 2;
-
-    window.open(
-      authUrl,
-      'peLoginWindow',
-      `toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,width=${w},height=${h},top=${top},left=${left}`
-    );
-  }
-
   // ========== EVENT LISTENERS ==========
   function bindEvents() {
     if (els.themeToggle) {
       els.themeToggle.addEventListener('click', toggleTheme);
-    }
-
-    if (els.btnPhoneEmailLogin) {
-      els.btnPhoneEmailLogin.addEventListener('click', launchPhoneEmailPopup);
     }
   }
 
@@ -194,7 +132,6 @@
   async function init() {
     initTheme();
     bindEvents();
-    checkUrlParams();
     await loadConfig();
   }
 
