@@ -449,15 +449,28 @@ input, select, textarea {
   overflow-x: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  width: 100%;
 }
 
 .category-nav::-webkit-scrollbar { display: none; }
 
 .category-nav-inner {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   padding: 0 16px;
   min-width: max-content;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .category-nav-inner {
+    justify-content: center;
+    flex-wrap: wrap;
+    min-width: 0;
+    padding: 0 24px;
+  }
 }
 
 .category-pill {
@@ -485,9 +498,52 @@ input, select, textarea {
   box-shadow: var(--shadow-accent);
 }
 
-/* ---------- Menu Grid ---------- */
+/* ---------- Menu Container & Sections ---------- */
+#menuSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#menuContainer {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
 .menu-section {
-  padding: 20px 16px;
+  padding: 24px 0 12px 0;
+  width: 100%;
+}
+
+.menu-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.menu-section-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-section-header .count {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 3px 12px;
+  border-radius: var(--radius-full);
 }
 
 .menu-section-title {
@@ -502,7 +558,8 @@ input, select, textarea {
 .menu-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
-  gap: 14px;
+  gap: 16px;
+  width: 100%;
 }
 
 /* ---------- Menu Item Card ---------- */
@@ -1592,22 +1649,29 @@ input, select, textarea {
 /* ---------- Responsive Tweaks ---------- */
 @media (min-width: 480px) {
   .menu-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 18px;
   }
 }
 
 @media (min-width: 768px) {
+  #menuContainer {
+    padding: 0 24px;
+  }
+  .menu-section {
+    padding: 32px 0 16px 0;
+  }
   .menu-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
   }
   .container { padding: 0 24px; }
-  .menu-section { padding: 24px; }
 }
 
 @media (min-width: 1024px) {
   .menu-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
   }
 }
 
