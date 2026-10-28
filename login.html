@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MJ's Corner — Sign In & Account</title>
-  <meta name="description" content="Sign in to your MJ's Corner customer account or access the restaurant admin portal.">
+  <title>MJ's Corner — Sign In with Mobile & OTP</title>
+  <meta name="description" content="Sign in to MJ's Corner using your mobile number and OTP verified via Phone.Email.">
   <link rel="shortcut icon" href="/favicon.ico">
   <meta name="theme-color" content="#e63946">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="auth.css">
+  
+  <!-- Auth Guard: If already logged in, redirect to store or admin -->
   <script src="auth.js"></script>
   <script>
     (function() {
@@ -17,15 +19,21 @@
       const user = auth.getCurrentUser();
       if (user) {
         const params = new URLSearchParams(window.location.search);
-        const isPortalAdmin = params.get('portal') === 'admin';
-        if (auth.isAdmin(user)) {
+        const redirect = params.get('redirect');
+        if (redirect) {
+          window.location.replace(redirect);
+        } else if (auth.isAdmin(user)) {
           window.location.replace('admin.html');
-        } else if (!isPortalAdmin) {
+        } else {
           window.location.replace('index.html');
         }
       }
     })();
   </script>
+
+  <!-- Official Phone.Email Sign In Script (https://www.phone.email/) -->
+  <script src="https://www.phone.email/sign_in_button_v1.js" async></script>
+
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -42,7 +50,7 @@
         MJ's Corner
       </a>
       <div class="header-actions">
-        <span style="font-size:0.78rem;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:4px 12px;border-radius:var(--radius-full);">🔥 Welcome</span>
+        <a href="index.html" class="btn-ghost-nav">🍽️ View Menu</a>
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
       </div>
     </div>
@@ -52,133 +60,97 @@
   <main class="auth-main">
     <div class="auth-container">
 
-      <!-- Auth Card -->
+      <!-- Admin Role Restriction Banner (if non-admin attempted to visit /admin) -->
+      <div id="adminNoticeBanner" class="auth-notice-banner hidden">
+        <div class="banner-icon">🛡️</div>
+        <div class="banner-content">
+          <strong>Admin Privileges Required</strong>
+          <p id="adminNoticeText">
+            Accounts receive Admin privileges when assigned <code>role: 'admin'</code> in MongoDB Atlas or listed in <code>ADMIN_PHONES</code>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Main Unified Auth Card -->
       <div class="auth-card">
-        
-        <!-- Tab Selector: Customer vs Admin -->
-        <div class="auth-tabs" id="authPortalTabs">
-          <button class="auth-tab active" data-tab="customer" id="tabCustomer">
-            <span>🍔</span> Customer Login
-          </button>
-          <button class="auth-tab" data-tab="admin" id="tabAdmin">
-            <span>👑</span> Admin Portal
-          </button>
-        </div>
-
-        <!-- ================= CUSTOMER PANEL ================= -->
-        <div class="auth-panel active" id="customerPanel">
+        <div class="auth-panel active" style="padding: 32px 26px;">
+          
           <div class="auth-header">
-            <h1 id="customerFormTitle">Welcome Back</h1>
-            <p id="customerFormSubtitle">Sign in to save addresses, track orders, and checkout faster</p>
+            <div class="auth-brand-pill">🍔 Fast Food & Quick Bites</div>
+            <h1>Welcome to MJ's Corner</h1>
+            <p>Sign in with your Name and Mobile Number via OTP</p>
           </div>
 
-          <!-- Quick Demo Buttons -->
-          <div class="demo-box">
-            <span class="demo-label">Testing Shortcuts</span>
-            <button type="button" class="btn-demo customer" id="btnDemoCustomer">
-              ⚡ Instant Demo Customer (Alex Johnson)
-            </button>
-          </div>
-
-          <div class="auth-divider">
-            <span>or continue with email</span>
-          </div>
-
-          <!-- Customer Sign In Form -->
-          <form id="customerLoginForm" class="auth-form">
+          <!-- Mobile + OTP Login Form -->
+          <form id="phoneLoginForm" class="auth-form">
+            <!-- Full Name -->
             <div class="form-group">
-              <label for="custEmail">Email Address</label>
-              <input type="email" id="custEmail" placeholder="e.g. alex@example.com" required value="alex@example.com">
+              <label for="custName">Full Name *</label>
+              <div class="input-with-icon">
+                <span class="input-prefix-icon">👤</span>
+                <input type="text" id="custName" placeholder="Enter your full name" required autocomplete="name" value="Rahul Sharma">
+              </div>
             </div>
+
+            <!-- Mobile Number -->
             <div class="form-group">
-              <label for="custPassword">Password</label>
-              <input type="password" id="custPassword" placeholder="Enter your password" required value="password123">
+              <label for="custPhone">Mobile Number *</label>
+              <div class="phone-input-row">
+                <div class="country-code-pill">
+                  <span>🇮🇳</span>
+                  <strong>+91</strong>
+                </div>
+                <input type="tel" id="custPhone" placeholder="Enter 10-digit mobile number" maxlength="10" pattern="[0-9]{10}" required autocomplete="tel" value="9876543210">
+              </div>
+              <small class="form-help-text">We'll verify your number securely via SMS OTP</small>
             </div>
-            <div class="form-group-row">
-              <label class="checkbox-label">
-                <input type="checkbox" id="custRemember" checked>
-                <span>Remember me</span>
-              </label>
-              <a href="#" class="forgot-link" id="forgotPasswordLink">Forgot password?</a>
-            </div>
-            <button type="submit" class="btn-auth-submit" id="btnCustomerLogin">
-              Sign In to Order
+
+            <!-- Phone.Email Official Sign In Button Container -->
+            <div id="pheIncludedContent" class="pe_signin_button"></div>
+
+            <!-- Phone.Email Trigger Button -->
+            <button type="button" class="btn-phone-email" id="btnPhoneEmailLogin">
+              <span class="btn-icon">🛡️</span>
+              <span class="btn-label">Verify with Phone.Email OTP</span>
+              <span class="btn-badge">Free SMS</span>
             </button>
+
+            <div class="auth-divider">
+              <span>or enter OTP code directly</span>
+            </div>
+
+            <!-- Direct OTP Field -->
+            <div class="otp-card-section" id="otpCardSection">
+              <div class="form-group" style="margin-bottom:12px;">
+                <label for="custOtp">6-Digit OTP Code</label>
+                <div class="input-with-icon">
+                  <span class="input-prefix-icon">🔑</span>
+                  <input type="text" id="custOtp" placeholder="Enter 6-digit OTP (e.g. 123456)" maxlength="6" inputmode="numeric">
+                </div>
+              </div>
+              <button type="submit" class="btn-auth-submit" id="btnVerifyOtp">
+                Verify OTP & Sign In →
+              </button>
+            </div>
+
+            <!-- Quick Testing Demo Buttons -->
+            <div class="demo-box" style="margin-top:20px;">
+              <span class="demo-label">⚡ Fast Testing Shortcuts</span>
+              <div class="demo-btn-group">
+                <button type="button" class="btn-demo customer" id="btnDemoCustomer">
+                  👤 Test Customer (+91 98765 43210)
+                </button>
+                <button type="button" class="btn-demo admin" id="btnDemoAdmin">
+                  👑 Test Admin Account (+91 99999 88888)
+                </button>
+              </div>
+              <small style="display:block;margin-top:6px;font-size:0.72rem;color:var(--text-tertiary);">
+                Tip: Admins are assigned directly via MongoDB Atlas <code>role: 'admin'</code>
+              </small>
+            </div>
           </form>
 
-          <!-- Customer Sign Up Form (hidden by default) -->
-          <form id="customerSignupForm" class="auth-form hidden">
-            <div class="form-group">
-              <label for="regName">Full Name *</label>
-              <input type="text" id="regName" placeholder="Enter your full name" required>
-            </div>
-            <div class="form-group">
-              <label for="regEmail">Email Address *</label>
-              <input type="email" id="regEmail" placeholder="e.g. yourname@example.com" required>
-            </div>
-            <div class="form-group">
-              <label for="regPhone">Phone Number *</label>
-              <input type="tel" id="regPhone" placeholder="e.g. +91 98765 43210" required>
-            </div>
-            <div class="form-group">
-              <label for="regAddress">Default Delivery Address (Optional)</label>
-              <textarea id="regAddress" rows="2" placeholder="House/Flat, Street, Landmark"></textarea>
-            </div>
-            <div class="form-group">
-              <label for="regPassword">Create Password *</label>
-              <input type="password" id="regPassword" placeholder="Minimum 6 characters" minlength="6" required>
-            </div>
-            <button type="submit" class="btn-auth-submit" id="btnCustomerRegister">
-              Create Account & Continue
-            </button>
-          </form>
-
-          <!-- Toggle Sign In / Sign Up -->
-          <div class="auth-toggle-mode">
-            <span id="authTogglePrompt">Don't have an account?</span>
-            <button type="button" class="btn-text-link" id="btnToggleAuthMode">Sign Up</button>
-          </div>
         </div>
-
-        <!-- ================= ADMIN PANEL ================= -->
-        <div class="auth-panel" id="adminPanel">
-          <div class="auth-header">
-            <div class="admin-badge-icon">👑</div>
-            <h1>Admin Access</h1>
-            <p>Log in to manage live orders, menu pricing, and special promotions</p>
-          </div>
-
-          <!-- Quick Admin Demo Button -->
-          <div class="demo-box">
-            <span class="demo-label">Testing Shortcut</span>
-            <button type="button" class="btn-demo admin" id="btnDemoAdmin">
-              👑 Instant Demo Admin Login (One Click)
-            </button>
-          </div>
-
-          <div class="auth-divider">
-            <span>or sign in with admin credentials</span>
-          </div>
-
-          <!-- Admin Login Form -->
-          <form id="adminLoginForm" class="auth-form">
-            <div class="form-group">
-              <label for="adminEmail">Admin Email</label>
-              <input type="email" id="adminEmail" placeholder="admin@mjscorner.com" required value="admin@mjscorner.com">
-            </div>
-            <div class="form-group">
-              <label for="adminPassword">Admin Password</label>
-              <input type="password" id="adminPassword" placeholder="Enter admin password" required value="admin123">
-            </div>
-            <div class="admin-credentials-hint">
-              <span>Demo credentials:</span> <strong>admin@mjscorner.com</strong> / <strong>admin123</strong>
-            </div>
-            <button type="submit" class="btn-auth-submit admin" id="btnAdminLogin">
-              Access Admin Dashboard →
-            </button>
-          </form>
-        </div>
-
       </div>
 
       <!-- Feature highlights under auth card -->
@@ -186,22 +158,22 @@
         <div class="highlight-item">
           <span class="icon">⚡</span>
           <div>
-            <strong>Quick Checkout</strong>
-            <span>Addresses & phone saved</span>
+            <strong>Instant Mobile Login</strong>
+            <span>No passwords to remember</span>
           </div>
         </div>
         <div class="highlight-item">
-          <span class="icon">🎁</span>
+          <span class="icon">🛡️</span>
           <div>
-            <strong>Exclusive Deals</strong>
-            <span>Member discounts & offers</span>
+            <strong>Verified by Phone.Email</strong>
+            <span>Secure free SMS OTP</span>
           </div>
         </div>
         <div class="highlight-item">
-          <span class="icon">📋</span>
+          <span class="icon">👑</span>
           <div>
-            <strong>Order History</strong>
-            <span>Track previous meals</span>
+            <strong>MongoDB Role Security</strong>
+            <span>Admin access managed from database</span>
           </div>
         </div>
       </div>

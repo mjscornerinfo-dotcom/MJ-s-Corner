@@ -543,7 +543,28 @@
 
     els.menuEditorList.innerHTML = html;
 
-    // Bind local file uploads for each card
+  async function uploadImageToCloudinary(base64Data, itemName = 'food') {
+    try {
+      showToast(`☁️ Uploading to Cloudinary CDN...`, 'info');
+      const res = await fetch('/api/upload-food-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Data })
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        return data.url;
+      } else {
+        throw new Error(data.message || 'Upload failed');
+      }
+    } catch (err) {
+      console.warn('Cloudinary upload error, using local data:', err);
+      showToast('Cloudinary notice: ' + (err.message || 'Saved locally'), 'info');
+      return base64Data;
+    }
+  }
+
+  // Bind local file uploads for each card
     els.menuEditorList.querySelectorAll('input[type="file"][data-upload-id]').forEach(input => {
       input.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -553,11 +574,16 @@
         if (!item) return;
 
         const reader = new FileReader();
-        reader.onload = (loadEvt) => {
-          item.image = loadEvt.target.result;
+        reader.onload = async (loadEvt) => {
+          const rawBase64 = loadEvt.target.result;
           const imgEl = $(`#edit-img-${id}`);
-          if (imgEl) imgEl.src = item.image;
-          showToast(`Photo uploaded for ${item.name}! Save to persist.`, 'success');
+          if (imgEl) imgEl.src = rawBase64;
+
+          const cdnUrl = await uploadImageToCloudinary(rawBase64, item.name);
+          item.image = cdnUrl;
+          if (imgEl) imgEl.src = cdnUrl;
+          saveMenu();
+          showToast(`☁️ Cloudinary photo saved for ${item.name}!`, 'success');
         };
         reader.readAsDataURL(file);
       });
@@ -1057,10 +1083,14 @@
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (loadEvt) => {
-          newItemImageData = loadEvt.target.result;
-          if (newItemImgPreview) newItemImgPreview.src = newItemImageData;
-          showToast('Image uploaded and previewed!', 'success');
+        reader.onload = async (loadEvt) => {
+          const rawBase64 = loadEvt.target.result;
+          if (newItemImgPreview) newItemImgPreview.src = rawBase64;
+
+          const cdnUrl = await uploadImageToCloudinary(rawBase64, 'new_menu_item');
+          newItemImageData = cdnUrl;
+          if (newItemImgPreview) newItemImgPreview.src = cdnUrl;
+          showToast('☁️ Photo uploaded to Cloudinary successfully!', 'success');
         };
         reader.readAsDataURL(file);
       });
@@ -1169,8 +1199,8 @@
         <div class="user-dropdown" id="adminDropdown">
           <div class="user-dropdown-header">
             <div class="user-dropdown-name">${(user && user.name) || 'Restaurant Admin'}</div>
-            <div class="user-dropdown-email">${(user && user.email) || 'admin@mjscorner.com'}</div>
-            <div style="font-size:0.72rem;color:var(--success);font-weight:700;margin-top:2px;">● Signed in as Admin</div>
+            <div class="user-dropdown-email">${(user && user.phone) || (user && user.email) || '+91 99999 88888'}</div>
+            <div style="font-size:0.72rem;color:var(--success);font-weight:700;margin-top:2px;">● MongoDB Role: Admin</div>
           </div>
           <a href="index.html" class="user-dropdown-item">🍽️ Customer Store</a>
           <button class="user-dropdown-item danger" id="btnLogoutAdmin">🚪 Sign Out</button>
@@ -1193,12 +1223,12 @@
           MJAuth.logout();
           showToast('Signed out of Admin', 'info');
           setTimeout(() => {
-            window.location.href = 'login.html?portal=admin';
+            window.location.href = 'login.html';
           }, 500);
         });
       }
     } else {
-      window.location.replace('login.html?portal=admin');
+      window.location.replace('login.html?denied=admin');
     }
   }
 

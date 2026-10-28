@@ -1044,3 +1044,170 @@
   border-radius: var(--radius-full);
 }
 
+/* ============================================
+   Mobile & Phone.Email Login Form Styles
+   ============================================ */
+.auth-notice-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1.5px solid #f59e0b;
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.auth-notice-banner .banner-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.auth-notice-banner .banner-content strong {
+  display: block;
+  font-size: 0.92rem;
+  color: #d97706;
+  margin-bottom: 4px;
+}
+
+.auth-notice-banner .banner-content p {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.auth-brand-pill {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.phone-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.country-code-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.phone-input-row input {
+  flex: 1;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-prefix-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 1rem;
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.input-with-icon input {
+  padding-left: 38px;
+  width: 100%;
+}
+
+.form-help-text {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-tertiary);
+  margin-top: 5px;
+}
+
+/* Phone.Email Primary Action Button */
+.btn-phone-email {
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: white;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  margin: 14px 0 6px 0;
+}
+
+.btn-phone-email:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  filter: brightness(1.05);
+}
+
+.btn-phone-email:active {
+  transform: translateY(0);
+}
+
+.btn-phone-email .btn-icon {
+  font-size: 1.2rem;
+}
+
+.btn-phone-email .btn-badge {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.22);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  margin-left: 4px;
+}
+
+.otp-card-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 10px;
+}
+
+.demo-btn-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .demo-btn-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+

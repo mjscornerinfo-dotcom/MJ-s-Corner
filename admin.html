@@ -15,8 +15,10 @@
       const auth = window.MJAuth || (typeof MJAuth !== 'undefined' ? MJAuth : null);
       if (!auth) return;
       const user = auth.getCurrentUser();
-      if (!user || !auth.isAdmin(user)) {
-        window.location.replace('login.html?portal=admin');
+      if (!user) {
+        window.location.replace('login.html?redirect=admin.html');
+      } else if (!auth.isAdmin(user)) {
+        window.location.replace('login.html?denied=admin');
       }
     })();
   </script>
