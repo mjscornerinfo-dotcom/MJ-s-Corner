@@ -198,15 +198,22 @@
           <div style="font-size:0.75rem;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;padding-bottom:4px;border-bottom:1px solid var(--border);">
             Ordered Items (${items.length} item${items.length !== 1 ? 's' : ''})
           </div>
-          ${items.map(item => `
+          ${items.map(item => {
+            const sizeLabel = item.selectedSize ? ` <span style="color:var(--accent);font-weight:700;">(${escapeHtml(item.selectedSize.name)})</span>` : '';
+            const addonsLabel = item.selectedAddons && item.selectedAddons.length > 0
+              ? `<div style="font-size:0.73rem;color:var(--text-secondary);font-weight:600;margin-top:2px;">🧀 + ${item.selectedAddons.map(a => escapeHtml(a.name)).join(', ')}</div>`
+              : '';
+            return `
             <div class="order-item-chip">
               <img src="${item.image || 'images/burger.jpg'}" alt="${escapeHtml(item.name)}" class="order-item-chip-img" onerror="this.src='images/burger.jpg'">
               <div class="order-item-chip-details">
-                <div class="order-item-chip-name">${escapeHtml(item.name)}</div>
+                <div class="order-item-chip-name">${escapeHtml(item.name)}${sizeLabel}</div>
+                ${addonsLabel}
                 <div class="order-item-chip-price">₹${item.offerPrice || item.price || 0} × <strong>${item.qty || 1}</strong> = <strong>₹${((item.offerPrice || item.price || 0) * (item.qty || 1))}</strong></div>
               </div>
             </div>
-          `).join('')}
+          `;
+          }).join('')}
           ${order.customer && order.customer.notes ? `
             <div class="order-item-chip-note">
               <strong>📝 Notes:</strong> ${escapeHtml(order.customer.notes)}
@@ -332,6 +339,108 @@
     return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   }
 
+  function renderSizesInputs(item) {
+    const sizes = item.sizes || [];
+    if (sizes.length === 0) {
+      return `<div style="font-size:0.75rem;color:var(--text-tertiary);font-style:italic;padding:4px 0;">No sizes configured (uses standard price ₹${item.offerPrice}). Click "+ Add Size" to add options like Regular, Medium, Large.</div>`;
+    }
+    return sizes.map((s, idx) => `
+      <div class="variant-edit-row">
+        <input type="text" value="${escapeHtml(s.name)}" placeholder="Size name (e.g. Regular (8'') or Single Patty)" data-variant="size-name" data-item-id="${item.id}" data-idx="${idx}" style="flex:2;">
+        <div style="display:flex;align-items:center;gap:4px;flex:1;">
+          <span style="font-size:0.8rem;color:var(--text-secondary);font-weight:600;">₹</span>
+          <input type="number" value="${s.price}" placeholder="Price" min="0" data-variant="size-price" data-item-id="${item.id}" data-idx="${idx}" style="width:100%;">
+        </div>
+        <button type="button" class="btn-admin danger" data-action="del-size" data-item-id="${item.id}" data-idx="${idx}" style="padding:6px 10px;font-size:0.75rem;" title="Delete size">🗑️</button>
+      </div>
+    `).join('');
+  }
+
+  function renderAddonsInputs(item) {
+    const addons = item.addons || [];
+    if (addons.length === 0) {
+      return `<div style="font-size:0.75rem;color:var(--text-tertiary);font-style:italic;padding:4px 0;">No extra add-ons configured. Click "+ Add Extra Add-on" to add extras like Cheese Burst Option, Extra Cheese Slice.</div>`;
+    }
+    return addons.map((a, idx) => `
+      <div class="variant-edit-row">
+        <input type="text" value="${escapeHtml(a.name)}" placeholder="Add-on name (e.g. Cheese Burst Option, Extra Cheese)" data-variant="addon-name" data-item-id="${item.id}" data-idx="${idx}" style="flex:2;">
+        <div style="display:flex;align-items:center;gap:4px;flex:1;">
+          <span style="font-size:0.8rem;color:var(--text-secondary);font-weight:600;">+₹</span>
+          <input type="number" value="${a.price}" placeholder="Extra cost" min="0" data-variant="addon-price" data-item-id="${item.id}" data-idx="${idx}" style="width:100%;">
+        </div>
+        <button type="button" class="btn-admin danger" data-action="del-addon" data-item-id="${item.id}" data-idx="${idx}" style="padding:6px 10px;font-size:0.75rem;" title="Delete add-on">🗑️</button>
+      </div>
+    `).join('');
+  }
+
+  function bindVariantEvents(card, item) {
+    // Size inputs
+    card.querySelectorAll('[data-variant="size-name"]').forEach(inp => {
+      inp.addEventListener('input', (e) => {
+        const idx = parseInt(e.target.dataset.idx);
+        if (item.sizes && item.sizes[idx]) {
+          item.sizes[idx].name = e.target.value;
+        }
+      });
+    });
+
+    card.querySelectorAll('[data-variant="size-price"]').forEach(inp => {
+      inp.addEventListener('input', (e) => {
+        const idx = parseInt(e.target.dataset.idx);
+        if (item.sizes && item.sizes[idx]) {
+          item.sizes[idx].price = parseInt(e.target.value) || 0;
+        }
+      });
+    });
+
+    card.querySelectorAll('[data-action="del-size"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = parseInt(btn.dataset.idx);
+        if (item.sizes) {
+          item.sizes.splice(idx, 1);
+          const container = card.querySelector(`#sizes-container-${item.id}`);
+          if (container) {
+            container.innerHTML = renderSizesInputs(item);
+            bindVariantEvents(card, item);
+          }
+        }
+      });
+    });
+
+    // Add-on inputs
+    card.querySelectorAll('[data-variant="addon-name"]').forEach(inp => {
+      inp.addEventListener('input', (e) => {
+        const idx = parseInt(e.target.dataset.idx);
+        if (item.addons && item.addons[idx]) {
+          item.addons[idx].name = e.target.value;
+        }
+      });
+    });
+
+    card.querySelectorAll('[data-variant="addon-price"]').forEach(inp => {
+      inp.addEventListener('input', (e) => {
+        const idx = parseInt(e.target.dataset.idx);
+        if (item.addons && item.addons[idx]) {
+          item.addons[idx].price = parseInt(e.target.value) || 0;
+        }
+      });
+    });
+
+    card.querySelectorAll('[data-action="del-addon"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = parseInt(btn.dataset.idx);
+        if (item.addons) {
+          item.addons.splice(idx, 1);
+          const container = card.querySelector(`#addons-container-${item.id}`);
+          if (container) {
+            container.innerHTML = renderAddonsInputs(item);
+            bindVariantEvents(card, item);
+          }
+        }
+      });
+    });
+  }
+
   // ========== MENU EDITOR ==========
   function renderMenuEditor() {
     if (state.menu.length === 0) {
@@ -384,6 +493,36 @@
                   <input type="text" value="${item.badge || ''}" data-field="badge" data-id="${item.id}" placeholder="e.g. Bestseller">
                 </div>
               </div>
+
+              <!-- Sizes & Extra Add-ons Editor -->
+              <div class="edit-card-variants">
+                <!-- Sizes Block -->
+                <div class="variants-section-block">
+                  <div class="variants-section-header">
+                    <span style="font-size:0.82rem;font-weight:700;color:var(--text-primary);">📏 Sizes & Size Pricing <span style="font-size:0.72rem;color:var(--text-tertiary);font-weight:500;">(e.g. Regular, Medium, Large)</span></span>
+                    <button type="button" class="btn-admin secondary btn-add-size" data-item-id="${item.id}" style="padding:3px 8px;font-size:0.75rem;">
+                      ➕ Add Size
+                    </button>
+                  </div>
+                  <div class="item-sizes-container" id="sizes-container-${item.id}">
+                    ${renderSizesInputs(item)}
+                  </div>
+                </div>
+
+                <!-- Add-ons Block -->
+                <div class="variants-section-block">
+                  <div class="variants-section-header">
+                    <span style="font-size:0.82rem;font-weight:700;color:var(--text-primary);">🧀 Extra Add-ons & Extra Cost <span style="font-size:0.72rem;color:var(--text-tertiary);font-weight:500;">(e.g. Cheese Burst, Extra Cheese)</span></span>
+                    <button type="button" class="btn-admin secondary btn-add-addon" data-item-id="${item.id}" style="padding:3px 8px;font-size:0.75rem;">
+                      ➕ Add Extra Add-on
+                    </button>
+                  </div>
+                  <div class="item-addons-container" id="addons-container-${item.id}">
+                    ${renderAddonsInputs(item)}
+                  </div>
+                </div>
+              </div>
+
               <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
                 <div style="display:flex;align-items:center;gap:10px;">
                   <label class="toggle-switch" style="flex-shrink:0;">
@@ -483,6 +622,37 @@
           item.available = availInput.checked;
         });
       }
+
+      // 5. Variants (Sizes & Add-ons) binding
+      bindVariantEvents(card, item);
+
+      // Add Size button trigger
+      const btnAddSize = card.querySelector('.btn-add-size');
+      if (btnAddSize) {
+        btnAddSize.addEventListener('click', () => {
+          if (!item.sizes) item.sizes = [];
+          item.sizes.push({ name: '', price: item.offerPrice || 0 });
+          const container = card.querySelector(`#sizes-container-${item.id}`);
+          if (container) {
+            container.innerHTML = renderSizesInputs(item);
+            bindVariantEvents(card, item);
+          }
+        });
+      }
+
+      // Add Addon button trigger
+      const btnAddAddon = card.querySelector('.btn-add-addon');
+      if (btnAddAddon) {
+        btnAddAddon.addEventListener('click', () => {
+          if (!item.addons) item.addons = [];
+          item.addons.push({ name: '', price: 30 });
+          const container = card.querySelector(`#addons-container-${item.id}`);
+          if (container) {
+            container.innerHTML = renderAddonsInputs(item);
+            bindVariantEvents(card, item);
+          }
+        });
+      }
     });
 
     // Delete item handler
@@ -499,12 +669,20 @@
   }
 
   function saveMenu() {
+    state.menu.forEach(item => {
+      if (Array.isArray(item.sizes)) {
+        item.sizes = item.sizes.filter(s => s && s.name && s.name.trim() !== '');
+      }
+      if (Array.isArray(item.addons)) {
+        item.addons = item.addons.filter(a => a && a.name && a.name.trim() !== '');
+      }
+    });
     if (window.MJData) {
       MJData.saveMenu(state.menu);
     } else {
       localStorage.setItem('mj_menu', JSON.stringify(state.menu));
     }
-    showToast('Menu saved! Changes synced to customer portal in real-time.', 'success');
+    showToast('Menu, sizes & add-ons saved successfully! Synced in real-time.', 'success');
   }
 
   // ========== PROMOTIONS ==========
@@ -739,7 +917,9 @@
           mrp,
           offerPrice,
           badge,
-          available: true
+          available: true,
+          sizes: [],
+          addons: []
         };
 
         state.menu.unshift(newItem);

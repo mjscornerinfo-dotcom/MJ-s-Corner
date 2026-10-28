@@ -261,6 +261,57 @@
     </div>
   </div>
 
+  <!-- ========== ITEM CUSTOMIZATION MODAL ========== -->
+  <div class="modal-overlay" id="customizationModal">
+    <div class="modal customization-modal">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img id="customItemImg" src="images/burger.jpg" alt="" class="custom-modal-img">
+          <div>
+            <h2 id="customItemTitle" style="font-size:1.15rem;margin:0;font-family:var(--font-display);">Customize Item</h2>
+            <div id="customItemCategory" style="font-size:0.75rem;color:var(--text-tertiary);margin-top:2px;">Category</div>
+          </div>
+        </div>
+        <button class="cart-close-btn" id="customizationCloseBtn">✕</button>
+      </div>
+      <div class="modal-body" id="customizationModalBody" style="max-height:65vh;overflow-y:auto;padding:20px;">
+        <p id="customItemDesc" style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.45;"></p>
+
+        <!-- Sizes Selection -->
+        <div id="customSizesGroup" class="custom-section hidden">
+          <div class="custom-section-header">
+            <span class="custom-section-title">📏 Select Size</span>
+            <span class="custom-badge required">Required</span>
+          </div>
+          <div class="custom-options-list" id="customSizesList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Add-ons Selection -->
+        <div id="customAddonsGroup" class="custom-section hidden">
+          <div class="custom-section-header">
+            <span class="custom-section-title">🧀 Extra Add-ons</span>
+            <span class="custom-badge optional">Optional</span>
+          </div>
+          <div class="custom-options-list" id="customAddonsList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+      <div class="customization-modal-footer">
+        <div class="custom-qty-selector">
+          <button type="button" class="btn-qty" id="btnCustomQtyDec" aria-label="Decrease quantity">−</button>
+          <span class="custom-qty-val" id="customQtyVal">1</span>
+          <button type="button" class="btn-qty" id="btnCustomQtyInc" aria-label="Increase quantity">+</button>
+        </div>
+        <button type="button" class="btn-submit-order" id="btnConfirmAddToCart" style="flex:1;max-width:280px;padding:12px 18px;font-size:0.95rem;">
+          Add to Cart • <span id="customTotalDisplay">₹0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========== CUSTOMER PROFILE MODAL ========== -->
   <div class="modal-overlay" id="profileModal">
     <div class="modal profile-modal">

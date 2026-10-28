@@ -12,103 +12,176 @@
       id: 1, name: 'Classic Smash Burger', category: 'Burgers',
       description: 'Double-stacked beef patties with melted cheese, special sauce, and brioche bun',
       image: 'images/burger.jpg', mrp: 349, offerPrice: 249,
-      badge: 'Bestseller', available: true
+      badge: 'Bestseller', available: true,
+      sizes: [
+        { name: 'Single Patty', price: 249 },
+        { name: 'Double Patty', price: 329 }
+      ],
+      addons: [
+        { name: 'Extra Cheese Slice', price: 30 },
+        { name: 'Crispy Bacon Strip', price: 50 },
+        { name: 'Grilled Mushrooms', price: 40 }
+      ]
     },
     {
       id: 2, name: 'BBQ Bacon Burger', category: 'Burgers',
       description: 'Smoky BBQ sauce, crispy bacon, caramelized onions, and pepper jack cheese',
       image: 'images/burger.jpg', mrp: 399, offerPrice: 329,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [
+        { name: 'Single Patty', price: 329 },
+        { name: 'Double Patty', price: 399 }
+      ],
+      addons: [
+        { name: 'Extra Cheese Slice', price: 30 },
+        { name: 'Smoky BBQ Dip', price: 25 }
+      ]
     },
     {
       id: 3, name: 'Spicy Chicken Burger', category: 'Burgers',
       description: 'Crispy fried chicken fillet with sriracha mayo and pickled jalapeños',
       image: 'images/burger.jpg', mrp: 329, offerPrice: 269,
-      badge: '🌶️ Spicy', available: true
+      badge: '🌶️ Spicy', available: true,
+      sizes: [
+        { name: 'Single Fillet', price: 269 },
+        { name: 'Double Fillet', price: 349 }
+      ],
+      addons: [
+        { name: 'Extra Cheese Slice', price: 30 },
+        { name: 'Pickled Jalapeños', price: 25 }
+      ]
     },
     // ---- Pizza ----
     {
       id: 4, name: 'Margherita Pizza', category: 'Pizza',
       description: 'San Marzano tomatoes, fresh mozzarella, basil, and extra-virgin olive oil',
       image: 'images/pizza.jpg', mrp: 449, offerPrice: 349,
-      badge: 'Popular', available: true
+      badge: 'Popular', available: true,
+      sizes: [
+        { name: 'Regular (8")', price: 349 },
+        { name: 'Medium (10")', price: 479 },
+        { name: 'Large (12")', price: 599 }
+      ],
+      addons: [
+        { name: 'Cheese Burst Option', price: 99 },
+        { name: 'Extra Mozzarella', price: 60 },
+        { name: 'Garlic Butter Crust', price: 40 }
+      ]
     },
     {
       id: 5, name: 'Pepperoni Feast', category: 'Pizza',
       description: 'Loaded with spicy pepperoni, mozzarella, and our signature tomato sauce',
       image: 'images/pizza.jpg', mrp: 549, offerPrice: 449,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [
+        { name: 'Regular (8")', price: 449 },
+        { name: 'Medium (10")', price: 599 },
+        { name: 'Large (12")', price: 749 }
+      ],
+      addons: [
+        { name: 'Cheese Burst Option', price: 99 },
+        { name: 'Extra Pepperoni', price: 80 }
+      ]
     },
     {
       id: 6, name: 'BBQ Chicken Pizza', category: 'Pizza',
       description: 'Grilled chicken, BBQ sauce, red onions, and smoked gouda cheese',
       image: 'images/pizza.jpg', mrp: 599, offerPrice: 479,
-      badge: 'New', available: true
+      badge: 'New', available: true,
+      sizes: [
+        { name: 'Regular (8")', price: 479 },
+        { name: 'Medium (10")', price: 629 },
+        { name: 'Large (12")', price: 779 }
+      ],
+      addons: [
+        { name: 'Cheese Burst Option', price: 99 },
+        { name: 'Smoked Gouda Topping', price: 70 }
+      ]
     },
     // ---- Pasta ----
     {
       id: 7, name: 'Chicken Alfredo', category: 'Pasta',
       description: 'Creamy fettuccine with grilled chicken, parmesan, and fresh herbs',
       image: 'images/pasta.jpg', mrp: 399, offerPrice: 329,
-      badge: 'Chef\'s Pick', available: true
+      badge: 'Chef\'s Pick', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 8, name: 'Penne Arrabbiata', category: 'Pasta',
       description: 'Spicy tomato sauce with garlic, chili flakes, and fresh basil',
       image: 'images/pasta.jpg', mrp: 349, offerPrice: 279,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     },
     // ---- Sides ----
     {
       id: 9, name: 'Loaded Cheese Fries', category: 'Sides',
       description: 'Crispy fries topped with melted cheese sauce, herbs, and spices',
       image: 'images/fries.jpg', mrp: 249, offerPrice: 179,
-      badge: 'Fan Fav', available: true
+      badge: 'Fan Fav', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 10, name: 'Buffalo Wings', category: 'Sides',
       description: 'Glazed buffalo wings with blue cheese dip and celery sticks',
       image: 'images/wings.jpg', mrp: 379, offerPrice: 299,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 11, name: 'Chicken Shawarma Wrap', category: 'Sides',
       description: 'Grilled chicken with pickled vegetables, tahini, and fresh lettuce',
       image: 'images/wrap.jpg', mrp: 279, offerPrice: 229,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     },
     // ---- Salads ----
     {
       id: 12, name: 'Mediterranean Bowl', category: 'Salads',
       description: 'Grilled chicken, feta, olives, tomatoes, cucumber, and lemon vinaigrette',
       image: 'images/salad.jpg', mrp: 349, offerPrice: 289,
-      badge: 'Healthy', available: true
+      badge: 'Healthy', available: true,
+      sizes: [],
+      addons: []
     },
     // ---- Drinks ----
     {
       id: 13, name: 'Mango Smoothie', category: 'Drinks',
       description: 'Fresh tropical mango blended with yogurt and a hint of mint',
       image: 'images/smoothie.jpg', mrp: 199, offerPrice: 149,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 14, name: 'Berry Blast Smoothie', category: 'Drinks',
       description: 'Mixed berries, banana, and honey blended to perfection',
       image: 'images/smoothie.jpg', mrp: 229, offerPrice: 179,
-      badge: 'New', available: true
+      badge: 'New', available: true,
+      sizes: [],
+      addons: []
     },
     // ---- Desserts ----
     {
       id: 15, name: 'Molten Brownie Sundae', category: 'Desserts',
       description: 'Warm chocolate brownie with vanilla ice cream and chocolate drizzle',
       image: 'images/brownie.jpg', mrp: 299, offerPrice: 229,
-      badge: '🍫 Indulge', available: true
+      badge: '🍫 Indulge', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 16, name: 'Classic Cheesecake', category: 'Desserts',
       description: 'New York style cheesecake with berry compote',
       image: 'images/brownie.jpg', mrp: 349, offerPrice: 269,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     }
   ];
 
@@ -133,6 +206,14 @@
       state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
       const savedCart = localStorage.getItem('mj_cart');
       state.cart = savedCart ? JSON.parse(savedCart) : [];
+      // Ensure existing cart items have cartKey
+      state.cart.forEach(c => {
+        if (!c.cartKey) {
+          const sName = c.selectedSize ? c.selectedSize.name : '';
+          const aNames = (c.selectedAddons || []).map(a => a.name).sort().join('|');
+          c.cartKey = `${c.id}__${sName}__${aNames}`;
+        }
+      });
     } catch (e) {
       state.menu = window.MJData ? MJData.getMenu() : [];
       state.cart = [];
@@ -233,6 +314,22 @@
     ordersModal: $('#ordersModal'),
     ordersCloseBtn: $('#ordersCloseBtn'),
     customerOrdersList: $('#customerOrdersList'),
+    // Item Customization Modal
+    customizationModal: $('#customizationModal'),
+    customizationCloseBtn: $('#customizationCloseBtn'),
+    customItemImg: $('#customItemImg'),
+    customItemTitle: $('#customItemTitle'),
+    customItemCategory: $('#customItemCategory'),
+    customItemDesc: $('#customItemDesc'),
+    customSizesGroup: $('#customSizesGroup'),
+    customSizesList: $('#customSizesList'),
+    customAddonsGroup: $('#customAddonsGroup'),
+    customAddonsList: $('#customAddonsList'),
+    btnCustomQtyDec: $('#btnCustomQtyDec'),
+    btnCustomQtyInc: $('#btnCustomQtyInc'),
+    customQtyVal: $('#customQtyVal'),
+    customTotalDisplay: $('#customTotalDisplay'),
+    btnConfirmAddToCart: $('#btnConfirmAddToCart'),
     // Success modal
     successModal: $('#successModal'),
     orderIdDisplay: $('#orderIdDisplay'),
@@ -647,16 +744,23 @@
             <div style="font-size:0.75rem;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">
               Ordered Items (${items.length})
             </div>
-            ${items.map(item => `
+            ${items.map(item => {
+              const sizeLabel = item.selectedSize ? ` <span class="order-item-size-tag">(${escapeHtml(item.selectedSize.name)})</span>` : '';
+              const addonsLabel = item.selectedAddons && item.selectedAddons.length > 0
+                ? `<div class="order-item-addons-tag">🧀 + ${item.selectedAddons.map(a => escapeHtml(a.name)).join(', ')}</div>`
+                : '';
+              return `
               <div class="customer-order-item-row">
                 <img src="${item.image || 'images/burger.jpg'}" alt="${escapeHtml(item.name)}" class="customer-order-item-img" onerror="this.src='images/burger.jpg'">
                 <div class="customer-order-item-info">
-                  <div class="customer-order-item-name">${escapeHtml(item.name)}</div>
+                  <div class="customer-order-item-name">${escapeHtml(item.name)}${sizeLabel}</div>
+                  ${addonsLabel}
                   <div class="customer-order-item-sub">₹${item.offerPrice || item.mrp || 0} × ${item.qty}</div>
                 </div>
                 <div class="customer-order-item-total">₹${((item.offerPrice || item.mrp || 0) * (item.qty || 1))}</div>
               </div>
-            `).join('')}
+            `;
+            }).join('')}
 
             ${(order.customer && (order.customer.notes || order.customer.address)) || order.coupon ? `
               <div class="customer-order-meta">
@@ -797,13 +901,235 @@
     bindMenuActions();
   }
 
+  // ========== ITEM CUSTOMIZATION (SIZES & ADD-ONS) ==========
+  let customizationState = {
+    item: null,
+    selectedSize: null,
+    selectedAddons: [],
+    qty: 1
+  };
+
+  function hasCustomizations(item) {
+    if (!item) return false;
+    const hasSizes = Array.isArray(item.sizes) && item.sizes.length > 0;
+    const hasAddons = Array.isArray(item.addons) && item.addons.length > 0;
+    return hasSizes || hasAddons;
+  }
+
+  function openCustomizationModal(item) {
+    if (!item) return;
+    customizationState.item = item;
+    customizationState.qty = 1;
+    customizationState.selectedAddons = [];
+
+    // Pre-select first size if sizes exist
+    if (Array.isArray(item.sizes) && item.sizes.length > 0) {
+      customizationState.selectedSize = { ...item.sizes[0] };
+    } else {
+      customizationState.selectedSize = null;
+    }
+
+    if (els.customItemImg) els.customItemImg.src = item.image || 'images/burger.jpg';
+    if (els.customItemTitle) els.customItemTitle.textContent = item.name;
+    if (els.customItemCategory) els.customItemCategory.textContent = item.category;
+    if (els.customItemDesc) els.customItemDesc.textContent = item.description || '';
+
+    // Render Sizes
+    if (Array.isArray(item.sizes) && item.sizes.length > 0) {
+      if (els.customSizesGroup) els.customSizesGroup.classList.remove('hidden');
+      renderCustomSizes(item.sizes);
+    } else {
+      if (els.customSizesGroup) els.customSizesGroup.classList.add('hidden');
+      if (els.customSizesList) els.customSizesList.innerHTML = '';
+    }
+
+    // Render Add-ons
+    if (Array.isArray(item.addons) && item.addons.length > 0) {
+      if (els.customAddonsGroup) els.customAddonsGroup.classList.remove('hidden');
+      renderCustomAddons(item.addons);
+    } else {
+      if (els.customAddonsGroup) els.customAddonsGroup.classList.add('hidden');
+      if (els.customAddonsList) els.customAddonsList.innerHTML = '';
+    }
+
+    updateCustomizationTotal();
+
+    if (els.customizationModal) {
+      els.customizationModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeCustomizationModal() {
+    if (els.customizationModal) {
+      els.customizationModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    customizationState.item = null;
+  }
+
+  function renderCustomSizes(sizes) {
+    if (!els.customSizesList) return;
+    els.customSizesList.innerHTML = sizes.map((s, idx) => {
+      const isSelected = customizationState.selectedSize && customizationState.selectedSize.name === s.name;
+      return `
+        <div class="custom-option-card ${isSelected ? 'selected' : ''}" data-size-idx="${idx}">
+          <div class="custom-option-left">
+            <span class="custom-option-indicator">${isSelected ? '●' : ''}</span>
+            <span>${escapeHtml(s.name)}</span>
+          </div>
+          <span class="custom-option-price">₹${s.price}</span>
+        </div>
+      `;
+    }).join('');
+
+    els.customSizesList.querySelectorAll('.custom-option-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.sizeIdx);
+        customizationState.selectedSize = { ...sizes[idx] };
+        renderCustomSizes(sizes);
+        updateCustomizationTotal();
+      });
+    });
+  }
+
+  function renderCustomAddons(addons) {
+    if (!els.customAddonsList) return;
+    els.customAddonsList.innerHTML = addons.map((a, idx) => {
+      const isSelected = customizationState.selectedAddons.some(sel => sel.name === a.name);
+      return `
+        <div class="custom-option-card ${isSelected ? 'selected' : ''}" data-addon-idx="${idx}">
+          <div class="custom-option-left">
+            <span class="custom-option-indicator checkbox">${isSelected ? '✓' : ''}</span>
+            <span>${escapeHtml(a.name)}</span>
+          </div>
+          <span class="custom-option-price">+₹${a.price}</span>
+        </div>
+      `;
+    }).join('');
+
+    els.customAddonsList.querySelectorAll('.custom-option-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.addonIdx);
+        const addon = addons[idx];
+        const existingIdx = customizationState.selectedAddons.findIndex(sel => sel.name === addon.name);
+        if (existingIdx >= 0) {
+          customizationState.selectedAddons.splice(existingIdx, 1);
+        } else {
+          customizationState.selectedAddons.push({ ...addon });
+        }
+        renderCustomAddons(addons);
+        updateCustomizationTotal();
+      });
+    });
+  }
+
+  function getCustomizationUnitPrice() {
+    if (!customizationState.item) return 0;
+    const basePrice = customizationState.selectedSize 
+      ? Number(customizationState.selectedSize.price) 
+      : Number(customizationState.item.offerPrice || customizationState.item.mrp || 0);
+    const addonsTotal = customizationState.selectedAddons.reduce((sum, a) => sum + Number(a.price || 0), 0);
+    return basePrice + addonsTotal;
+  }
+
+  function updateCustomizationTotal() {
+    if (els.customQtyVal) els.customQtyVal.textContent = customizationState.qty;
+    const unitPrice = getCustomizationUnitPrice();
+    const total = unitPrice * customizationState.qty;
+    if (els.customTotalDisplay) {
+      els.customTotalDisplay.textContent = `₹${total}`;
+    }
+  }
+
+  function confirmCustomAddToCart() {
+    const item = customizationState.item;
+    if (!item) return;
+
+    if (Array.isArray(item.sizes) && item.sizes.length > 0 && !customizationState.selectedSize) {
+      showToast('Please select a size first', 'error');
+      return;
+    }
+
+    addItemToCart(
+      item,
+      customizationState.selectedSize,
+      customizationState.selectedAddons,
+      customizationState.qty
+    );
+
+    const descParts = [];
+    if (customizationState.selectedSize) descParts.push(customizationState.selectedSize.name);
+    if (customizationState.selectedAddons.length > 0) {
+      descParts.push(`with ${customizationState.selectedAddons.map(a => a.name).join(', ')}`);
+    }
+    const customSummary = descParts.length > 0 ? ` (${descParts.join(' ')})` : '';
+
+    showToast(`Added ${item.name}${customSummary} to cart!`);
+    closeCustomizationModal();
+  }
+
   function renderMenuItem(item) {
+    const customizable = hasCustomizations(item);
     const discount = item.mrp > 0 ? Math.round(((item.mrp - item.offerPrice) / item.mrp) * 100) : 0;
-    const cartItem = state.cart.find(c => c.id === item.id);
+    
+    // For non-customizable items, direct cart item matching:
+    const cartItem = !customizable ? state.cart.find(c => c.id === item.id) : null;
     const qty = cartItem ? cartItem.qty : 0;
 
+    // For customizable items, sum total qty across all variants in cart:
+    const variantQtyInCart = customizable 
+      ? state.cart.filter(c => c.id === item.id).reduce((sum, c) => sum + c.qty, 0)
+      : 0;
+
+    // Price display
+    let pricingHtml = '';
+    if (customizable && Array.isArray(item.sizes) && item.sizes.length > 0) {
+      const minPrice = Math.min(...item.sizes.map(s => Number(s.price)));
+      pricingHtml = `
+        <div class="menu-card-pricing">
+          <span class="price-offer">From ₹${minPrice}</span>
+          ${item.mrp > minPrice ? `<span class="price-mrp">₹${item.mrp}</span>` : ''}
+        </div>
+        <div class="customizable-tag">✨ Customizable options</div>
+      `;
+    } else {
+      pricingHtml = `
+        <div class="menu-card-pricing">
+          <span class="price-offer">₹${item.offerPrice}</span>
+          ${item.mrp > item.offerPrice ? `<span class="price-mrp">₹${item.mrp}</span>` : ''}
+        </div>
+        ${customizable ? `<div class="customizable-tag">✨ Extra add-ons available</div>` : ''}
+      `;
+    }
+
+    let actionsHtml = '';
+    if (customizable) {
+      actionsHtml = `
+        <button class="btn-add-cart" data-action="customize" data-id="${item.id}">
+          ${variantQtyInCart > 0 ? `+ Add More (${variantQtyInCart} in cart)` : '✨ Customize & Add'}
+        </button>
+      `;
+    } else {
+      if (qty === 0) {
+        actionsHtml = `
+          <button class="btn-add-cart" data-action="add" data-id="${item.id}">
+            + Add to Cart
+          </button>
+        `;
+      } else {
+        actionsHtml = `
+          <div class="qty-control">
+            <button data-action="dec" data-id="${item.id}" aria-label="Decrease quantity">−</button>
+            <span class="qty-value">${qty}</span>
+            <button data-action="inc" data-id="${item.id}" aria-label="Increase quantity">+</button>
+          </div>
+        `;
+      }
+    }
+
     return `
-      <div class="menu-card" data-id="${item.id}">
+      <div class="menu-card ${customizable ? 'is-customizable' : ''}" data-id="${item.id}">
         <div class="menu-card-img-wrap">
           <img src="${item.image}" alt="${item.name}" loading="lazy">
           ${item.badge ? `<span class="menu-card-badge">${item.badge}</span>` : ''}
@@ -812,22 +1138,9 @@
         <div class="menu-card-content">
           <h3 class="menu-card-title">${item.name}</h3>
           <p class="menu-card-desc">${item.description}</p>
-          <div class="menu-card-pricing">
-            <span class="price-offer">₹${item.offerPrice}</span>
-            ${item.mrp > item.offerPrice ? `<span class="price-mrp">₹${item.mrp}</span>` : ''}
-          </div>
+          ${pricingHtml}
           <div class="menu-card-actions">
-            ${qty === 0 ? `
-              <button class="btn-add-cart" data-action="add" data-id="${item.id}">
-                + Add to Cart
-              </button>
-            ` : `
-              <div class="qty-control">
-                <button data-action="dec" data-id="${item.id}" aria-label="Decrease quantity">−</button>
-                <span class="qty-value">${qty}</span>
-                <button data-action="inc" data-id="${item.id}" aria-label="Increase quantity">+</button>
-              </div>
-            `}
+            ${actionsHtml}
           </div>
         </div>
       </div>
@@ -835,6 +1148,7 @@
   }
 
   function bindMenuActions() {
+    // Add to Cart for non-customizable items
     els.menuContainer.querySelectorAll('[data-action="add"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -842,53 +1156,96 @@
       });
     });
 
-    els.menuContainer.querySelectorAll('[data-action="inc"]').forEach(btn => {
+    // Customize button for customizable items
+    els.menuContainer.querySelectorAll('[data-action="customize"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        updateCartQty(parseInt(btn.dataset.id), 1);
+        const item = state.menu.find(i => i.id === parseInt(btn.dataset.id));
+        if (item) openCustomizationModal(item);
       });
     });
 
+    // Also clicking customizable card anywhere opens customization modal
+    els.menuContainer.querySelectorAll('.menu-card.is-customizable').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
+        const item = state.menu.find(i => i.id === parseInt(card.dataset.id));
+        if (item) openCustomizationModal(item);
+      });
+    });
+
+    // Non-customizable quantity increment
+    els.menuContainer.querySelectorAll('[data-action="inc"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updateCartQty(btn.dataset.id, 1);
+      });
+    });
+
+    // Non-customizable quantity decrement
     els.menuContainer.querySelectorAll('[data-action="dec"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        updateCartQty(parseInt(btn.dataset.id), -1);
+        updateCartQty(btn.dataset.id, -1);
       });
     });
   }
 
   // ========== CART & FLOATING "GO TO CHECKOUT" BAR ==========
-  function addToCart(itemId) {
-    const menuItem = state.menu.find(i => i.id === itemId);
+  function addItemToCart(menuItem, selectedSize = null, selectedAddons = [], qty = 1) {
     if (!menuItem) return;
 
-    const existing = state.cart.find(c => c.id === itemId);
+    const sizeName = selectedSize ? selectedSize.name : '';
+    const addonNames = (selectedAddons || []).map(a => a.name).sort().join('|');
+    const cartKey = `${menuItem.id}__${sizeName}__${addonNames}`;
+
+    const basePrice = selectedSize ? Number(selectedSize.price) : Number(menuItem.offerPrice || menuItem.mrp || 0);
+    const addonsTotal = (selectedAddons || []).reduce((sum, a) => sum + Number(a.price || 0), 0);
+    const unitPrice = basePrice + addonsTotal;
+    const unitMrp = Math.max(menuItem.mrp || 0, unitPrice);
+
+    const existing = state.cart.find(c => c.cartKey === cartKey);
     if (existing) {
-      existing.qty++;
+      existing.qty += qty;
     } else {
       state.cart.push({
+        cartKey: cartKey,
         id: menuItem.id,
         name: menuItem.name,
-        offerPrice: menuItem.offerPrice,
-        mrp: menuItem.mrp,
+        selectedSize: selectedSize ? { name: selectedSize.name, price: Number(selectedSize.price) } : null,
+        selectedAddons: (selectedAddons || []).map(a => ({ name: a.name, price: Number(a.price) })),
+        offerPrice: unitPrice,
+        mrp: unitMrp,
         image: menuItem.image,
-        qty: 1
+        qty: qty
       });
     }
 
     saveCart();
     updateCartUI();
     renderMenu();
+  }
+
+  function addToCart(itemId) {
+    const menuItem = state.menu.find(i => i.id === itemId);
+    if (!menuItem) return;
+
+    if (hasCustomizations(menuItem)) {
+      openCustomizationModal(menuItem);
+      return;
+    }
+
+    addItemToCart(menuItem, null, [], 1);
     showToast(`Added ${menuItem.name} to cart!`);
   }
 
-  function updateCartQty(itemId, delta) {
-    const item = state.cart.find(c => c.id === itemId);
+  function updateCartQty(keyOrId, delta) {
+    const item = state.cart.find(c => c.cartKey === String(keyOrId) || c.id === parseInt(keyOrId));
     if (!item) return;
 
     item.qty += delta;
     if (item.qty <= 0) {
-      state.cart = state.cart.filter(c => c.id !== itemId);
+      state.cart = state.cart.filter(c => c !== item);
     }
 
     saveCart();
@@ -896,8 +1253,11 @@
     renderMenu();
   }
 
-  function removeFromCart(itemId) {
-    state.cart = state.cart.filter(c => c.id !== itemId);
+  function removeFromCart(keyOrId) {
+    const item = state.cart.find(c => c.cartKey === String(keyOrId) || c.id === parseInt(keyOrId));
+    if (!item) return;
+
+    state.cart = state.cart.filter(c => c !== item);
     saveCart();
     updateCartUI();
     renderMenu();
@@ -915,7 +1275,7 @@
       itemCount += item.qty;
     });
 
-    const savings = originalTotal - subtotal;
+    const savings = Math.max(0, originalTotal - subtotal);
     return { subtotal, savings, total: subtotal, itemCount };
   }
 
@@ -951,32 +1311,42 @@
     els.cartSavings.textContent = `₹${totals.savings}`;
     els.cartTotal.textContent = `₹${totals.total}`;
 
-    els.cartItemsList.innerHTML = state.cart.map(item => `
+    els.cartItemsList.innerHTML = state.cart.map(item => {
+      const sizeTag = item.selectedSize ? `<span class="cart-item-option-pill">📏 ${escapeHtml(item.selectedSize.name)}</span>` : '';
+      const addonsTag = item.selectedAddons && item.selectedAddons.length > 0
+        ? `<div class="cart-item-option-pill">🧀 ${item.selectedAddons.map(a => escapeHtml(a.name)).join(', ')}</div>`
+        : '';
+      const keyAttr = escapeHtml(item.cartKey || String(item.id));
+
+      return `
       <div class="cart-item">
-        <img src="${item.image}" alt="${item.name}" class="cart-item-img">
+        <img src="${item.image}" alt="${escapeHtml(item.name)}" class="cart-item-img">
         <div class="cart-item-info">
-          <div class="cart-item-name">${item.name}</div>
+          <div class="cart-item-name">${escapeHtml(item.name)}</div>
+          ${sizeTag ? `<div>${sizeTag}</div>` : ''}
+          ${addonsTag ? `<div>${addonsTag}</div>` : ''}
           <div class="cart-item-price">₹${item.offerPrice}</div>
           <div class="cart-item-controls">
             <div class="qty-control">
-              <button data-cart-action="dec" data-id="${item.id}">−</button>
+              <button data-cart-action="dec" data-key="${keyAttr}">−</button>
               <span class="qty-value">${item.qty}</span>
-              <button data-cart-action="inc" data-id="${item.id}">+</button>
+              <button data-cart-action="inc" data-key="${keyAttr}">+</button>
             </div>
           </div>
         </div>
-        <button class="cart-item-remove" data-cart-action="remove" data-id="${item.id}" aria-label="Remove item">🗑️</button>
+        <button class="cart-item-remove" data-cart-action="remove" data-key="${keyAttr}" aria-label="Remove item">🗑️</button>
       </div>
-    `).join('');
+      `;
+    }).join('');
 
     els.cartItemsList.querySelectorAll('[data-cart-action="inc"]').forEach(btn => {
-      btn.addEventListener('click', () => updateCartQty(parseInt(btn.dataset.id), 1));
+      btn.addEventListener('click', () => updateCartQty(btn.dataset.key, 1));
     });
     els.cartItemsList.querySelectorAll('[data-cart-action="dec"]').forEach(btn => {
-      btn.addEventListener('click', () => updateCartQty(parseInt(btn.dataset.id), -1));
+      btn.addEventListener('click', () => updateCartQty(btn.dataset.key, -1));
     });
     els.cartItemsList.querySelectorAll('[data-cart-action="remove"]').forEach(btn => {
-      btn.addEventListener('click', () => removeFromCart(parseInt(btn.dataset.id)));
+      btn.addEventListener('click', () => removeFromCart(btn.dataset.key));
     });
   }
 
@@ -1410,9 +1780,39 @@
       if (e.target === els.promoPopupOverlay) closePromoPopup();
     });
 
+    // Item Customization Modal triggers
+    if (els.customizationCloseBtn) {
+      els.customizationCloseBtn.addEventListener('click', closeCustomizationModal);
+    }
+    if (els.customizationModal) {
+      els.customizationModal.addEventListener('click', (e) => {
+        if (e.target === els.customizationModal) closeCustomizationModal();
+      });
+    }
+    if (els.btnCustomQtyDec) {
+      els.btnCustomQtyDec.addEventListener('click', () => {
+        if (customizationState.qty > 1) {
+          customizationState.qty--;
+          updateCustomizationTotal();
+        }
+      });
+    }
+    if (els.btnCustomQtyInc) {
+      els.btnCustomQtyInc.addEventListener('click', () => {
+        if (customizationState.qty < 99) {
+          customizationState.qty++;
+          updateCustomizationTotal();
+        }
+      });
+    }
+    if (els.btnConfirmAddToCart) {
+      els.btnConfirmAddToCart.addEventListener('click', confirmCustomAddToCart);
+    }
+
     // Close on Escape key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        closeCustomizationModal();
         closeCart();
         closeCheckout();
         closeProfileModal();

@@ -16,103 +16,176 @@ var MJData = (function () {
       id: 1, name: 'Classic Smash Burger', category: 'Burgers',
       description: 'Double-stacked beef patties with melted cheese, special sauce, and brioche bun',
       image: 'images/burger.jpg', mrp: 349, offerPrice: 249,
-      badge: 'Bestseller', available: true
+      badge: 'Bestseller', available: true,
+      sizes: [
+        { name: 'Single Patty', price: 249 },
+        { name: 'Double Patty', price: 329 }
+      ],
+      addons: [
+        { name: 'Extra Cheese Slice', price: 30 },
+        { name: 'Crispy Bacon Strip', price: 50 },
+        { name: 'Grilled Mushrooms', price: 40 }
+      ]
     },
     {
       id: 2, name: 'BBQ Bacon Burger', category: 'Burgers',
       description: 'Smoky BBQ sauce, crispy bacon, caramelized onions, and pepper jack cheese',
       image: 'images/burger.jpg', mrp: 399, offerPrice: 329,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [
+        { name: 'Single Patty', price: 329 },
+        { name: 'Double Patty', price: 399 }
+      ],
+      addons: [
+        { name: 'Extra Cheese Slice', price: 30 },
+        { name: 'Smoky BBQ Dip', price: 25 }
+      ]
     },
     {
       id: 3, name: 'Spicy Chicken Burger', category: 'Burgers',
       description: 'Crispy fried chicken fillet with sriracha mayo and pickled jalapeños',
       image: 'images/burger.jpg', mrp: 329, offerPrice: 269,
-      badge: '🌶️ Spicy', available: true
+      badge: '🌶️ Spicy', available: true,
+      sizes: [
+        { name: 'Single Fillet', price: 269 },
+        { name: 'Double Fillet', price: 349 }
+      ],
+      addons: [
+        { name: 'Extra Cheese Slice', price: 30 },
+        { name: 'Pickled Jalapeños', price: 25 }
+      ]
     },
     // ---- Pizza ----
     {
       id: 4, name: 'Margherita Pizza', category: 'Pizza',
       description: 'San Marzano tomatoes, fresh mozzarella, basil, and extra-virgin olive oil',
       image: 'images/pizza.jpg', mrp: 449, offerPrice: 349,
-      badge: 'Popular', available: true
+      badge: 'Popular', available: true,
+      sizes: [
+        { name: 'Regular (8")', price: 349 },
+        { name: 'Medium (10")', price: 479 },
+        { name: 'Large (12")', price: 599 }
+      ],
+      addons: [
+        { name: 'Cheese Burst Option', price: 99 },
+        { name: 'Extra Mozzarella', price: 60 },
+        { name: 'Garlic Butter Crust', price: 40 }
+      ]
     },
     {
       id: 5, name: 'Pepperoni Feast', category: 'Pizza',
       description: 'Loaded with spicy pepperoni, mozzarella, and our signature tomato sauce',
       image: 'images/pizza.jpg', mrp: 549, offerPrice: 449,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [
+        { name: 'Regular (8")', price: 449 },
+        { name: 'Medium (10")', price: 599 },
+        { name: 'Large (12")', price: 749 }
+      ],
+      addons: [
+        { name: 'Cheese Burst Option', price: 99 },
+        { name: 'Extra Pepperoni', price: 80 }
+      ]
     },
     {
       id: 6, name: 'BBQ Chicken Pizza', category: 'Pizza',
       description: 'Grilled chicken, BBQ sauce, red onions, and smoked gouda cheese',
       image: 'images/pizza.jpg', mrp: 599, offerPrice: 479,
-      badge: 'New', available: true
+      badge: 'New', available: true,
+      sizes: [
+        { name: 'Regular (8")', price: 479 },
+        { name: 'Medium (10")', price: 629 },
+        { name: 'Large (12")', price: 779 }
+      ],
+      addons: [
+        { name: 'Cheese Burst Option', price: 99 },
+        { name: 'Smoked Gouda Topping', price: 70 }
+      ]
     },
     // ---- Pasta ----
     {
       id: 7, name: 'Chicken Alfredo', category: 'Pasta',
       description: 'Creamy fettuccine with grilled chicken, parmesan, and fresh herbs',
       image: 'images/pasta.jpg', mrp: 399, offerPrice: 329,
-      badge: 'Chef\'s Pick', available: true
+      badge: 'Chef\'s Pick', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 8, name: 'Penne Arrabbiata', category: 'Pasta',
       description: 'Spicy tomato sauce with garlic, chili flakes, and fresh basil',
       image: 'images/pasta.jpg', mrp: 349, offerPrice: 279,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     },
     // ---- Sides ----
     {
       id: 9, name: 'Loaded Cheese Fries', category: 'Sides',
       description: 'Crispy fries topped with melted cheese sauce, herbs, and spices',
       image: 'images/fries.jpg', mrp: 249, offerPrice: 179,
-      badge: 'Fan Fav', available: true
+      badge: 'Fan Fav', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 10, name: 'Buffalo Wings', category: 'Sides',
       description: 'Glazed buffalo wings with blue cheese dip and celery sticks',
       image: 'images/wings.jpg', mrp: 379, offerPrice: 299,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 11, name: 'Chicken Shawarma Wrap', category: 'Sides',
       description: 'Grilled chicken with pickled vegetables, tahini, and fresh lettuce',
       image: 'images/wrap.jpg', mrp: 279, offerPrice: 229,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     },
     // ---- Salads ----
     {
       id: 12, name: 'Mediterranean Bowl', category: 'Salads',
       description: 'Grilled chicken, feta, olives, tomatoes, cucumber, and lemon vinaigrette',
       image: 'images/salad.jpg', mrp: 349, offerPrice: 289,
-      badge: 'Healthy', available: true
+      badge: 'Healthy', available: true,
+      sizes: [],
+      addons: []
     },
     // ---- Drinks ----
     {
       id: 13, name: 'Mango Smoothie', category: 'Drinks',
       description: 'Fresh tropical mango blended with yogurt and a hint of mint',
       image: 'images/smoothie.jpg', mrp: 199, offerPrice: 149,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 14, name: 'Berry Blast Smoothie', category: 'Drinks',
       description: 'Mixed berries, banana, and honey blended to perfection',
       image: 'images/smoothie.jpg', mrp: 229, offerPrice: 179,
-      badge: 'New', available: true
+      badge: 'New', available: true,
+      sizes: [],
+      addons: []
     },
     // ---- Desserts ----
     {
       id: 15, name: 'Molten Brownie Sundae', category: 'Desserts',
       description: 'Warm chocolate brownie with vanilla ice cream and chocolate drizzle',
       image: 'images/brownie.jpg', mrp: 299, offerPrice: 229,
-      badge: '🍫 Indulge', available: true
+      badge: '🍫 Indulge', available: true,
+      sizes: [],
+      addons: []
     },
     {
       id: 16, name: 'Classic Cheesecake', category: 'Desserts',
       description: 'New York style cheesecake with berry compote',
       image: 'images/brownie.jpg', mrp: 349, offerPrice: 269,
-      badge: '', available: true
+      badge: '', available: true,
+      sizes: [],
+      addons: []
     }
   ];
 
@@ -150,6 +223,29 @@ var MJData = (function () {
   function initStorage() {
     if (localStorage.getItem(STORAGE_KEY_MENU) === null) {
       localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(DEFAULT_MENU));
+    } else {
+      // Migrate existing menu items to have sizes & addons if missing
+      try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY_MENU));
+        if (Array.isArray(stored)) {
+          let modified = false;
+          stored.forEach(item => {
+            if (item.sizes === undefined) {
+              const def = DEFAULT_MENU.find(d => d.id === item.id);
+              item.sizes = def && def.sizes ? JSON.parse(JSON.stringify(def.sizes)) : [];
+              modified = true;
+            }
+            if (item.addons === undefined) {
+              const def = DEFAULT_MENU.find(d => d.id === item.id);
+              item.addons = def && def.addons ? JSON.parse(JSON.stringify(def.addons)) : [];
+              modified = true;
+            }
+          });
+          if (modified) {
+            localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(stored));
+          }
+        }
+      } catch (e) {}
     }
     if (localStorage.getItem(STORAGE_KEY_PROMOS) === null) {
       localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOS));
