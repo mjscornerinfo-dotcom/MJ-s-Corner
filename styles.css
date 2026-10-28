@@ -2518,3 +2518,187 @@ input, select, textarea {
   border-color: var(--accent);
   outline: none;
 }
+
+/* ============================================
+   ADVANCED PROMOTIONS & IN-CART COMBOS
+   ============================================ */
+
+/* Admin Promo Tags */
+.promo-badge-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.promo-badge-tag.pct {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.promo-badge-tag.flat {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.promo-scope-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.promo-scope-config-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-top: 12px;
+}
+
+.promo-scope-config-box.combo-config {
+  border-left: 3px solid var(--accent);
+}
+
+.promo-fields select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.promo-scope-config-box select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+/* Menu Item Combo Hint */
+.menu-combo-tag {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 700;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* In-Cart Promo & Combo Banners */
+.cart-promo-banners {
+  margin: 10px 0 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cart-combo-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.cart-combo-card.teaser {
+  background: rgba(230, 81, 0, 0.06);
+  border: 1.5px dashed var(--accent);
+}
+
+.cart-combo-card.unlocked {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1.5px solid var(--success);
+}
+
+.combo-card-left {
+  flex: 1;
+}
+
+.combo-badge-pill {
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.combo-badge-pill.teaser {
+  background: var(--accent);
+  color: white;
+}
+
+.combo-badge-pill.unlocked {
+  background: var(--success);
+  color: white;
+}
+
+.combo-badge-pill.category {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.combo-card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.combo-card-desc {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.btn-combo-action {
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: var(--accent);
+  color: white;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-combo-action.browse {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-combo-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.btn-combo-action.applied {
+  background: var(--success);
+  color: white;
+  cursor: default;
+}
+

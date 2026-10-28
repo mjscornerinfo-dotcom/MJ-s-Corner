@@ -252,10 +252,14 @@
     cartDrawer: $('#cartDrawer'),
     cartBody: $('#cartBody'),
     cartEmpty: $('#cartEmpty'),
+    cartPromoBanners: $('#cartPromoBanners'),
     cartItemsList: $('#cartItemsList'),
     cartFooter: $('#cartFooter'),
     cartCloseBtn: $('#cartCloseBtn'),
     cartSubtotal: $('#cartSubtotal'),
+    cartCouponRow: $('#cartCouponRow'),
+    cartCouponLabel: $('#cartCouponLabel'),
+    cartCouponDiscount: $('#cartCouponDiscount'),
     cartSavings: $('#cartSavings'),
     cartTotal: $('#cartTotal'),
     btnCheckout: $('#btnCheckout'),
@@ -1128,6 +1132,22 @@
       }
     }
 
+    // Check if item belongs to a category with an active combo offer
+    const comboOffer = (state.promos || []).find(p => 
+      p.active && 
+      p.scope === 'combo' && 
+      Array.isArray(p.comboCategories) && 
+      p.comboCategories.includes(item.category)
+    );
+    let comboBadgeHtml = '';
+    if (comboOffer) {
+      const otherCat = (comboOffer.comboCategories || []).find(c => c !== item.category) || 'Drink';
+      const offLabel = comboOffer.discountType === 'percentage' 
+        ? `${comboOffer.discountValue}% OFF` 
+        : `₹${comboOffer.discountValue} OFF`;
+      comboBadgeHtml = `<div class="menu-combo-tag">✨ Pair with <strong>${escapeHtml(otherCat)}</strong> for ${offLabel}!</div>`;
+    }
+
     return `
       <div class="menu-card ${customizable ? 'is-customizable' : ''}" data-id="${item.id}">
         <div class="menu-card-img-wrap">
@@ -1139,6 +1159,7 @@
           <h3 class="menu-card-title">${item.name}</h3>
           <p class="menu-card-desc">${item.description}</p>
           ${pricingHtml}
+          ${comboBadgeHtml}
           <div class="menu-card-actions">
             ${actionsHtml}
           </div>
@@ -1279,8 +1300,247 @@
     return { subtotal, savings, total: subtotal, itemCount };
   }
 
+  // ========== PROMO EVALUATION & IN-CART COMBOS ==========
+  function calculatePromoDiscount(promo) {
+    if (!promo || !promo.active) {
+      return { discount: 0, eligible: false, message: 'This promo is inactive or invalid.' };
+    }
+
+    const { subtotal } = getCartTotals();
+    if (promo.minOrderValue && subtotal < Number(promo.minOrderValue)) {
+      return {
+        discount: 0,
+        eligible: false,
+        message: `Minimum cart value of ₹${promo.minOrderValue} required for '${promo.code}'.`
+      };
+    }
+
+    const getCategoryItems = (cat) => {
+      return state.cart.filter(item => {
+        const menuItem = state.menu.find(m => m.id === item.id);
+        return menuItem && menuItem.category && menuItem.category.toLowerCase() === String(cat).toLowerCase();
+      });
+    };
+
+    const scope = promo.scope || 'order';
+    const discountType = promo.discountType || (promo.flatDiscount ? 'flat' : 'percentage');
+    const discountVal = Number(promo.discountValue !== undefined ? promo.discountValue : (promo.discountPercent || promo.flatDiscount || 20));
+
+    if (scope === 'combo') {
+      const cats = Array.isArray(promo.comboCategories) && promo.comboCategories.length >= 2 
+        ? promo.comboCategories 
+        : ['Pizza', 'Drinks'];
+      const cat1 = cats[0];
+      const cat2 = cats[1];
+      const items1 = getCategoryItems(cat1);
+      const items2 = getCategoryItems(cat2);
+
+      if (items1.length === 0 || items2.length === 0) {
+        const missing = [];
+        if (items1.length === 0) missing.push(cat1);
+        if (items2.length === 0) missing.push(cat2);
+        return {
+          discount: 0,
+          eligible: false,
+          message: `Add ${missing.join(' and ')} to your cart to unlock the '${promo.code}' combo deal!`
+        };
+      }
+
+      // Both categories present! Calculate discount on the combo items
+      const comboSubtotal = [...items1, ...items2].reduce((sum, item) => sum + (item.offerPrice * item.qty), 0);
+      let discount = 0;
+      if (discountType === 'percentage') {
+        discount = Math.round((comboSubtotal * discountVal) / 100);
+      } else {
+        discount = Math.min(discountVal, comboSubtotal);
+      }
+      return { discount: Math.max(1, discount), eligible: true, message: '' };
+    }
+
+    if (scope === 'category') {
+      const targetCat = promo.targetCategory || 'All';
+      const items = targetCat === 'All' ? state.cart : getCategoryItems(targetCat);
+      if (items.length === 0) {
+        return {
+          discount: 0,
+          eligible: false,
+          message: `This coupon requires at least one item from '${targetCat}' in your cart.`
+        };
+      }
+      const catSubtotal = items.reduce((sum, item) => sum + (item.offerPrice * item.qty), 0);
+      let discount = 0;
+      if (discountType === 'percentage') {
+        discount = Math.round((catSubtotal * discountVal) / 100);
+      } else {
+        discount = Math.min(discountVal, catSubtotal);
+      }
+      return { discount: Math.max(1, discount), eligible: true, message: '' };
+    }
+
+    if (scope === 'item') {
+      const targetId = parseInt(promo.targetItemId);
+      const item = state.cart.find(c => c.id === targetId);
+      if (!item) {
+        const m = state.menu.find(m => m.id === targetId);
+        return {
+          discount: 0,
+          eligible: false,
+          message: `This coupon is only valid for ${m ? m.name : 'the specified item'}.`
+        };
+      }
+      const itemTotal = item.offerPrice * item.qty;
+      let discount = 0;
+      if (discountType === 'percentage') {
+        discount = Math.round((itemTotal * discountVal) / 100);
+      } else {
+        discount = Math.min(discountVal, itemTotal);
+      }
+      return { discount: Math.max(1, discount), eligible: true, message: '' };
+    }
+
+    // Default: Entire Order
+    let discount = 0;
+    if (discountType === 'percentage') {
+      discount = Math.round((subtotal * discountVal) / 100);
+    } else {
+      discount = Math.min(discountVal, subtotal);
+    }
+    return { discount: Math.max(1, discount), eligible: true, message: '' };
+  }
+
+  function renderCartPromoBanners() {
+    if (!els.cartPromoBanners) return;
+    if (state.cart.length === 0) {
+      els.cartPromoBanners.innerHTML = '';
+      return;
+    }
+
+    // Map categories in cart
+    const cartCategories = new Set();
+    state.cart.forEach(c => {
+      const m = state.menu.find(i => i.id === c.id);
+      if (m && m.category) cartCategories.add(m.category);
+    });
+
+    const activePromos = (state.promos || []).filter(p => p.active);
+    let html = '';
+
+    activePromos.forEach(promo => {
+      const discountType = promo.discountType || (promo.flatDiscount ? 'flat' : 'percentage');
+      const discountVal = promo.discountValue !== undefined ? promo.discountValue : (promo.discountPercent || promo.flatDiscount || 20);
+      const discountLabel = discountType === 'percentage' ? `${discountVal}% OFF` : `₹${discountVal} OFF`;
+      const isApplied = state.appliedPromo && state.appliedPromo.code === promo.code;
+
+      if (promo.scope === 'combo') {
+        const cats = Array.isArray(promo.comboCategories) && promo.comboCategories.length >= 2 
+          ? promo.comboCategories 
+          : ['Pizza', 'Drinks'];
+        const cat1 = cats[0];
+        const cat2 = cats[1];
+        const has1 = cartCategories.has(cat1);
+        const has2 = cartCategories.has(cat2);
+
+        // Case A: Full combo unlocked!
+        if (has1 && has2) {
+          html += `
+            <div class="cart-combo-card unlocked">
+              <div class="combo-card-left">
+                <div class="combo-badge-pill unlocked">🎉 COMBO UNLOCKED</div>
+                <div class="combo-card-title">${escapeHtml(promo.title || `${cat1} + ${cat2} Combo`)}</div>
+                <div class="combo-card-desc">You've added both <strong>${escapeHtml(cat1)}</strong> & <strong>${escapeHtml(cat2)}</strong>! Save ${discountLabel}.</div>
+              </div>
+              <button type="button" class="btn-combo-action ${isApplied ? 'applied' : ''}" data-apply-promo="${escapeHtml(promo.code)}">
+                ${isApplied ? '✓ Applied' : 'Apply Deal 🏷️'}
+              </button>
+            </div>
+          `;
+        }
+        // Case B: Teaser - Customer has 1 of the categories, but missing the other!
+        else if (has1 || has2) {
+          const presentCat = has1 ? cat1 : cat2;
+          const missingCat = has1 ? cat2 : cat1;
+          html += `
+            <div class="cart-combo-card teaser">
+              <div class="combo-card-left">
+                <div class="combo-badge-pill teaser">💡 COMBO OFFER AVAILABLE</div>
+                <div class="combo-card-title">Add a <strong>${escapeHtml(missingCat)}</strong> to get <strong>${discountLabel}</strong>!</div>
+                <div class="combo-card-desc">Pair your ${escapeHtml(presentCat)} with any ${escapeHtml(missingCat)} to unlock promo <strong>${escapeHtml(promo.code)}</strong>.</div>
+              </div>
+              <button type="button" class="btn-combo-action browse" data-jump-cat="${escapeHtml(missingCat)}">
+                + Add ${escapeHtml(missingCat)} 🥤
+              </button>
+            </div>
+          `;
+        }
+      } else if (promo.scope === 'category') {
+        const targetCat = promo.targetCategory;
+        if (targetCat && cartCategories.has(targetCat)) {
+          html += `
+            <div class="cart-combo-card unlocked">
+              <div class="combo-card-left">
+                <div class="combo-badge-pill category">📁 ${escapeHtml(targetCat)} OFFER</div>
+                <div class="combo-card-title">${escapeHtml(promo.title || promo.code)}</div>
+                <div class="combo-card-desc">Save <strong>${discountLabel}</strong> on items in ${escapeHtml(targetCat)}.</div>
+              </div>
+              <button type="button" class="btn-combo-action ${isApplied ? 'applied' : ''}" data-apply-promo="${escapeHtml(promo.code)}">
+                ${isApplied ? '✓ Applied' : 'Apply 🏷️'}
+              </button>
+            </div>
+          `;
+        }
+      }
+    });
+
+    els.cartPromoBanners.innerHTML = html;
+
+    // Bind apply buttons
+    els.cartPromoBanners.querySelectorAll('[data-apply-promo]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyCheckoutCoupon(btn.dataset.applyPromo);
+      });
+    });
+
+    // Bind browse missing combo category button
+    els.cartPromoBanners.querySelectorAll('[data-jump-cat]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cat = btn.dataset.jumpCat;
+        closeCart();
+        state.activeCategory = cat;
+        renderCategories();
+        renderMenu();
+        const section = document.getElementById(`category-${cat}`);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        showToast(`Select your ${cat} to complete the combo!`, 'info');
+      });
+    });
+  }
+
   function updateCartUI() {
     const totals = getCartTotals();
+
+    // Re-validate applied coupon against current cart contents
+    if (state.appliedPromo) {
+      const promoObj = state.promos.find(p => p.code === state.appliedPromo.code);
+      if (!promoObj || !promoObj.active) {
+        state.appliedPromo = null;
+      } else {
+        const res = calculatePromoDiscount(promoObj);
+        if (!res.eligible) {
+          state.appliedPromo = null;
+          showToast(`Coupon '${promoObj.code}' removed: ${res.message}`, 'info');
+        } else {
+          state.appliedPromo.discountAmount = res.discount;
+        }
+      }
+    }
+
+    const couponDiscount = state.appliedPromo ? state.appliedPromo.discountAmount : 0;
+    const finalTotal = Math.max(0, totals.subtotal - couponDiscount);
+    const totalSavings = totals.savings + couponDiscount;
 
     // 1. Header Badge
     els.cartBadge.textContent = totals.itemCount;
@@ -1290,8 +1550,8 @@
     if (totals.itemCount > 0) {
       els.floatingCheckoutBar.classList.remove('hidden');
       els.floatingItemCount.textContent = `${totals.itemCount} ${totals.itemCount === 1 ? 'item' : 'items'}`;
-      els.floatingTotal.textContent = `₹${totals.total}`;
-      els.floatingSavings.textContent = totals.savings > 0 ? `Saved ₹${totals.savings}` : '';
+      els.floatingTotal.textContent = `₹${finalTotal}`;
+      els.floatingSavings.textContent = totalSavings > 0 ? `Saved ₹${totalSavings}` : '';
     } else {
       els.floatingCheckoutBar.classList.add('hidden');
     }
@@ -1299,6 +1559,7 @@
     // 3. Cart Drawer Contents
     if (state.cart.length === 0) {
       els.cartEmpty.classList.remove('hidden');
+      if (els.cartPromoBanners) els.cartPromoBanners.innerHTML = '';
       els.cartItemsList.innerHTML = '';
       els.cartFooter.classList.add('hidden');
       return;
@@ -1307,9 +1568,21 @@
     els.cartEmpty.classList.add('hidden');
     els.cartFooter.classList.remove('hidden');
 
+    // Render In-Cart Promo Suggestions / Unlocked Banners
+    renderCartPromoBanners();
+
     els.cartSubtotal.textContent = `₹${totals.subtotal}`;
-    els.cartSavings.textContent = `₹${totals.savings}`;
-    els.cartTotal.textContent = `₹${totals.total}`;
+    if (state.appliedPromo) {
+      if (els.cartCouponRow) {
+        els.cartCouponRow.classList.remove('hidden');
+        els.cartCouponLabel.textContent = `Coupon (${state.appliedPromo.code})`;
+        els.cartCouponDiscount.textContent = `-₹${state.appliedPromo.discountAmount}`;
+      }
+    } else {
+      if (els.cartCouponRow) els.cartCouponRow.classList.add('hidden');
+    }
+    els.cartSavings.textContent = `₹${totalSavings}`;
+    els.cartTotal.textContent = `₹${finalTotal}`;
 
     els.cartItemsList.innerHTML = state.cart.map(item => {
       const sizeTag = item.selectedSize ? `<span class="cart-item-option-pill">📏 ${escapeHtml(item.selectedSize.name)}</span>` : '';
@@ -1474,10 +1747,21 @@
     }
 
     els.checkoutPromoChips.innerHTML = activePromos.map(promo => {
-      const discountLabel = promo.discountPercent ? `${promo.discountPercent}% OFF` : (promo.flatDiscount ? `₹${promo.flatDiscount} OFF` : 'DEAL');
+      const discountType = promo.discountType || (promo.flatDiscount ? 'flat' : 'percentage');
+      const discountVal = promo.discountValue !== undefined ? promo.discountValue : (promo.discountPercent || promo.flatDiscount || 20);
+      const discountLabel = discountType === 'percentage' ? `${discountVal}% OFF` : `₹${discountVal} OFF`;
+
+      let scopeLabel = '';
+      if (promo.scope === 'combo') {
+        const cats = Array.isArray(promo.comboCategories) ? promo.comboCategories.join(' + ') : 'Combo';
+        scopeLabel = ` • Combo: ${cats}`;
+      } else if (promo.scope === 'category') {
+        scopeLabel = ` • On ${promo.targetCategory || 'Category'}`;
+      }
+
       return `
-        <span class="promo-chip" data-code="${promo.code}">
-          🏷️ ${promo.code} (${discountLabel})
+        <span class="promo-chip" data-code="${escapeHtml(promo.code)}">
+          🏷️ <strong>${escapeHtml(promo.code)}</strong> (${discountLabel}${scopeLabel})
         </span>
       `;
     }).join('');
@@ -1503,33 +1787,32 @@
       return;
     }
 
-    const { subtotal } = getCartTotals();
-    let discount = 0;
-    if (promo.discountPercent) {
-      discount = Math.round((subtotal * promo.discountPercent) / 100);
-    } else if (promo.flatDiscount) {
-      discount = Math.min(promo.flatDiscount, subtotal);
-    } else {
-      discount = Math.round(subtotal * 0.2);
+    const res = calculatePromoDiscount(promo);
+    if (!res.eligible) {
+      showToast(res.message, 'error');
+      return;
     }
 
     state.appliedPromo = {
       code: promo.code,
       title: promo.title,
-      discountAmount: discount
+      discountAmount: res.discount,
+      promoData: promo
     };
 
-    els.appliedCouponTag.classList.remove('hidden');
-    els.appliedCouponText.textContent = `🎉 '${promo.code}' applied! You saved ₹${discount}`;
-    showToast(`Coupon ${promo.code} applied! Saved ₹${discount}`);
+    if (els.appliedCouponTag) els.appliedCouponTag.classList.remove('hidden');
+    if (els.appliedCouponText) els.appliedCouponText.textContent = `🎉 '${promo.code}' applied! You saved ₹${res.discount}`;
+    showToast(`Coupon ${promo.code} applied! Saved ₹${res.discount}`);
+    updateCartUI();
     updateCheckoutBreakdown();
   }
 
   function removeCheckoutCoupon() {
     state.appliedPromo = null;
-    els.appliedCouponTag.classList.add('hidden');
+    if (els.appliedCouponTag) els.appliedCouponTag.classList.add('hidden');
     els.checkoutPromoInput.value = '';
     showToast('Coupon removed.', 'info');
+    updateCartUI();
     updateCheckoutBreakdown();
   }
 

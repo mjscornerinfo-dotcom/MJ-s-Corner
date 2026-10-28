@@ -109,12 +109,18 @@
         <p>Your cart is empty</p>
         <p style="font-size:0.82rem;">Add delicious items from the menu to get started</p>
       </div>
+      <!-- In-cart promo suggestion / unlocked banners -->
+      <div id="cartPromoBanners" class="cart-promo-banners"></div>
       <div id="cartItemsList"></div>
     </div>
     <div class="cart-footer hidden" id="cartFooter">
       <div class="cart-summary-row">
         <span>Subtotal</span>
         <span id="cartSubtotal">₹0</span>
+      </div>
+      <div class="cart-summary-row hidden" id="cartCouponRow" style="color:var(--success);">
+        <span id="cartCouponLabel">Coupon Discount</span>
+        <span id="cartCouponDiscount">-₹0</span>
       </div>
       <div class="cart-summary-row">
         <span>You Save</span>

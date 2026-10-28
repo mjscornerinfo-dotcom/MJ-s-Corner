@@ -686,6 +686,12 @@
   }
 
   // ========== PROMOTIONS ==========
+  function getMenuCategories() {
+    const defaultCats = ['Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
+    const fromMenu = state.menu.map(m => m.category).filter(Boolean);
+    return Array.from(new Set(defaultCats.concat(fromMenu)));
+  }
+
   function renderPromotions() {
     // Update popup toggle
     const toggle = els.promoPopupToggle.querySelector('input');
@@ -696,38 +702,151 @@
       return;
     }
 
-    els.promoList.innerHTML = state.promos.map(promo => `
+    const categories = getMenuCategories();
+
+    els.promoList.innerHTML = state.promos.map(promo => {
+      // Ensure default fields
+      const discountType = promo.discountType || (promo.flatDiscount ? 'flat' : 'percentage');
+      const discountValue = promo.discountValue !== undefined ? promo.discountValue : (promo.discountPercent || promo.flatDiscount || 15);
+      const scope = promo.scope || 'order';
+      const comboCats = Array.isArray(promo.comboCategories) && promo.comboCategories.length >= 2 
+        ? promo.comboCategories 
+        : ['Pizza', 'Drinks'];
+
+      const badgeLabel = discountType === 'percentage' ? `${discountValue}% OFF` : `₹${discountValue} OFF`;
+      let scopeLabel = 'Entire Order';
+      if (scope === 'combo') scopeLabel = `Combo: ${comboCats.join(' + ')}`;
+      else if (scope === 'category') scopeLabel = `Category: ${promo.targetCategory || 'All'}`;
+      else if (scope === 'item') {
+        const itemObj = state.menu.find(m => m.id === parseInt(promo.targetItemId));
+        scopeLabel = itemObj ? `Item: ${itemObj.name}` : 'Specific Item';
+      }
+
+      return `
       <div class="promo-card" id="promo-card-${promo.id}">
         <div class="promo-card-header">
-          <div class="promo-card-title">${promo.title}</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div class="promo-card-title">${escapeHtml(promo.title)}</div>
+            <span class="promo-badge-tag ${discountType}">
+              ${badgeLabel}
+            </span>
+            <span class="promo-scope-tag ${scope}">
+              ${scopeLabel}
+            </span>
+          </div>
           <div style="display:flex;align-items:center;gap:12px;">
-            <label class="toggle-switch">
+            <label class="toggle-switch" title="Toggle active status">
               <input type="checkbox" ${promo.active ? 'checked' : ''} data-promo-toggle="${promo.id}">
               <span class="toggle-slider"></span>
             </label>
-            <button class="btn-admin danger" data-promo-delete="${promo.id}">🗑️</button>
+            <button class="btn-admin danger" data-promo-delete="${promo.id}" title="Delete promotion">🗑️</button>
           </div>
         </div>
+
         <div class="promo-fields">
           <div class="form-group">
-            <label>Title</label>
-            <input type="text" value="${promo.title}" data-promo-field="title" data-promo-id="${promo.id}">
+            <label>Title *</label>
+            <input type="text" value="${escapeHtml(promo.title)}" data-promo-field="title" data-promo-id="${promo.id}" placeholder="e.g. Pizza & Drinks Combo">
           </div>
           <div class="form-group">
-            <label>Subtitle</label>
-            <input type="text" value="${promo.subtitle}" data-promo-field="subtitle" data-promo-id="${promo.id}">
+            <label>Promo Code *</label>
+            <input type="text" value="${escapeHtml(promo.code)}" data-promo-field="code" data-promo-id="${promo.id}" style="text-transform:uppercase;font-weight:700;letter-spacing:0.04em;" placeholder="e.g. PIZZADRINK">
           </div>
           <div class="form-group">
-            <label>Promo Code</label>
-            <input type="text" value="${promo.code}" data-promo-field="code" data-promo-id="${promo.id}" style="text-transform:uppercase">
+            <label>Subtitle / Tagline</label>
+            <input type="text" value="${escapeHtml(promo.subtitle || '')}" data-promo-field="subtitle" data-promo-id="${promo.id}" placeholder="e.g. Pair & Save Big">
           </div>
           <div class="form-group">
-            <label>Description</label>
-            <input type="text" value="${promo.description}" data-promo-field="description" data-promo-id="${promo.id}">
+            <label>Customer Description</label>
+            <input type="text" value="${escapeHtml(promo.description || '')}" data-promo-field="description" data-promo-id="${promo.id}" placeholder="e.g. Get 20% off when you order Pizza and Drinks together">
+          </div>
+
+          <!-- Discount Type: Rupees or Percentage -->
+          <div class="form-group">
+            <label>Discount Type *</label>
+            <select data-promo-field="discountType" data-promo-id="${promo.id}">
+              <option value="percentage" ${discountType === 'percentage' ? 'selected' : ''}>Percentage (%)</option>
+              <option value="flat" ${discountType === 'flat' ? 'selected' : ''}>Rupees (₹ Flat Discount)</option>
+            </select>
+          </div>
+
+          <!-- Discount Value -->
+          <div class="form-group">
+            <label>Discount Value (${discountType === 'percentage' ? '%' : '₹'}) *</label>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-weight:700;color:var(--text-secondary);">${discountType === 'percentage' ? '%' : '₹'}</span>
+              <input type="number" min="1" max="${discountType === 'percentage' ? '100' : '9999'}" value="${discountValue}" data-promo-field="discountValue" data-promo-id="${promo.id}">
+            </div>
+          </div>
+
+          <!-- Offer Target / Scope -->
+          <div class="form-group">
+            <label>Offer Target / Scope *</label>
+            <select data-promo-field="scope" data-promo-id="${promo.id}">
+              <option value="order" ${scope === 'order' ? 'selected' : ''}>Entire Order (Cart Discount)</option>
+              <option value="category" ${scope === 'category' ? 'selected' : ''}>Specific Category</option>
+              <option value="combo" ${scope === 'combo' ? 'selected' : ''}>Combo Offer (e.g. Pizza + Drinks)</option>
+              <option value="item" ${scope === 'item' ? 'selected' : ''}>Specific Menu Item</option>
+            </select>
+          </div>
+
+          <!-- Min Order Value -->
+          <div class="form-group">
+            <label>Min Order Value (₹, Optional)</label>
+            <input type="number" min="0" value="${promo.minOrderValue || 0}" data-promo-field="minOrderValue" data-promo-id="${promo.id}" placeholder="0 for no minimum">
           </div>
         </div>
+
+        <!-- Conditional Scope Details -->
+        ${scope === 'category' ? `
+          <div class="promo-scope-config-box">
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="font-weight:700;color:var(--text-primary);margin-bottom:6px;display:block;">🎯 Target Category (Offer applies to items in this category):</label>
+              <select data-promo-field="targetCategory" data-promo-id="${promo.id}">
+                ${categories.map(cat => `<option value="${cat}" ${(promo.targetCategory || 'Pizza') === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        ` : ''}
+
+        ${scope === 'combo' ? `
+          <div class="promo-scope-config-box combo-config">
+            <div style="font-size:0.85rem;font-weight:700;color:var(--text-primary);margin-bottom:8px;">
+              🍕🥤 Combo Requirements (Customer must add items from BOTH categories to unlock):
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Primary Category</label>
+                <select data-promo-combo-cat="0" data-promo-id="${promo.id}">
+                  ${categories.map(cat => `<option value="${cat}" ${comboCats[0] === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>+ Companion Category</label>
+                <select data-promo-combo-cat="1" data-promo-id="${promo.id}">
+                  ${categories.map(cat => `<option value="${cat}" ${comboCats[1] === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:8px;line-height:1.4;">
+              💡 <strong>Customer Experience:</strong> If a customer adds any <strong>${comboCats[0]}</strong> to their cart, an interactive combo banner instantly reflects in the cart urging them to add a <strong>${comboCats[1]}</strong> to get ${discountType === 'percentage' ? `${discountValue}% OFF` : `₹${discountValue} OFF`}!
+            </div>
+          </div>
+        ` : ''}
+
+        ${scope === 'item' ? `
+          <div class="promo-scope-config-box">
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="font-weight:700;color:var(--text-primary);margin-bottom:6px;display:block;">🍔 Select Target Menu Item:</label>
+              <select data-promo-field="targetItemId" data-promo-id="${promo.id}">
+                ${state.menu.map(m => `<option value="${m.id}" ${parseInt(promo.targetItemId) === m.id ? 'selected' : ''}>${escapeHtml(m.name)} (₹${m.offerPrice})</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        ` : ''}
       </div>
-    `).join('');
+      `;
+    }).join('');
 
     // Bind promo field changes
     els.promoList.querySelectorAll('[data-promo-field]').forEach(input => {
@@ -736,8 +855,43 @@
         const field = input.dataset.promoField;
         const promo = state.promos.find(p => p.id === id);
         if (promo) {
-          promo[field] = input.value;
+          if (field === 'discountValue' || field === 'minOrderValue' || field === 'targetItemId') {
+            promo[field] = parseFloat(input.value) || 0;
+          } else {
+            promo[field] = input.value;
+          }
+
+          // Keep legacy fields in sync for backward compatibility
+          if (promo.discountType === 'percentage') {
+            promo.discountPercent = promo.discountValue;
+            delete promo.flatDiscount;
+          } else {
+            promo.flatDiscount = promo.discountValue;
+            delete promo.discountPercent;
+          }
+
           savePromos();
+          // If discountType or scope changed, re-render to reflect new options
+          if (field === 'discountType' || field === 'scope') {
+            renderPromotions();
+          }
+        }
+      });
+    });
+
+    // Bind combo category selectors
+    els.promoList.querySelectorAll('[data-promo-combo-cat]').forEach(select => {
+      select.addEventListener('change', () => {
+        const id = parseInt(select.dataset.promoId);
+        const idx = parseInt(select.dataset.promoComboCat);
+        const promo = state.promos.find(p => p.id === id);
+        if (promo) {
+          if (!Array.isArray(promo.comboCategories)) {
+            promo.comboCategories = ['Pizza', 'Drinks'];
+          }
+          promo.comboCategories[idx] = select.value;
+          savePromos();
+          renderPromotions();
         }
       });
     });
@@ -771,16 +925,22 @@
     const newId = state.promos.length > 0 ? Math.max(...state.promos.map(p => p.id)) + 1 : 1;
     state.promos.push({
       id: newId,
-      title: '🎉 New Promotion',
-      subtitle: 'Special offer',
-      code: 'NEWCODE',
-      description: 'Enter promotion details here',
+      title: '🍕🥤 Pizza & Drinks Combo',
+      subtitle: 'Pair & Save Big',
+      code: 'COMBO' + newId,
+      description: 'Get 20% off when you order Pizza and Drinks together',
       active: true,
-      discountPercent: 15
+      discountType: 'percentage',
+      discountValue: 20,
+      scope: 'combo',
+      targetCategory: 'Pizza',
+      targetItemId: null,
+      comboCategories: ['Pizza', 'Drinks'],
+      minOrderValue: 0
     });
     savePromos();
     renderPromotions();
-    showToast('New promotion added');
+    showToast('New combo promotion added! You can customize its categories, discount, and code.', 'success');
   }
 
   function savePromos() {

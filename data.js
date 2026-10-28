@@ -195,27 +195,60 @@ var MJData = (function () {
       title: '🎉 Grand Opening!',
       subtitle: 'Celebrate with us',
       code: 'MJOPEN',
-      description: 'Get 25% off on your first order',
+      description: 'Get 25% off on entire order',
       active: true,
-      discountPercent: 25
+      discountType: 'percentage', // 'percentage' | 'flat'
+      discountValue: 25,
+      scope: 'order', // 'order' | 'category' | 'combo' | 'item'
+      targetCategory: 'All',
+      targetItemId: null,
+      comboCategories: [],
+      minOrderValue: 0
     },
     {
       id: 2,
-      title: '🍕 Pizza Mania',
-      subtitle: 'Limited time only',
-      code: 'PIZZA50',
-      description: 'Flat ₹50 off on all pizzas',
+      title: '🍕🥤 Pizza & Drinks Combo',
+      subtitle: 'Pair & Save Big',
+      code: 'PIZZADRINK',
+      description: 'Get 20% off when you order Pizza and Drinks together',
       active: true,
-      flatDiscount: 50
+      discountType: 'percentage',
+      discountValue: 20,
+      scope: 'combo',
+      targetCategory: '',
+      targetItemId: null,
+      comboCategories: ['Pizza', 'Drinks'],
+      minOrderValue: 0
     },
     {
       id: 3,
-      title: '⚡ Flash Sale',
-      subtitle: 'Weekend Treat',
-      code: 'SAVE20',
-      description: 'Get 20% off on your order',
+      title: '🍕 Pizza Mania',
+      subtitle: 'Flat discount',
+      code: 'PIZZA50',
+      description: 'Flat ₹50 off on all pizzas',
       active: true,
-      discountPercent: 20
+      discountType: 'flat',
+      discountValue: 50,
+      scope: 'category',
+      targetCategory: 'Pizza',
+      targetItemId: null,
+      comboCategories: [],
+      minOrderValue: 299
+    },
+    {
+      id: 4,
+      title: '🍔🍟 Burger & Sides Combo',
+      subtitle: 'The Classic Pair',
+      code: 'BURGERCOMBO',
+      description: 'Get 15% off when you pair any Burger with Sides',
+      active: true,
+      discountType: 'percentage',
+      discountValue: 15,
+      scope: 'combo',
+      targetCategory: '',
+      targetItemId: null,
+      comboCategories: ['Burgers', 'Sides'],
+      minOrderValue: 0
     }
   ];
 
@@ -249,6 +282,59 @@ var MJData = (function () {
     }
     if (localStorage.getItem(STORAGE_KEY_PROMOS) === null) {
       localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOS));
+    } else {
+      // Migrate existing promos to support discountType, discountValue, scope, comboCategories
+      try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY_PROMOS));
+        if (Array.isArray(stored)) {
+          let modified = false;
+          // If stored promos are only the old 3 default promos without combo, merge in combo promos
+          const hasCombo = stored.some(p => p.scope === 'combo' || p.code === 'PIZZADRINK');
+          if (!hasCombo) {
+            const pizzaCombo = DEFAULT_PROMOS.find(p => p.code === 'PIZZADRINK');
+            if (pizzaCombo) {
+              stored.splice(1, 0, JSON.parse(JSON.stringify(pizzaCombo)));
+              modified = true;
+            }
+          }
+          stored.forEach(promo => {
+            if (!promo.discountType) {
+              if (promo.flatDiscount) {
+                promo.discountType = 'flat';
+                promo.discountValue = promo.flatDiscount;
+              } else {
+                promo.discountType = 'percentage';
+                promo.discountValue = promo.discountPercent || 20;
+              }
+              modified = true;
+            }
+            if (!promo.scope) {
+              if (promo.code === 'PIZZA50') {
+                promo.scope = 'category';
+                promo.targetCategory = 'Pizza';
+              } else if (promo.code === 'PIZZADRINK') {
+                promo.scope = 'combo';
+                promo.comboCategories = ['Pizza', 'Drinks'];
+              } else {
+                promo.scope = 'order';
+                promo.targetCategory = 'All';
+              }
+              modified = true;
+            }
+            if (promo.comboCategories === undefined) {
+              promo.comboCategories = promo.code === 'PIZZADRINK' ? ['Pizza', 'Drinks'] : [];
+              modified = true;
+            }
+            if (promo.minOrderValue === undefined) {
+              promo.minOrderValue = 0;
+              modified = true;
+            }
+          });
+          if (modified) {
+            localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(stored));
+          }
+        }
+      } catch (e) {}
     }
     if (localStorage.getItem(STORAGE_KEY_POPUP) === null) {
       localStorage.setItem(STORAGE_KEY_POPUP, 'true');
