@@ -149,6 +149,8 @@
 
   const els = {
     themeToggle: $('#themeToggle'),
+    btnHeaderOrders: $('#btnHeaderOrders'),
+    headerOrdersCount: $('#headerOrdersCount'),
     btnHeaderProfile: $('#btnHeaderProfile'),
     headerUserAvatar: $('#headerUserAvatar'),
     headerUserName: $('#headerUserName'),
@@ -227,11 +229,16 @@
     btnProfileSaveNewAddress: $('#btnProfileSaveNewAddress'),
     profileAddressList: $('#profileAddressList'),
     profileOrdersList: $('#profileOrdersList'),
+    // Dedicated Orders modal
+    ordersModal: $('#ordersModal'),
+    ordersCloseBtn: $('#ordersCloseBtn'),
+    customerOrdersList: $('#customerOrdersList'),
     // Success modal
     successModal: $('#successModal'),
     orderIdDisplay: $('#orderIdDisplay'),
     orderSuccessTypeDisplay: $('#orderSuccessTypeDisplay'),
     orderSuccessPromoDisplay: $('#orderSuccessPromoDisplay'),
+    btnTrackOrderInSuccess: $('#btnTrackOrderInSuccess'),
     btnNewOrder: $('#btnNewOrder'),
     // Promo popup
     promoPopupOverlay: $('#promoPopupOverlay'),
@@ -394,50 +401,244 @@
     });
   }
 
-  function renderProfileOrders() {
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function formatOrderDateTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function updateHeaderOrdersBadge() {
+    if (!els.headerOrdersCount) return;
+    const user = MJAuth.getCurrentUser();
+    if (!user) {
+      els.headerOrdersCount.classList.add('hidden');
+      return;
+    }
+    const allOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
+    const activeUserOrders = allOrders.filter(o => 
+      ((o.customer && o.customer.userId === user.id) || (o.customer && o.customer.email === user.email)) &&
+      ['pending', 'preparing', 'ready'].includes(o.status)
+    );
+    if (activeUserOrders.length > 0) {
+      els.headerOrdersCount.textContent = activeUserOrders.length;
+      els.headerOrdersCount.classList.remove('hidden');
+    } else {
+      els.headerOrdersCount.classList.add('hidden');
+    }
+  }
+
+  function openOrdersModal() {
+    renderCustomerOrders(els.customerOrdersList);
+    els.ordersModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeOrdersModal() {
+    els.ordersModal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function cancelCustomerOrder(orderId) {
+    const allOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
+    const order = allOrders.find(o => o.id === orderId);
+    if (!order) return;
+    if (order.status !== 'pending') {
+      showToast('This order can no longer be cancelled as it is already being prepared.', 'error');
+      return;
+    }
+    order.status = 'cancelled';
+    localStorage.setItem('mj_orders', JSON.stringify(allOrders));
+    window.dispatchEvent(new Event('mj_orders_changed'));
+    renderCustomerOrders(els.customerOrdersList);
+    renderProfileOrders();
+    updateHeaderOrdersBadge();
+    showToast(`Order ${orderId} has been cancelled successfully.`, 'info');
+  }
+
+  function renderCustomerOrders(container) {
+    if (!container) return;
     const user = MJAuth.getCurrentUser();
     if (!user) return;
 
     const allOrders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
-    // Filter orders by this user ID or email
     const myOrders = allOrders.filter(o => 
       (o.customer && o.customer.userId === user.id) || 
       (o.customer && o.customer.email === user.email)
     );
 
     if (myOrders.length === 0) {
-      els.profileOrdersList.innerHTML = `
-        <div style="text-align:center;padding:32px;color:var(--text-tertiary);">
-          <div style="font-size:2.5rem;margin-bottom:8px;">🍽️</div>
-          <p>You haven't placed any orders yet.</p>
-          <p style="font-size:0.8rem;">Explore the menu to order your first meal!</p>
+      container.innerHTML = `
+        <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary);">
+          <div style="font-size:3.5rem;margin-bottom:12px;">🍽️</div>
+          <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">No Orders Yet</h3>
+          <p style="font-size:0.88rem;max-width:320px;margin:0 auto 18px;">You haven't placed any orders yet. Discover our fresh meals and order now!</p>
+          <button type="button" class="btn-admin primary" id="btnExploreMenuFromOrders" style="padding:10px 22px;border-radius:var(--radius-full);">
+            🍴 Browse Menu
+          </button>
         </div>
       `;
+      const btnExplore = container.querySelector('#btnExploreMenuFromOrders');
+      if (btnExplore) {
+        btnExplore.addEventListener('click', () => {
+          closeOrdersModal();
+          closeProfileModal();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
       return;
     }
 
-    const typeIcons = { 'dine-in': '🍽️', 'pickup': '🥡', 'delivery': '🚗' };
+    const typeIcons = { 'dine-in': '🍽️ Dine-In', 'pickup': '🥡 Pickup', 'delivery': '🚗 Delivery' };
 
-    els.profileOrdersList.innerHTML = myOrders.map(order => {
-      const itemsText = order.items.map(i => `${i.name} ×${i.qty}`).join(', ');
-      const dateStr = new Date(order.timestamp).toLocaleString();
-      return `
-        <div class="profile-order-card">
-          <div class="profile-order-header">
-            <div>
-              <strong>${order.id}</strong>
-              <span style="margin-left:8px;font-size:0.8rem;color:var(--text-tertiary);">${typeIcons[order.type] || ''} ${order.type.toUpperCase()}</span>
+    container.innerHTML = myOrders.map(order => {
+      const isCancelled = order.status === 'cancelled';
+      const items = order.items || [];
+      const dateFormatted = formatOrderDateTime(order.timestamp);
+
+      // Status Stepper calculation
+      let stepperHtml = '';
+      if (!isCancelled) {
+        const steps = [
+          { key: 'pending', label: 'Order Placed', icon: '⏳' },
+          { key: 'preparing', label: 'In Kitchen', icon: '👨‍🍳' },
+          { key: 'ready', label: 'Ready', icon: '✅' },
+          { key: 'delivered', label: order.type === 'delivery' ? 'Delivered' : 'Served', icon: '🚗' }
+        ];
+
+        const statusIdx = steps.findIndex(s => s.key === order.status);
+        const fillPct = statusIdx >= 0 ? (statusIdx / (steps.length - 1)) * 100 : 0;
+
+        stepperHtml = `
+          <div class="order-tracker-stepper">
+            <div class="stepper-bar-bg">
+              <div class="stepper-bar-fill" style="width:${fillPct}%;"></div>
             </div>
-            <span class="status-badge ${order.status}">${order.status.toUpperCase()}</span>
+            ${steps.map((st, idx) => {
+              const isCompleted = idx < statusIdx;
+              const isActive = idx === statusIdx;
+              const stepCls = isCompleted ? 'completed' : (isActive ? 'active' : '');
+              return `
+                <div class="stepper-step ${stepCls}">
+                  <div class="stepper-circle">${isCompleted ? '✓' : st.icon}</div>
+                  <div class="stepper-label">${st.label}</div>
+                </div>
+              `;
+            }).join('')}
           </div>
-          <div class="profile-order-items">${itemsText}</div>
-          <div class="profile-order-footer">
-            <span style="font-size:0.75rem;color:var(--text-tertiary);">${dateStr}</span>
-            <span style="font-weight:800;color:var(--text-primary);font-size:0.95rem;">Total: ₹${order.total}</span>
+        `;
+      } else {
+        stepperHtml = `
+          <div class="order-cancelled-banner">
+            <span>❌</span>
+            <span>This order was cancelled.</span>
+          </div>
+        `;
+      }
+
+      // Can cancel if still pending
+      const canCancel = order.status === 'pending';
+      const cancelBtnHtml = canCancel
+        ? `<button type="button" class="btn-cancel-cust-order" data-cancel-order="${order.id}">❌ Cancel Order</button>`
+        : '';
+
+      return `
+        <div class="customer-order-card" id="cust-order-${order.id}">
+          <div class="customer-order-header">
+            <div class="customer-order-id-group">
+              <span class="customer-order-id">${order.id}</span>
+              <span class="customer-order-type-badge">${typeIcons[order.type] || order.type}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <span class="status-badge ${order.status}">${order.status.toUpperCase()}</span>
+              <span class="customer-order-date">${dateFormatted}</span>
+            </div>
+          </div>
+
+          <!-- Stepper / Status Banner -->
+          ${stepperHtml}
+
+          <!-- Items Ordered -->
+          <div class="customer-order-items-box">
+            <div style="font-size:0.75rem;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">
+              Ordered Items (${items.length})
+            </div>
+            ${items.map(item => `
+              <div class="customer-order-item-row">
+                <img src="${item.image || 'images/burger.jpg'}" alt="${escapeHtml(item.name)}" class="customer-order-item-img" onerror="this.src='images/burger.jpg'">
+                <div class="customer-order-item-info">
+                  <div class="customer-order-item-name">${escapeHtml(item.name)}</div>
+                  <div class="customer-order-item-sub">₹${item.offerPrice || item.mrp || 0} × ${item.qty}</div>
+                </div>
+                <div class="customer-order-item-total">₹${((item.offerPrice || item.mrp || 0) * (item.qty || 1))}</div>
+              </div>
+            `).join('')}
+
+            ${(order.customer && (order.customer.notes || order.customer.address)) || order.coupon ? `
+              <div class="customer-order-meta">
+                ${order.customer.notes ? `
+                  <div class="customer-order-meta-item">
+                    <span>📝</span>
+                    <span><strong>Kitchen Note:</strong> ${escapeHtml(order.customer.notes)}</span>
+                  </div>
+                ` : ''}
+                ${order.customer.address ? `
+                  <div class="customer-order-meta-item">
+                    <span>📍</span>
+                    <span><strong>Delivery to:</strong> ${escapeHtml(order.customer.address)}</span>
+                  </div>
+                ` : ''}
+                ${order.coupon ? `
+                  <div class="customer-order-meta-item" style="color:var(--success);">
+                    <span>🎟️</span>
+                    <span><strong>Promo '${escapeHtml(order.coupon.code)}':</strong> -₹${order.coupon.discountAmount} applied</span>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Footer with Total & Cancel button -->
+          <div class="customer-order-footer">
+            <div class="customer-order-pricing">
+              ${order.coupon ? `<div class="customer-order-coupon-text">Saved ₹${order.coupon.discountAmount} with ${order.coupon.code}</div>` : ''}
+              <div class="customer-order-total-amount">Total: ₹${order.total}</div>
+            </div>
+            <div>
+              ${cancelBtnHtml}
+            </div>
           </div>
         </div>
       `;
     }).join('');
+
+    // Bind cancel order buttons
+    container.querySelectorAll('[data-cancel-order]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.cancelOrder;
+        if (confirm(`Are you sure you want to cancel order ${id}?`)) {
+          cancelCustomerOrder(id);
+        }
+      });
+    });
+  }
+
+  function renderProfileOrders() {
+    renderCustomerOrders(els.profileOrdersList);
   }
 
   // ========== CATEGORIES & MENU ==========
@@ -957,6 +1158,8 @@
     const orders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
     orders.unshift(order);
     localStorage.setItem('mj_orders', JSON.stringify(orders));
+    window.dispatchEvent(new Event('mj_orders_changed'));
+    updateHeaderOrdersBadge();
 
     // Clear cart & coupon
     state.cart = [];
@@ -1105,6 +1308,25 @@
       showToast('Address saved to your account!', 'success');
     });
 
+    // My Orders modal triggers
+    if (els.btnHeaderOrders) {
+      els.btnHeaderOrders.addEventListener('click', openOrdersModal);
+    }
+    if (els.ordersCloseBtn) {
+      els.ordersCloseBtn.addEventListener('click', closeOrdersModal);
+    }
+    if (els.ordersModal) {
+      els.ordersModal.addEventListener('click', (e) => {
+        if (e.target === els.ordersModal) closeOrdersModal();
+      });
+    }
+    if (els.btnTrackOrderInSuccess) {
+      els.btnTrackOrderInSuccess.addEventListener('click', () => {
+        closeSuccess();
+        openOrdersModal();
+      });
+    }
+
     // Success Modal
     els.btnNewOrder.addEventListener('click', () => {
       closeSuccess();
@@ -1124,6 +1346,7 @@
         closeCart();
         closeCheckout();
         closeProfileModal();
+        closeOrdersModal();
         closeSuccess();
         closePromoPopup();
       }
@@ -1138,20 +1361,36 @@
       renderCheckoutPromoChips();
     }
 
+    function handleOrdersUpdate() {
+      updateHeaderOrdersBadge();
+      if (els.ordersModal && els.ordersModal.classList.contains('open')) {
+        renderCustomerOrders(els.customerOrdersList);
+      }
+      if (els.profileModal && els.profileModal.classList.contains('open') && els.tabProfileOrders && els.tabProfileOrders.classList.contains('active')) {
+        renderProfileOrders();
+      }
+    }
+
     window.addEventListener('mj_data_changed', handleDataUpdate);
+    window.addEventListener('mj_orders_changed', handleOrdersUpdate);
 
     // Listen for storage changes from other tabs
     window.addEventListener('storage', (e) => {
       if (e.key === 'mj_menu' || e.key === 'mj_promos' || e.key === 'mj_promoPopup') {
         handleDataUpdate();
       }
+      if (e.key === 'mj_orders') {
+        handleOrdersUpdate();
+      }
       if (e.key === 'mj_currentUser') {
         initHeaderProfile();
+        updateHeaderOrdersBadge();
       }
     });
 
     window.addEventListener('mj_auth_changed', () => {
       initHeaderProfile();
+      updateHeaderOrdersBadge();
     });
   }
 
@@ -1160,11 +1399,20 @@
     loadState();
     initTheme();
     initHeaderProfile();
+    updateHeaderOrdersBadge();
     initCheckoutOrderType();
     renderCategories();
     renderMenu();
     updateCartUI();
     bindEvents();
+
+    // Periodic check for order status updates from admin (poll every 4s)
+    setInterval(() => {
+      updateHeaderOrdersBadge();
+      if (els.ordersModal && els.ordersModal.classList.contains('open')) {
+        renderCustomerOrders(els.customerOrdersList);
+      }
+    }, 4000);
 
     // Show promo popup once after a short delay
     if (state.promoPopupEnabled) {

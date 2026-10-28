@@ -37,6 +37,13 @@
         MJ's Corner
       </div>
       <div class="header-actions">
+        <!-- My Orders Section Button -->
+        <button class="my-orders-btn-header" id="btnHeaderOrders" aria-label="Open My Orders" title="Track your orders and live status">
+          <span>📦</span>
+          <span style="font-weight:700;">My Orders</span>
+          <span class="orders-badge-count hidden" id="headerOrdersCount">0</span>
+        </button>
+
         <!-- Customer Profile Section Button -->
         <button class="user-profile-btn" id="btnHeaderProfile" aria-label="Open profile">
           <span class="user-avatar-circle" id="headerUserAvatar">U</span>
@@ -335,6 +342,27 @@
     </div>
   </div>
 
+  <!-- ========== MY ORDERS MODAL ========== -->
+  <div class="modal-overlay" id="ordersModal">
+    <div class="modal my-orders-modal">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.5rem;">📦</span>
+          <div>
+            <h2 style="font-size:1.2rem;margin:0;">My Orders</h2>
+            <p style="font-size:0.75rem;color:var(--text-tertiary);margin:0;">Live status tracking & order history</p>
+          </div>
+        </div>
+        <button class="cart-close-btn" id="ordersCloseBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="customerOrdersList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ========== ORDER SUCCESS MODAL ========== -->
   <div class="modal-overlay" id="successModal">
     <div class="modal">
@@ -345,7 +373,14 @@
         <p style="font-weight:700;color:var(--accent);font-size:1.15rem;" id="orderIdDisplay">#MJ-0001</p>
         <div id="orderSuccessTypeDisplay" style="margin: 8px 0; font-size: 0.92rem; color: var(--text-secondary);"></div>
         <div id="orderSuccessPromoDisplay" style="margin-bottom: 12px; font-size: 0.88rem; color: var(--success); font-weight: 600;"></div>
-        <button class="btn-submit-order" id="btnNewOrder" style="margin-top:20px">Order More Food</button>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">
+          <button type="button" class="btn-admin primary" id="btnTrackOrderInSuccess" style="width:100%;padding:14px;font-size:0.95rem;justify-content:center;">
+            📦 Track in My Orders →
+          </button>
+          <button type="button" class="btn-admin secondary" id="btnNewOrder" style="width:100%;padding:12px;font-size:0.9rem;justify-content:center;">
+            🍽️ Order More Food
+          </button>
+        </div>
       </div>
     </div>
   </div>

@@ -126,11 +126,21 @@
     }
   }
 
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   // ========== DASHBOARD ==========
   function renderDashboard() {
     const orders = state.orders;
     const totalOrders = orders.length;
-    const revenue = orders.reduce((sum, o) => sum + o.total, 0);
+    const revenue = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
     const pending = orders.filter(o => o.status === 'pending').length;
     const menuItems = state.menu.filter(m => m.available).length;
 
@@ -172,27 +182,93 @@
   }
 
   function renderOrderRow(order, showTime) {
-    const itemNames = order.items.map(i => `${i.name} ×${i.qty}`).join(', ');
-    const statusClass = order.status;
-    const statusLabel = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+    const items = order.items || [];
+    const totalQty = items.reduce((acc, i) => acc + (i.qty || 1), 0);
     const time = showTime ? `<td>${formatTime(order.timestamp)}</td>` : '';
     const typeIcons = { 'dine-in': '🍽️', 'pickup': '🥡', 'delivery': '🚗' };
 
+    // Dropdown menu in items section
+    const itemsDropdownHtml = `
+      <details class="order-items-dropdown">
+        <summary class="order-items-summary" title="Click to view all ordered items">
+          <span>📦 ${totalQty} Item${totalQty !== 1 ? 's' : ''}</span>
+          <span style="font-size:0.7rem;opacity:0.8;">▾</span>
+        </summary>
+        <div class="order-items-dropdown-list">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.05em;padding-bottom:4px;border-bottom:1px solid var(--border);">
+            Ordered Items (${items.length} item${items.length !== 1 ? 's' : ''})
+          </div>
+          ${items.map(item => `
+            <div class="order-item-chip">
+              <img src="${item.image || 'images/burger.jpg'}" alt="${escapeHtml(item.name)}" class="order-item-chip-img" onerror="this.src='images/burger.jpg'">
+              <div class="order-item-chip-details">
+                <div class="order-item-chip-name">${escapeHtml(item.name)}</div>
+                <div class="order-item-chip-price">₹${item.offerPrice || item.price || 0} × <strong>${item.qty || 1}</strong> = <strong>₹${((item.offerPrice || item.price || 0) * (item.qty || 1))}</strong></div>
+              </div>
+            </div>
+          `).join('')}
+          ${order.customer && order.customer.notes ? `
+            <div class="order-item-chip-note">
+              <strong>📝 Notes:</strong> ${escapeHtml(order.customer.notes)}
+            </div>
+          ` : ''}
+          ${order.customer && order.customer.address ? `
+            <div class="order-item-chip-address">
+              <strong>📍 Delivery Address:</strong> ${escapeHtml(order.customer.address)}
+            </div>
+          ` : ''}
+          ${order.coupon ? `
+            <div class="order-item-chip-promo">
+              🎟️ Promo: <strong>${escapeHtml(order.coupon.code)}</strong> (Saved ₹${order.coupon.discountAmount})
+            </div>
+          ` : ''}
+        </div>
+      </details>
+    `;
+
+    // Manual status selector
+    const statusSelectHtml = `
+      <div class="status-select-wrap">
+        <select class="status-select ${order.status}" data-order-id="${order.id}" data-action="manual-status" title="Manually update order status">
+          <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+          <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>👨‍🍳 Preparing</option>
+          <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>✅ Ready</option>
+          <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>🚗 Delivered</option>
+          <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>❌ Cancelled</option>
+        </select>
+      </div>
+    `;
+
+    // Actions: Next-status advance button + Cancel option
     const nextStatus = getNextStatus(order.status);
-    const actionBtn = nextStatus
-      ? `<button class="btn-admin primary" data-order-id="${order.id}" data-next-status="${nextStatus}" data-action="update-status">${getStatusAction(nextStatus)}</button>`
-      : `<span style="color:var(--text-tertiary);font-size:0.82rem;">Completed</span>`;
+    const nextBtn = (nextStatus && order.status !== 'cancelled')
+      ? `<button class="btn-admin primary" data-order-id="${order.id}" data-next-status="${nextStatus}" data-action="update-status" title="Advance to ${nextStatus}">${getStatusAction(nextStatus)}</button>`
+      : '';
+
+    const cancelBtn = (order.status !== 'cancelled')
+      ? `<button class="btn-admin danger" data-order-id="${order.id}" data-action="cancel-order" title="Cancel this order">❌ Cancel</button>`
+      : `<span style="font-size:0.78rem;color:var(--danger);font-weight:700;">Cancelled</span>`;
+
+    const actionsHtml = `
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        ${nextBtn}
+        ${cancelBtn}
+      </div>
+    `;
 
     return `
       <tr>
         <td><strong>${order.id}</strong></td>
-        <td>${order.customer.name}</td>
+        <td>
+          <div style="font-weight:600;">${escapeHtml(order.customer.name)}</div>
+          <div style="font-size:0.75rem;color:var(--text-tertiary);">${escapeHtml(order.customer.phone || '')}</div>
+        </td>
         <td>${typeIcons[order.type] || ''} ${order.type}</td>
-        <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${itemNames}">${itemNames}</td>
+        <td>${itemsDropdownHtml}</td>
         <td><strong>₹${order.total}</strong></td>
         ${time}
-        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
-        <td>${actionBtn}</td>
+        <td>${statusSelectHtml}</td>
+        <td>${actionsHtml}</td>
       </tr>
     `;
   }
@@ -212,15 +288,34 @@
     if (order) {
       order.status = newStatus;
       localStorage.setItem('mj_orders', JSON.stringify(state.orders));
+      window.dispatchEvent(new Event('mj_orders_changed'));
       loadData();
-      showToast(`Order ${orderId} → ${newStatus}`);
+      showToast(`Order ${orderId} status set to '${newStatus}'`);
     }
   }
 
   function bindOrderActions(container) {
+    // 1. Manual status dropdown
+    container.querySelectorAll('[data-action="manual-status"]').forEach(select => {
+      select.addEventListener('change', () => {
+        updateOrderStatus(select.dataset.orderId, select.value);
+      });
+    });
+
+    // 2. Next status quick button
     container.querySelectorAll('[data-action="update-status"]').forEach(btn => {
       btn.addEventListener('click', () => {
         updateOrderStatus(btn.dataset.orderId, btn.dataset.nextStatus);
+      });
+    });
+
+    // 3. Cancel order button
+    container.querySelectorAll('[data-action="cancel-order"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const orderId = btn.dataset.orderId;
+        if (confirm(`Are you sure you want to cancel order ${orderId}?`)) {
+          updateOrderStatus(orderId, 'cancelled');
+        }
       });
     });
   }
@@ -685,6 +780,10 @@
     });
 
     window.addEventListener('mj_data_changed', () => {
+      loadData();
+    });
+
+    window.addEventListener('mj_orders_changed', () => {
       loadData();
     });
 
