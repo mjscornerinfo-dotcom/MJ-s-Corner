@@ -2065,39 +2065,63 @@ input, select, textarea {
    CUSTOMER MY ORDERS SECTION & TRACKING
    ============================================ */
 
-/* Header My Orders Button */
-.my-orders-btn-header {
+/* Header My Orders & Customer Profile Icon-Only Buttons */
+.my-orders-btn-header,
+.header .user-profile-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: var(--radius-full);
+  justify-content: center;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
   transition: all var(--transition-base);
+  cursor: pointer;
+  padding: 0;
   text-decoration: none;
+  flex-shrink: 0;
 }
 
-.my-orders-btn-header:hover {
-  background: var(--accent-soft);
+.my-orders-btn-header:hover,
+.header .user-profile-btn:hover {
+  background: var(--accent-light);
   border-color: var(--accent);
   color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .orders-badge-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
   background: var(--accent);
   color: white;
   border-radius: var(--radius-full);
   font-size: 0.68rem;
   font-weight: 700;
-  padding: 2px 7px;
-  min-width: 18px;
-  text-align: center;
-  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.header .user-profile-btn .user-avatar-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
 }
 
 /* Customer Orders Modal & Cards */

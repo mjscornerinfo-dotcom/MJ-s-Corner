@@ -37,17 +37,15 @@
         MJ's Corner
       </div>
       <div class="header-actions">
-        <!-- My Orders Section Button -->
-        <button class="my-orders-btn-header" id="btnHeaderOrders" aria-label="Open My Orders" title="Track your orders and live status">
-          <img src="LOGO.jpg" alt="MJ's Corner" class="user-avatar-logo">
-          <span style="font-weight:700;">My Orders</span>
+        <!-- My Orders Section Button (Icon only) -->
+        <button class="my-orders-btn-header" id="btnHeaderOrders" aria-label="Open My Orders" title="My Orders">
+          <span>📦</span>
           <span class="orders-badge-count hidden" id="headerOrdersCount">0</span>
         </button>
 
-        <!-- Customer Profile Section Button -->
-        <button class="user-profile-btn" id="btnHeaderProfile" aria-label="Open profile">
-          <img src="LOGO.jpg" alt="MJ's Corner" class="user-avatar-logo" id="headerUserAvatar">
-          <span id="headerUserName">Profile</span>
+        <!-- Customer Profile Section Button (Icon only) -->
+        <button class="user-profile-btn" id="btnHeaderProfile" aria-label="Open profile" title="My Profile & Account">
+          <span class="user-avatar-circle" id="headerUserAvatar">👤</span>
         </button>
 
         <!-- Theme Toggle -->
@@ -340,7 +338,7 @@
     <div class="modal profile-modal">
       <div class="modal-header">
         <div style="display:flex;align-items:center;gap:10px;">
-          <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);">
+          <span style="font-size:1.4rem;">👤</span>
           <h2 style="margin:0;">My Account & Profile</h2>
         </div>
         <button class="cart-close-btn" id="profileCloseBtn">✕</button>
@@ -354,7 +352,7 @@
           <span>📍</span> Saved Addresses
         </button>
         <button class="profile-tab" data-tab="orders" id="tabProfileOrders">
-          <img src="LOGO.jpg" alt="Logo" style="width:16px;height:16px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px;"> My Orders
+          <span>📦</span> My Orders
         </button>
       </div>
 
@@ -424,7 +422,7 @@
     <div class="modal my-orders-modal">
       <div class="modal-header">
         <div style="display:flex;align-items:center;gap:12px;">
-          <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+          <span style="font-size:1.5rem;">📦</span>
           <div>
             <h2 style="font-size:1.2rem;margin:0;">My Orders</h2>
             <p style="font-size:0.75rem;color:var(--text-tertiary);margin:0;">Live status tracking & order history</p>

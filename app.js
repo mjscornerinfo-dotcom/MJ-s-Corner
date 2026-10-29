@@ -479,18 +479,29 @@
 
     const isAdm = auth.isAdmin(user);
 
-    // Official logo exclusively used in header profile avatar
+    // Profile button: Icon-only without text label
+    if (els.btnHeaderProfile) {
+      els.btnHeaderProfile.title = isAdm ? 'Admin Account' : (user.name ? `${user.name} (Profile)` : 'Profile');
+    }
+
     if (els.headerUserAvatar) {
-      if (els.headerUserAvatar.tagName === 'IMG') {
-        els.headerUserAvatar.src = 'LOGO.jpg';
+      els.headerUserAvatar.textContent = isAdm ? '👑' : '👤';
+      if (isAdm) {
+        els.headerUserAvatar.style.background = 'linear-gradient(135deg, #d97706, #ef4444)';
+        els.headerUserAvatar.style.borderRadius = '50%';
+        els.headerUserAvatar.style.color = '#fff';
       } else {
-        els.headerUserAvatar.textContent = isAdm ? '👑' : (user.name ? user.name.charAt(0).toUpperCase() : 'U');
+        els.headerUserAvatar.style.background = 'transparent';
+        els.headerUserAvatar.style.color = 'inherit';
       }
     }
 
-    if (isAdm) {
-      els.headerUserName.textContent = 'Admin';
+    if (els.headerUserName) {
+      els.headerUserName.textContent = '';
+      els.headerUserName.style.display = 'none';
+    }
 
+    if (isAdm) {
       let adminLink = $('#headerAdminLink');
       if (!adminLink && els.btnHeaderProfile && els.btnHeaderProfile.parentNode) {
         adminLink = document.createElement('a');
@@ -502,9 +513,6 @@
         els.btnHeaderProfile.parentNode.insertBefore(adminLink, els.btnHeaderProfile);
       }
     } else {
-      const firstName = user.name ? user.name.split(' ')[0] : 'Profile';
-      els.headerUserName.textContent = firstName;
-
       const adminLink = $('#headerAdminLink');
       if (adminLink) adminLink.remove();
     }
@@ -753,7 +761,7 @@
     if (!user) {
       container.innerHTML = `
         <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary);">
-          <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:68px;height:68px;border-radius:50%;object-fit:cover;margin:0 auto 16px;border:2px solid var(--accent);box-shadow:0 4px 14px rgba(0,0,0,0.15);display:block;">
+          <div style="font-size:3.5rem;margin-bottom:12px;">🔒</div>
           <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Sign In to View Orders</h3>
           <p style="font-size:0.88rem;max-width:320px;margin:0 auto 18px;">Please log in with your mobile OTP to view your isolated order history and track deliveries.</p>
           <a href="login.html" class="btn-admin primary" style="display:inline-block;padding:10px 22px;border-radius:var(--radius-full);text-decoration:none;">
@@ -777,7 +785,7 @@
     if (myOrders.length === 0) {
       container.innerHTML = `
         <div style="text-align:center;padding:48px 20px;color:var(--text-tertiary);">
-          <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 16px;border:2px solid var(--accent);box-shadow:0 4px 14px rgba(0,0,0,0.15);display:block;">
+          <div style="font-size:3.5rem;margin-bottom:12px;">🍽️</div>
           <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">No Orders Yet</h3>
           <p style="font-size:0.88rem;max-width:320px;margin:0 auto 18px;">You haven't placed any orders yet on this account. Discover our fresh meals and order now!</p>
           <button type="button" class="btn-admin primary" id="btnExploreMenuFromOrders" style="padding:10px 22px;border-radius:var(--radius-full);">
@@ -872,12 +880,9 @@
       return `
         <div class="customer-order-card" id="cust-order-${order.id}">
           <div class="customer-order-header">
-            <div class="customer-order-id-group" style="display:flex;align-items:center;gap:8px;">
-              <img src="LOGO.jpg" alt="MJ's Corner" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid var(--accent);flex-shrink:0;">
-              <div>
-                <span class="customer-order-id">${order.id}</span>
-                <span class="customer-order-type-badge">${typeIcons[order.type] || order.type}</span>
-              </div>
+            <div class="customer-order-id-group">
+              <span class="customer-order-id">${order.id}</span>
+              <span class="customer-order-type-badge">${typeIcons[order.type] || order.type}</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
               <span class="status-badge ${order.status}">${order.status.toUpperCase()}</span>
