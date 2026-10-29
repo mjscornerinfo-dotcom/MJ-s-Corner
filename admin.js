@@ -1253,18 +1253,25 @@
 
     if (isAdm) {
       els.adminUserWrap.innerHTML = `
-        <button class="user-profile-btn" id="btnAdminProfile" aria-label="Admin Profile" style="border-color:var(--accent);background:var(--accent-soft);">
-          <span class="user-avatar-circle" style="background:linear-gradient(135deg, #d97706, #ef4444);">👑</span>
-          <span style="font-weight:700;color:var(--accent);">Admin Active</span>
-          <span style="font-size:0.68rem;opacity:0.7;">▾</span>
+        <button class="admin-active-indicator-btn" id="btnAdminProfile" aria-label="Admin Profile" title="Logged in as Admin (click for settings)">
+          <div class="admin-avatar-crown">👑</div>
+          <div class="admin-active-info">
+            <span class="admin-active-title">
+              <span class="admin-live-pulse-dot"></span>
+              Admin Active
+            </span>
+          </div>
+          <span class="admin-active-caret">▾</span>
         </button>
-        <div class="user-dropdown" id="adminDropdown">
+        <div class="user-dropdown admin-user-dropdown" id="adminDropdown">
           <div class="user-dropdown-header">
             <div class="user-dropdown-name">${(user && user.name) || 'Restaurant Admin'}</div>
             <div class="user-dropdown-email">${(user && user.phone) || (user && user.email) || '+91 99999 88888'}</div>
-            <div style="font-size:0.72rem;color:var(--success);font-weight:700;margin-top:2px;">● MongoDB Role: Admin</div>
+            <div class="admin-dropdown-role">
+              <span>🛡️</span> MongoDB Role: Admin
+            </div>
           </div>
-          <a href="index.html" class="user-dropdown-item">🍽️ Customer Store</a>
+          <a href="index.html" class="user-dropdown-item">🍽️ Visit Customer Store</a>
           <button class="user-dropdown-item danger" id="btnLogoutAdmin">🚪 Sign Out</button>
         </div>
       `;
