@@ -358,21 +358,46 @@ function getAdminPhonesList() {
   return envVal.split(',').map(p => p.trim().replace(/\D/g, '')).filter(Boolean);
 }
 
-async function findOrCreateUser({ name, phone, countryCode = '+91' }) {
-  const db = getDb();
-  const digitsOnly = phone.replace(/\D/g, '');
-  const last10 = digitsOnly.slice(-10);
-  const adminPhones = getAdminPhonesList();
-  const isDefaultAdmin = adminPhones.includes(last10);
+function getAdminEmailsList() {
+  const envVal = process.env.ADMIN_EMAILS || 'admin@mjscorner.com';
+  return envVal.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+}
 
-  // Search by exact phone, regex suffix, or rawPhone
-  let user = await db.collection('users').findOne({
-    $or: [
+function deriveNameFromEmail(email) {
+  if (!email || !email.includes('@')) return 'Customer';
+  const prefix = email.split('@')[0];
+  const parts = prefix.split(/[._\-0-9]+/).filter(Boolean);
+  if (parts.length === 0) return 'Customer';
+  return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
+}
+
+async function findOrCreateUser({ name, phone = '', email = '', countryCode = '+91' }) {
+  const db = getDb();
+  const digitsOnly = (phone || '').replace(/\D/g, '');
+  const last10 = digitsOnly.slice(-10);
+  const cleanEmail = (email || '').trim().toLowerCase();
+
+  const adminPhones = getAdminPhonesList();
+  const adminEmails = getAdminEmailsList();
+  const isDefaultAdmin = (last10 && adminPhones.includes(last10)) || (cleanEmail && adminEmails.includes(cleanEmail));
+
+  // Search by phone, rawPhone suffix, or email
+  const queryConditions = [];
+  if (last10) {
+    queryConditions.push(
       { phone: phone },
       { phone: { $regex: last10 + '$' } },
       { rawPhone: last10 }
-    ]
-  });
+    );
+  }
+  if (cleanEmail) {
+    queryConditions.push({ email: cleanEmail });
+  }
+
+  let user = null;
+  if (queryConditions.length > 0) {
+    user = await db.collection('users').findOne({ $or: queryConditions });
+  }
 
   const now = new Date();
 
@@ -381,21 +406,39 @@ async function findOrCreateUser({ name, phone, countryCode = '+91' }) {
     if (name && (!user.name || user.name === 'Customer' || user.name === 'Guest Customer')) {
       updates.name = name.trim();
     }
-    // If phone is configured in ADMIN_PHONES, ensure admin role
+    if (cleanEmail && !user.email) {
+      updates.email = cleanEmail;
+    }
+    if (phone && !user.phone) {
+      updates.phone = phone.startsWith('+') ? phone : `${countryCode} ${last10}`;
+      updates.countryCode = countryCode;
+      updates.rawPhone = last10;
+    }
+    // If user matches admin criteria, ensure admin role
     if (isDefaultAdmin && user.role !== 'admin') {
       updates.role = 'admin';
     }
     await db.collection('users').updateOne({ _id: user._id }, { $set: updates });
     user = { ...user, ...updates };
   } else {
+    let finalName = (name && name.trim()) || '';
+    if (!finalName && cleanEmail) {
+      finalName = deriveNameFromEmail(cleanEmail);
+    }
+    if (!finalName) {
+      finalName = 'Customer';
+    }
+
     const newUser = {
       id: 'usr_' + Date.now(),
-      name: (name && name.trim()) || 'Customer',
-      phone: phone.startsWith('+') ? phone : `${countryCode} ${last10}`,
-      countryCode: countryCode,
-      rawPhone: last10,
+      name: finalName,
+      phone: last10 ? (phone.startsWith('+') ? phone : `${countryCode} ${last10}`) : '',
+      countryCode: last10 ? countryCode : '',
+      rawPhone: last10 || '',
+      email: cleanEmail || '',
       role: isDefaultAdmin ? 'admin' : 'customer',
       addresses: [],
+      cart: [],
       createdAt: now,
       lastLogin: now
     };
@@ -406,7 +449,8 @@ async function findOrCreateUser({ name, phone, countryCode = '+91' }) {
   return {
     id: user.id || String(user._id),
     name: user.name,
-    phone: user.phone,
+    phone: user.phone || '',
+    email: user.email || '',
     role: user.role || 'customer',
     addresses: user.addresses || []
   };
@@ -417,39 +461,60 @@ async function findOrCreateUser({ name, phone, countryCode = '+91' }) {
 // Public configuration for frontend (Phone.Email client ID, etc.)
 app.get('/api/config', (req, res) => {
   res.json({
-    phoneEmailClientId: process.env.PHONE_EMAIL_CLIENT_ID || '',
+    phoneEmailClientId: process.env.PHONE_EMAIL_CLIENT_ID || '11976801478974448261',
     hasCloudinary: !!process.env.CLOUDINARY_API_KEY
   });
 });
 
-// Phone.Email OTP Verification Callback
-// Frontend receives user_json_url from phoneEmailListener and posts it here
+// Phone.Email OTP Verification Callback (Phone or Email)
+// Frontend receives user_json_url from phoneEmailListener or phoneEmailReceiver and posts it here
 app.post('/api/auth/verify-phone-email', async (req, res) => {
   try {
-    const { name, user_json_url } = req.body;
+    const { name: clientName, user_json_url } = req.body;
     if (!user_json_url) {
       return res.status(400).json({ success: false, message: 'Missing user_json_url from Phone.Email' });
     }
 
     const verifiedData = await fetchJsonFromUrl(user_json_url);
+    console.log('[Phone.Email Verified Payload]:', verifiedData);
+
     const countryCode = verifiedData.user_country_code || verifiedData.country_code || '91';
     const rawNumber = verifiedData.user_phone_number || verifiedData.phone_no || '';
-    if (!rawNumber) {
-      return res.status(400).json({ success: false, message: 'Phone number could not be verified from Phone.Email.' });
+    const verifiedEmail = (verifiedData.user_email_id || verifiedData.email || '').trim().toLowerCase();
+
+    if (!rawNumber && !verifiedEmail) {
+      return res.status(400).json({
+        success: false,
+        message: 'Neither phone number nor email was verified by Phone.Email.'
+      });
     }
 
-    const formattedCountry = countryCode.startsWith('+') ? countryCode : `+${countryCode}`;
-    const cleanPhone = `${formattedCountry} ${rawNumber.replace(/\D/g, '').slice(-10)}`;
+    let cleanPhone = '';
+    let formattedCountry = '+91';
+    if (rawNumber) {
+      formattedCountry = countryCode.startsWith('+') ? countryCode : `+${countryCode}`;
+      const digits = rawNumber.replace(/\D/g, '').slice(-10);
+      cleanPhone = `${formattedCountry} ${digits}`;
+    }
+
+    let derivedName = clientName || '';
+    if (!derivedName) {
+      const parts = [verifiedData.user_first_name, verifiedData.user_last_name].filter(Boolean).map(s => s.trim());
+      if (parts.length > 0) {
+        derivedName = parts.join(' ');
+      }
+    }
 
     const user = await findOrCreateUser({
-      name: name || verifiedData.user_first_name || '',
+      name: derivedName,
       phone: cleanPhone,
+      email: verifiedEmail,
       countryCode: formattedCountry
     });
 
     return res.json({
       success: true,
-      message: 'Verified successfully via Phone.Email!',
+      message: verifiedEmail && !cleanPhone ? 'Email verified successfully via Phone.Email!' : 'Phone verified successfully via Phone.Email!',
       user
     });
   } catch (err) {
@@ -460,19 +525,28 @@ app.post('/api/auth/verify-phone-email', async (req, res) => {
 
 
 
-// Sync or fetch fresh user role & profile from MongoDB
-app.get('/api/auth/user/:phone', async (req, res) => {
+// Sync or fetch fresh user role & profile from MongoDB by phone or email or userId
+app.get('/api/auth/user/:identifier', async (req, res) => {
   try {
     const db = getDb();
-    const rawDigits = req.params.phone.replace(/\D/g, '');
-    const last10 = rawDigits.slice(-10);
+    const identifier = decodeURIComponent(req.params.identifier).trim();
+    let query;
 
-    const user = await db.collection('users').findOne({
-      $or: [
-        { phone: { $regex: last10 + '$' } },
-        { rawPhone: last10 }
-      ]
-    });
+    if (identifier.includes('@')) {
+      query = { email: identifier.toLowerCase() };
+    } else {
+      const rawDigits = identifier.replace(/\D/g, '');
+      const last10 = rawDigits.slice(-10);
+      query = {
+        $or: [
+          { phone: { $regex: last10 + '$' } },
+          { rawPhone: last10 },
+          { id: identifier }
+        ]
+      };
+    }
+
+    const user = await db.collection('users').findOne(query);
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found in MongoDB' });
@@ -483,7 +557,8 @@ app.get('/api/auth/user/:phone', async (req, res) => {
       user: {
         id: user.id || String(user._id),
         name: user.name,
-        phone: user.phone,
+        phone: user.phone || '',
+        email: user.email || '',
         role: user.role || 'customer',
         addresses: user.addresses || []
       }
@@ -497,22 +572,40 @@ app.get('/api/auth/user/:phone', async (req, res) => {
 app.post('/api/auth/sync-user', async (req, res) => {
   try {
     const db = getDb();
-    const { phone, addresses, name } = req.body;
-    if (!phone) return res.status(400).json({ success: false, message: 'Phone required' });
-    const rawDigits = phone.replace(/\D/g, '');
-    const last10 = rawDigits.slice(-10);
+    const { phone, email, userId, addresses, name } = req.body;
+    if (!phone && !email && !userId) {
+      return res.status(400).json({ success: false, message: 'User identifier required' });
+    }
+
+    const query = [];
+    if (userId) query.push({ id: userId });
+    if (email) query.push({ email: email.trim().toLowerCase() });
+    if (phone) {
+      const rawDigits = phone.replace(/\D/g, '');
+      const last10 = rawDigits.slice(-10);
+      if (last10) {
+        query.push(
+          { phone: { $regex: last10 + '$' } },
+          { rawPhone: last10 }
+        );
+      }
+    }
 
     const updates = {};
     if (Array.isArray(addresses)) updates.addresses = addresses;
     if (name) updates.name = name;
+    if (email) updates.email = email.trim().toLowerCase();
+    if (phone) {
+      const rawDigits = phone.replace(/\D/g, '');
+      const last10 = rawDigits.slice(-10);
+      if (last10) {
+        updates.phone = phone.startsWith('+') ? phone : `+91 ${last10}`;
+        updates.rawPhone = last10;
+      }
+    }
 
     await db.collection('users').updateOne(
-      {
-        $or: [
-          { phone: { $regex: last10 + '$' } },
-          { rawPhone: last10 }
-        ]
-      },
+      { $or: query },
       { $set: updates }
     );
 
@@ -537,26 +630,32 @@ app.get('/api/admin/users', async (req, res) => {
 app.post('/api/admin/set-role', async (req, res) => {
   try {
     const db = getDb();
-    const { phone, role } = req.body;
-    if (!phone || !role) {
-      return res.status(400).json({ success: false, message: 'Phone and role are required' });
+    const { phone, email, userId, role } = req.body;
+    if ((!phone && !email && !userId) || !role) {
+      return res.status(400).json({ success: false, message: 'User identifier and role are required' });
     }
 
-    const rawDigits = phone.replace(/\D/g, '');
-    const last10 = rawDigits.slice(-10);
-
-    const result = await db.collection('users').updateOne(
-      {
-        $or: [
+    const query = [];
+    if (userId) query.push({ id: userId });
+    if (email) query.push({ email: email.trim().toLowerCase() });
+    if (phone) {
+      const rawDigits = phone.replace(/\D/g, '');
+      const last10 = rawDigits.slice(-10);
+      if (last10) {
+        query.push(
           { phone: { $regex: last10 + '$' } },
           { rawPhone: last10 }
-        ]
-      },
+        );
+      }
+    }
+
+    const result = await db.collection('users').updateOne(
+      { $or: query },
       { $set: { role: role } }
     );
 
     if (result.matchedCount === 0) {
-      return res.status(404).json({ success: false, message: 'No user found with that phone number' });
+      return res.status(404).json({ success: false, message: 'No user found in MongoDB with that identifier' });
     }
 
     return res.json({ success: true, message: `Role updated to ${role} in MongoDB!` });
@@ -691,18 +790,27 @@ app.post('/api/settings', async (req, res) => {
 });
 
 // ========== USER CART ISOLATION ENDPOINTS (MONGODB ATLAS) ==========
-app.get('/api/user/cart/:phone', async (req, res) => {
+app.get('/api/user/cart/:identifier', async (req, res) => {
   try {
     const db = getDb();
-    const rawDigits = req.params.phone.replace(/\D/g, '');
-    const last10 = rawDigits.slice(-10);
+    const identifier = decodeURIComponent(req.params.identifier).trim();
+    let query;
 
-    const user = await db.collection('users').findOne({
-      $or: [
-        { phone: { $regex: last10 + '$' } },
-        { rawPhone: last10 }
-      ]
-    });
+    if (identifier.includes('@')) {
+      query = { email: identifier.toLowerCase() };
+    } else {
+      const rawDigits = identifier.replace(/\D/g, '');
+      const last10 = rawDigits.slice(-10);
+      query = {
+        $or: [
+          { phone: { $regex: last10 + '$' } },
+          { rawPhone: last10 },
+          { id: identifier }
+        ]
+      };
+    }
+
+    const user = await db.collection('users').findOne(query);
 
     if (!user) {
       return res.json({ success: true, cart: [] });
@@ -717,20 +825,26 @@ app.get('/api/user/cart/:phone', async (req, res) => {
 app.post('/api/user/cart', async (req, res) => {
   try {
     const db = getDb();
-    const { phone, cart } = req.body;
-    if (!phone) {
-      return res.status(400).json({ success: false, message: 'Phone number is required' });
+    const { phone, email, userId, cart } = req.body;
+    if (!phone && !email && !userId) {
+      return res.status(400).json({ success: false, message: 'User identifier is required' });
     }
 
-    const rawDigits = phone.replace(/\D/g, '');
-    const last10 = rawDigits.slice(-10);
+    const query = [];
+    if (userId && userId !== 'guest') query.push({ id: userId });
+    if (email) query.push({ email: email.trim().toLowerCase() });
+    if (phone) {
+      const rawDigits = phone.replace(/\D/g, '');
+      const last10 = rawDigits.slice(-10);
+      if (last10) {
+        query.push(
+          { phone: { $regex: last10 + '$' } },
+          { rawPhone: last10 }
+        );
+      }
+    }
 
-    const user = await db.collection('users').findOne({
-      $or: [
-        { phone: { $regex: last10 + '$' } },
-        { rawPhone: last10 }
-      ]
-    });
+    const user = await db.collection('users').findOne({ $or: query });
 
     if (user) {
       await db.collection('users').updateOne(
@@ -743,12 +857,16 @@ app.post('/api/user/cart', async (req, res) => {
         }
       );
     } else {
+      const rawDigits = (phone || '').replace(/\D/g, '');
+      const last10 = rawDigits.slice(-10);
+      const cleanEmail = (email || '').trim().toLowerCase();
       await db.collection('users').insertOne({
-        id: 'usr_' + Date.now(),
-        name: 'Customer',
-        phone: phone.startsWith('+') ? phone : `+91 ${last10}`,
-        countryCode: '+91',
-        rawPhone: last10,
+        id: userId || ('usr_' + Date.now()),
+        name: cleanEmail ? deriveNameFromEmail(cleanEmail) : 'Customer',
+        phone: last10 ? (phone.startsWith('+') ? phone : `+91 ${last10}`) : '',
+        countryCode: last10 ? '+91' : '',
+        rawPhone: last10 || '',
+        email: cleanEmail || '',
         role: 'customer',
         addresses: [],
         cart: Array.isArray(cart) ? cart : [],
@@ -768,19 +886,29 @@ app.post('/api/user/cart', async (req, res) => {
 app.get('/api/orders', async (req, res) => {
   try {
     const db = getDb();
-    const { phone } = req.query;
+    const { phone, email, userId } = req.query;
     let query = {};
 
+    const orClauses = [];
     if (phone && phone.trim()) {
       const rawDigits = phone.replace(/\D/g, '');
       const last10 = rawDigits.slice(-10);
-      query = {
-        $or: [
+      if (last10) {
+        orClauses.push(
           { 'customer.phone': { $regex: last10 + '$' } },
-          { 'customer.rawPhone': last10 },
-          { 'customer.userId': phone }
-        ]
-      };
+          { 'customer.rawPhone': last10 }
+        );
+      }
+    }
+    if (email && email.trim()) {
+      orClauses.push({ 'customer.email': email.trim().toLowerCase() });
+    }
+    if (userId && userId.trim() && userId !== 'guest') {
+      orClauses.push({ 'customer.userId': userId.trim() });
+    }
+
+    if (orClauses.length > 0) {
+      query = { $or: orClauses };
     }
 
     const orders = await db.collection('orders').find(query).sort({ timestamp: -1, createdAt: -1 }).toArray();
@@ -800,6 +928,8 @@ app.post('/api/orders', async (req, res) => {
     }
 
     const customerPhone = (orderData.customer && orderData.customer.phone) || '';
+    const customerEmail = (orderData.customer && orderData.customer.email) || '';
+    const customerUserId = (orderData.customer && orderData.customer.userId) || '';
     const rawDigits = customerPhone.replace(/\D/g, '');
     const last10 = rawDigits.slice(-10);
 
@@ -807,7 +937,8 @@ app.post('/api/orders', async (req, res) => {
       ...orderData,
       customer: {
         ...orderData.customer,
-        rawPhone: last10
+        rawPhone: last10,
+        email: customerEmail.toLowerCase()
       },
       createdAt: new Date(),
       updatedAt: new Date()
@@ -816,17 +947,24 @@ app.post('/api/orders', async (req, res) => {
     await db.collection('orders').insertOne(orderDoc);
 
     // Automatically clear customer cart in MongoDB users collection upon checkout
+    const clearFilters = [];
     if (last10) {
+      clearFilters.push(
+        { phone: { $regex: last10 + '$' } },
+        { rawPhone: last10 }
+      );
+    }
+    if (customerEmail) {
+      clearFilters.push({ email: customerEmail.toLowerCase() });
+    }
+    if (customerUserId && customerUserId !== 'guest') {
+      clearFilters.push({ id: customerUserId });
+    }
+
+    if (clearFilters.length > 0) {
       await db.collection('users').updateOne(
-        {
-          $or: [
-            { phone: { $regex: last10 + '$' } },
-            { rawPhone: last10 }
-          ]
-        },
-        {
-          $set: { cart: [], cartUpdatedAt: new Date() }
-        }
+        { $or: clearFilters },
+        { $set: { cart: [], cartUpdatedAt: new Date() } }
       );
     }
 

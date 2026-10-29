@@ -61,40 +61,51 @@
       <div class="auth-card">
         <div class="auth-panel active" style="padding: 36px 30px;">
           
-          <div class="auth-header" style="margin-bottom: 24px;">
-            <h1 style="margin: 0;">Sign In</h1>
+          <div class="auth-header" style="margin-bottom: 28px;">
+            <h1 style="margin: 0 0 8px 0;">Sign In</h1>
+            <p style="margin: 0; color: var(--text-secondary); font-size: 0.92rem;">Choose your preferred sign-in method to continue</p>
           </div>
 
-          <!-- Login Form -->
-          <form id="phoneLoginForm" class="auth-form" onsubmit="return false;">
-            <!-- Full Name -->
-            <div class="form-group">
-              <label for="custName">Full Name</label>
-              <div class="input-with-icon">
-                <span class="input-prefix-icon">👤</span>
-                <input type="text" id="custName" placeholder="Enter your name" required autocomplete="name">
-              </div>
-            </div>
-
-            <!-- Mobile Number -->
-            <div class="form-group">
-              <label for="custPhone">Mobile Number</label>
-              <div class="phone-input-row">
-                <div class="country-code-pill">
-                  <span>🇮🇳</span>
-                  <strong>+91</strong>
+          <div class="pe-auth-container">
+            <!-- Option 1: Mobile Number OTP -->
+            <div class="pe-auth-section">
+              <div class="pe-section-header">
+                <span class="pe-section-icon">📱</span>
+                <div>
+                  <div class="pe-section-title">Sign in with Mobile Number</div>
+                  <div class="pe-section-subtitle">Instant SMS OTP verification</div>
                 </div>
-                <input type="tel" id="custPhone" placeholder="Enter mobile number" maxlength="10" pattern="[0-9]{10}" autocomplete="tel">
+              </div>
+              <div class="pe-button-wrapper">
+                <div class="pe_signin_button" data-client-id="11976801478974448261">
+                  <script src="https://www.phone.email/sign_in_button_v1.js" async></script>
+                </div>
               </div>
             </div>
 
-            <!-- Official Phone.Email Button -->
-            <div class="pe-button-wrapper" style="display:flex;justify-content:center;margin-top:24px;">
-              <div class="pe_signin_button" data-client-id="11976801478974448261">
-                <script src="https://www.phone.email/sign_in_button_v1.js" async></script>
+            <!-- Divider -->
+            <div class="auth-divider">
+              <span class="auth-divider-line"></span>
+              <span class="auth-divider-text">OR</span>
+              <span class="auth-divider-line"></span>
+            </div>
+
+            <!-- Option 2: Email OTP -->
+            <div class="pe-auth-section">
+              <div class="pe-section-header">
+                <span class="pe-section-icon">✉️</span>
+                <div>
+                  <div class="pe-section-title">Sign in with Email</div>
+                  <div class="pe-section-subtitle">Instant Email OTP verification</div>
+                </div>
+              </div>
+              <div class="pe-button-wrapper">
+                <div class="pe_verify_email" data-client-id="11976801478974448261">
+                  <script src="https://www.phone.email/verify_email_v1.js" async></script>
+                </div>
               </div>
             </div>
-          </form>
+          </div>
 
         </div>
       </div>

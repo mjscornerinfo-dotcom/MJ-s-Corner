@@ -37,10 +37,11 @@ var MJAuth = (function () {
   // Refresh user role & data from MongoDB Atlas in background
   async function refreshCurrentUserRoleFromDb() {
     const cur = getCurrentUser();
-    if (!cur || !cur.phone) return cur;
+    if (!cur || (!cur.phone && !cur.email && !cur.id)) return cur;
 
     try {
-      const res = await fetch(`/api/auth/user/${encodeURIComponent(cur.phone)}`);
+      const identifier = cur.phone || cur.email || cur.id;
+      const res = await fetch(`/api/auth/user/${encodeURIComponent(identifier)}`);
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.user) {
@@ -48,6 +49,8 @@ var MJAuth = (function () {
             ...cur,
             role: data.user.role || cur.role,
             name: data.user.name || cur.name,
+            phone: data.user.phone || cur.phone || '',
+            email: data.user.email || cur.email || '',
             addresses: data.user.addresses || cur.addresses || []
           };
           setCurrentUser(updated);
@@ -95,13 +98,15 @@ var MJAuth = (function () {
   }
 
   async function syncUserToDb(user) {
-    if (!user || !user.phone) return;
+    if (!user || (!user.phone && !user.email && !user.id)) return;
     try {
       await fetch('/api/auth/sync-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: user.phone,
+          phone: user.phone || '',
+          email: user.email || '',
+          userId: user.id || '',
           addresses: user.addresses,
           name: user.name
         })
@@ -149,12 +154,13 @@ var MJAuth = (function () {
     syncUserToDb(cur);
   }
 
-  function updateUserProfile(userId, { name, phone }) {
+  function updateUserProfile(userId, { name, phone, email }) {
     const cur = getCurrentUser();
     if (!cur) return false;
 
     if (name) cur.name = name.trim();
-    if (phone) cur.phone = phone.trim();
+    if (phone !== undefined) cur.phone = phone.trim();
+    if (email !== undefined) cur.email = email.trim().toLowerCase();
     setCurrentUser(cur);
     syncUserToDb(cur);
     return true;

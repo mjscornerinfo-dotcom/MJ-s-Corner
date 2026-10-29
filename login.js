@@ -1,6 +1,7 @@
 /* ============================================
-   MJ's Corner — Mobile OTP Login Logic
-   Powered by Phone.Email & MongoDB Roles
+   MJ's Corner — Passwordless Login Logic
+   Powered by Phone.Email (Phone & Email OTP)
+   MongoDB Atlas Session & Role Management
    ============================================ */
 
 (function () {
@@ -12,8 +13,6 @@
 
   const els = {
     themeToggle: $('#themeToggle'),
-    custName: $('#custName'),
-    custPhone: $('#custPhone'),
     toastContainer: $('#toastContainer')
   };
 
@@ -89,25 +88,21 @@
     }
   }
 
-  // ========== GLOBAL PHONE.EMAIL LISTENER CALLBACK ==========
-  window.phoneEmailListener = async function (userObj) {
-    console.log('[Phone.Email] Callback triggered with:', userObj);
+  // ========== UNIFIED PHONE.EMAIL VERIFICATION HANDLER ==========
+  async function processPhoneEmailVerification(userObj, authType = 'phone') {
+    console.log(`[Phone.Email ${authType}] Callback triggered with:`, userObj);
     const user_json_url = typeof userObj === 'string' ? userObj : (userObj && userObj.user_json_url);
 
     if (!user_json_url) {
-      showToast('Phone.Email verification failed: No verification URL returned', 'error');
+      showToast('Verification failed: No verification URL returned', 'error');
       return;
     }
 
-    showToast('Phone verified! Signing in...', 'info');
-
-    const name = (els.custName && els.custName.value.trim()) || '';
-    const phone = (els.custPhone && els.custPhone.value.trim()) || '';
+    const label = authType === 'email' ? 'Email' : 'Phone';
+    showToast(`${label} verified! Signing into MJ's Corner...`, 'info');
 
     try {
       const res = await MJAuth.loginWithPhoneEmail({
-        name,
-        phone,
         user_json_url
       });
 
@@ -119,6 +114,16 @@
     } catch (err) {
       showToast('Authentication error: ' + err.message, 'error');
     }
+  }
+
+  // Phone Sign In Callback (triggered by sign_in_button_v1.js)
+  window.phoneEmailListener = function (userObj) {
+    processPhoneEmailVerification(userObj, 'phone');
+  };
+
+  // Email Sign In Callback (triggered by verify_email_v1.js)
+  window.phoneEmailReceiver = function (userObj) {
+    processPhoneEmailVerification(userObj, 'email');
   };
 
   // ========== EVENT LISTENERS ==========

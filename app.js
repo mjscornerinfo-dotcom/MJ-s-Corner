@@ -204,16 +204,36 @@
   // ========== USER ISOLATION HELPERS ==========
   function getCartStorageKey(user) {
     const cur = user !== undefined ? user : (window.MJAuth ? MJAuth.getCurrentUser() : null);
-    if (!cur || !cur.phone) return 'mj_cart_guest';
-    const raw = cur.phone.replace(/\D/g, '').slice(-10);
-    return `mj_cart_${raw}`;
+    if (!cur) return 'mj_cart_guest';
+    if (cur.phone) {
+      const raw = cur.phone.replace(/\D/g, '').slice(-10);
+      if (raw) return `mj_cart_${raw}`;
+    }
+    if (cur.email) {
+      const cleanEmail = cur.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      return `mj_cart_em_${cleanEmail}`;
+    }
+    if (cur.id) {
+      return `mj_cart_id_${cur.id}`;
+    }
+    return 'mj_cart_guest';
   }
 
   function getOrdersStorageKey(user) {
     const cur = user !== undefined ? user : (window.MJAuth ? MJAuth.getCurrentUser() : null);
-    if (!cur || !cur.phone) return 'mj_orders_guest';
-    const raw = cur.phone.replace(/\D/g, '').slice(-10);
-    return `mj_orders_${raw}`;
+    if (!cur) return 'mj_orders_guest';
+    if (cur.phone) {
+      const raw = cur.phone.replace(/\D/g, '').slice(-10);
+      if (raw) return `mj_orders_${raw}`;
+    }
+    if (cur.email) {
+      const cleanEmail = cur.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      return `mj_orders_em_${cleanEmail}`;
+    }
+    if (cur.id) {
+      return `mj_orders_id_${cur.id}`;
+    }
+    return 'mj_orders_guest';
   }
 
   // ========== STATE ==========
@@ -261,8 +281,9 @@
     }
 
     // Sync user cart with MongoDB Atlas if customer is signed in
-    if (cur && cur.phone) {
-      fetch(`/api/user/cart/${encodeURIComponent(cur.phone)}`)
+    if (cur && (cur.phone || cur.email || cur.id)) {
+      const cartIdentifier = cur.phone || cur.email || cur.id;
+      fetch(`/api/user/cart/${encodeURIComponent(cartIdentifier)}`)
         .then(res => res.json())
         .then(data => {
           if (data.success && Array.isArray(data.cart)) {
@@ -293,13 +314,18 @@
     localStorage.setItem(key, JSON.stringify(state.cart));
 
     // Debounced sync to MongoDB Atlas for logged-in customer
-    if (syncToDb && cur && cur.phone) {
+    if (syncToDb && cur && (cur.phone || cur.email || cur.id)) {
       clearTimeout(cartSyncTimer);
       cartSyncTimer = setTimeout(() => {
         fetch('/api/user/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: cur.phone, cart: state.cart })
+          body: JSON.stringify({
+            phone: cur.phone || '',
+            email: cur.email || '',
+            userId: cur.id || '',
+            cart: state.cart
+          })
         }).catch(err => console.warn('Could not save user cart to MongoDB:', err));
       }, 400);
     }
@@ -617,9 +643,14 @@
 
   async function fetchCustomerOrders() {
     const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
-    if (!user || !user.phone) return [];
+    if (!user || (!user.phone && !user.email && !user.id)) return [];
     try {
-      const res = await fetch(`/api/orders?phone=${encodeURIComponent(user.phone)}`);
+      const params = new URLSearchParams();
+      if (user.phone) params.set('phone', user.phone);
+      if (user.email) params.set('email', user.email);
+      if (user.id) params.set('userId', user.id);
+
+      const res = await fetch(`/api/orders?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.orders)) {
@@ -636,17 +667,21 @@
   function updateHeaderOrdersBadge() {
     if (!els.headerOrdersCount) return;
     const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
-    if (!user || !user.phone) {
+    if (!user || (!user.phone && !user.email && !user.id)) {
       els.headerOrdersCount.classList.add('hidden');
       return;
     }
-    const userLast10 = user.phone.replace(/\D/g, '').slice(-10);
+    const userLast10 = user.phone ? user.phone.replace(/\D/g, '').slice(-10) : '';
+    const userEmail = (user.email || '').toLowerCase();
     const userOrders = JSON.parse(localStorage.getItem(getOrdersStorageKey(user)) || '[]');
     const activeUserOrders = userOrders.filter(o => {
       if (!o.customer) return false;
       const orderPhone = (o.customer.phone || '').replace(/\D/g, '').slice(-10);
-      return (orderPhone === userLast10 || o.customer.userId === user.id) &&
-             ['pending', 'preparing', 'ready'].includes(o.status);
+      const orderEmail = (o.customer.email || '').toLowerCase();
+      const isMyOrder = (userLast10 && orderPhone === userLast10) ||
+                        (userEmail && orderEmail === userEmail) ||
+                        (user.id && o.customer.userId === user.id);
+      return isMyOrder && ['pending', 'preparing', 'ready'].includes(o.status);
     });
     if (activeUserOrders.length > 0) {
       els.headerOrdersCount.textContent = activeUserOrders.length;
@@ -2432,7 +2467,8 @@
       if (user) {
         MJAuth.updateUserProfile(user.id, {
           name: els.profName.value,
-          phone: els.profPhone.value
+          phone: els.profPhone.value,
+          email: els.profEmail ? els.profEmail.value : (user.email || '')
         });
         initHeaderProfile();
         showToast('Profile updated successfully!', 'success');
@@ -2641,7 +2677,7 @@
     // Periodic live orders sync with MongoDB Atlas (poll every 5s if logged in)
     setInterval(() => {
       const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
-      if (user && user.phone) {
+      if (user && (user.phone || user.email || user.id)) {
         fetchCustomerOrders().then(() => {
           updateHeaderOrdersBadge();
           if (els.ordersModal && els.ordersModal.classList.contains('open')) {
