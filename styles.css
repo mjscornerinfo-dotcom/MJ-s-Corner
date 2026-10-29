@@ -296,9 +296,12 @@ input, select, textarea {
 }
 
 /* ---------- Main Content ---------- */
-.main {
+.main,
+#mainContent {
   padding-top: var(--header-height);
+  padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 /* ---------- Welcome / Splash Screen ---------- */
