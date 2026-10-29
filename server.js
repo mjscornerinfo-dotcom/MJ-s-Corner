@@ -2,11 +2,21 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const https = require('https');
+const crypto = require('crypto');
+const Razorpay = require('razorpay');
 const cloudinary = require('cloudinary').v2;
 const { connectToMongoDB, disconnectFromMongoDB, getDb } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Initialize Razorpay client helper
+function getRazorpayInstance() {
+  const key_id = process.env.RAZORPAY_KEY_ID;
+  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!key_id || !key_secret) return null;
+  return new Razorpay({ key_id, key_secret });
+}
 
 // Configure Cloudinary for Food Image Uploads
 cloudinary.config({
@@ -458,12 +468,186 @@ async function findOrCreateUser({ name, phone = '', email = '', countryCode = '+
 
 // ========== API ROUTES ==========
 
-// Public configuration for frontend (Phone.Email client ID, etc.)
+// Public configuration for frontend (Phone.Email client ID, Razorpay Key ID, etc.)
 app.get('/api/config', (req, res) => {
   res.json({
     phoneEmailClientId: process.env.PHONE_EMAIL_CLIENT_ID || '11976801478974448261',
-    hasCloudinary: !!process.env.CLOUDINARY_API_KEY
+    hasCloudinary: !!process.env.CLOUDINARY_API_KEY,
+    razorpayKeyId: process.env.RAZORPAY_KEY_ID || ''
   });
+});
+
+// ========== RAZORPAY STANDARD WEB CHECKOUT ENDPOINTS ==========
+
+// 1. Create Order: Calls Razorpay API (POST https://api.razorpay.com/v1/orders)
+// Expects: { amount (in paise), currency, receipt }
+// Returns: { order_id, amount, currency, key }
+app.post('/api/create-order', async (req, res) => {
+  try {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) {
+      return res.status(401).json({
+        success: false,
+        error: 'Razorpay credentials not configured on server (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET missing)'
+      });
+    }
+
+    const { amount, currency = 'INR', receipt, notes } = req.body;
+    const parsedAmount = parseInt(amount, 10);
+
+    // Minimum amount validation: at least 100 paise (₹1.00)
+    if (isNaN(parsedAmount) || parsedAmount < 100) {
+      return res.status(400).json({
+        success: false,
+        error: 'Amount must be at least 100 paise (₹1.00)'
+      });
+    }
+
+    const rzp = getRazorpayInstance();
+    const orderOptions = {
+      amount: parsedAmount,
+      currency: (currency || 'INR').toUpperCase(),
+      receipt: receipt || ('rcpt_' + Date.now().toString().slice(-8)),
+      notes: notes || {}
+    };
+
+    const razorpayOrder = await rzp.orders.create(orderOptions);
+
+    return res.json({
+      success: true,
+      order_id: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      key: keyId
+    });
+  } catch (err) {
+    console.error('Razorpay create-order error:', err);
+    return res.status(500).json({
+      success: false,
+      error: (err.error && err.error.description) || err.message || 'Failed to create Razorpay order'
+    });
+  }
+});
+
+// 2. Verify Payment Signature
+// Algorithm: HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
+// Expects: { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderData }
+app.post('/api/verify-payment', async (req, res) => {
+  try {
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keySecret) {
+      return res.status(401).json({
+        success: false,
+        error: 'Razorpay secret key not configured on server'
+      });
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderData } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: razorpay_order_id, razorpay_payment_id, and razorpay_signature are required'
+      });
+    }
+
+    // Algorithm: HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
+    const payload = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const generatedSignature = crypto
+      .createHmac('sha256', keySecret)
+      .update(payload)
+      .digest('hex');
+
+    let isValid = false;
+    try {
+      isValid = crypto.timingSafeEqual(
+        Buffer.from(generatedSignature, 'utf-8'),
+        Buffer.from(razorpay_signature, 'utf-8')
+      );
+    } catch (e) {
+      isValid = false;
+    }
+
+    if (!isValid) {
+      console.warn('[Razorpay] Signature mismatch for order:', razorpay_order_id);
+      return res.status(400).json({
+        success: false,
+        is_paid: false,
+        error: 'Payment verification failed: Signature mismatch. Order not marked as paid.'
+      });
+    }
+
+    // Payment is verified! Save order with paymentStatus: 'paid' in MongoDB Atlas
+    let savedOrder = null;
+    if (orderData && orderData.id) {
+      const db = getDb();
+      const customerPhone = (orderData.customer && orderData.customer.phone) || '';
+      const customerEmail = (orderData.customer && orderData.customer.email) || '';
+      const customerUserId = (orderData.customer && orderData.customer.userId) || '';
+      const rawDigits = customerPhone.replace(/\D/g, '');
+      const last10 = rawDigits.slice(-10);
+
+      const orderDoc = {
+        ...orderData,
+        paymentStatus: 'paid',
+        paymentMethod: 'razorpay',
+        paymentDetails: {
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+          verifiedAt: new Date()
+        },
+        customer: {
+          ...orderData.customer,
+          rawPhone: last10,
+          email: customerEmail.toLowerCase()
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      await db.collection('orders').insertOne(orderDoc);
+      savedOrder = orderDoc;
+
+      // Automatically clear customer cart in MongoDB users collection upon checkout
+      const clearFilters = [];
+      if (last10) {
+        clearFilters.push(
+          { phone: { $regex: last10 + '$' } },
+          { rawPhone: last10 }
+        );
+      }
+      if (customerEmail) {
+        clearFilters.push({ email: customerEmail.toLowerCase() });
+      }
+      if (customerUserId && customerUserId !== 'guest') {
+        clearFilters.push({ id: customerUserId });
+      }
+
+      if (clearFilters.length > 0) {
+        await db.collection('users').updateOne(
+          { $or: clearFilters },
+          { $set: { cart: [], cartUpdatedAt: new Date() } }
+        );
+      }
+    }
+
+    return res.json({
+      success: true,
+      is_paid: true,
+      message: 'Payment verified successfully!',
+      order_id: razorpay_order_id,
+      payment_id: razorpay_payment_id,
+      order: savedOrder
+    });
+  } catch (err) {
+    console.error('Razorpay verify-payment error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Server error while verifying payment signature'
+    });
+  }
 });
 
 // Phone.Email OTP Verification Callback (Phone or Email)
@@ -1040,3 +1224,5 @@ process.on('SIGTERM', async () => {
   await disconnectFromMongoDB();
   process.exit(0);
 });
+
+module.exports = app;

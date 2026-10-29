@@ -262,7 +262,36 @@
             </div>
           </div>
 
-          <!-- 5. Order Totals Breakdown -->
+          <!-- 5. Payment Method Selection -->
+          <div class="checkout-payment-box">
+            <label class="form-section-label" style="font-size:0.85rem;margin-bottom:8px;">💳 Payment Method</label>
+            <div class="payment-options-grid">
+              <label class="payment-option-card selected" id="optPayRazorpay">
+                <input type="radio" name="checkoutPaymentMethod" value="razorpay" id="payMethodRazorpay" checked>
+                <div class="payment-option-icon">⚡</div>
+                <div class="payment-option-info">
+                  <div class="payment-option-title">
+                    <span>Pay Online (Razorpay)</span>
+                    <span class="payment-badge-secure">Instant</span>
+                  </div>
+                  <div class="payment-option-desc">UPI (GPay, PhonePe, Paytm), Cards, NetBanking, Wallets</div>
+                </div>
+              </label>
+
+              <label class="payment-option-card" id="optPayCash">
+                <input type="radio" name="checkoutPaymentMethod" value="cash" id="payMethodCash">
+                <div class="payment-option-icon">💵</div>
+                <div class="payment-option-info">
+                  <div class="payment-option-title">
+                    <span>Cash on Delivery / Counter</span>
+                  </div>
+                  <div class="payment-option-desc">Pay directly upon delivery or at MJ's counter</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- 6. Order Totals Breakdown -->
           <div class="cart-summary-row" style="margin-top:16px;">
             <span>Subtotal</span>
             <span id="checkoutSubtotal">₹0</span>
@@ -276,7 +305,7 @@
             <span id="checkoutTotal">₹0</span>
           </div>
 
-          <button type="submit" class="btn-submit-order" id="btnPlaceOrder">Confirm & Place Order</button>
+          <button type="submit" class="btn-submit-order" id="btnPlaceOrder">💳 Pay ₹0 with Razorpay</button>
         </form>
       </div>
     </div>
@@ -479,6 +508,8 @@
   <!-- ========== TOAST CONTAINER ========== -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- Razorpay Standard Web Checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="data.js"></script>
   <script src="app.js"></script>
 </body>

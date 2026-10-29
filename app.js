@@ -236,6 +236,20 @@
     return 'mj_orders_guest';
   }
 
+  // ========== RAZORPAY CONFIGURATION ==========
+  let razorpayKeyId = '';
+  async function loadServerConfig() {
+    try {
+      const res = await fetch('/api/config');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.razorpayKeyId) razorpayKeyId = data.razorpayKeyId;
+      }
+    } catch (e) {
+      console.warn('Could not load server config:', e);
+    }
+  }
+
   // ========== STATE ==========
   let state = {
     menu: [],
@@ -399,6 +413,10 @@
     checkoutCouponLabel: $('#checkoutCouponLabel'),
     checkoutCouponDiscount: $('#checkoutCouponDiscount'),
     checkoutTotal: $('#checkoutTotal'),
+    payMethodRazorpay: $('#payMethodRazorpay'),
+    payMethodCash: $('#payMethodCash'),
+    optPayRazorpay: $('#optPayRazorpay'),
+    optPayCash: $('#optPayCash'),
     btnPlaceOrder: $('#btnPlaceOrder'),
     // Profile modal
     profileModal: $('#profileModal'),
@@ -918,6 +936,9 @@
             <div class="customer-order-id-group">
               <span class="customer-order-id">${order.id}</span>
               <span class="customer-order-type-badge">${typeIcons[order.type] || order.type}</span>
+              <span class="order-payment-badge ${order.paymentStatus === 'paid' ? 'paid' : 'pending'}">
+                ${order.paymentStatus === 'paid' ? '💳 Paid (Razorpay)' : '💵 Pay at Counter'}
+              </span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
               <span class="status-badge ${order.status}">${order.status.toUpperCase()}</span>
@@ -2276,6 +2297,34 @@
     updateCheckoutBreakdown();
   }
 
+  function updateCheckoutBtnText() {
+    if (!els.btnPlaceOrder) return;
+    const { subtotal } = getCartTotals();
+    const discount = state.appliedPromo ? state.appliedPromo.discountAmount : 0;
+    const finalPayable = Math.max(0, subtotal - discount);
+    const isRazorpay = !els.payMethodCash || !els.payMethodCash.checked;
+    if (isRazorpay) {
+      els.btnPlaceOrder.innerHTML = `💳 Pay ₹${finalPayable} with Razorpay`;
+    } else {
+      els.btnPlaceOrder.innerHTML = `Confirm & Place Order (Pay ₹${finalPayable} at Counter)`;
+    }
+  }
+
+  function initPaymentMethodSelector() {
+    if (els.payMethodRazorpay && els.payMethodCash) {
+      els.payMethodRazorpay.addEventListener('change', () => {
+        if (els.optPayRazorpay) els.optPayRazorpay.classList.add('selected');
+        if (els.optPayCash) els.optPayCash.classList.remove('selected');
+        updateCheckoutBtnText();
+      });
+      els.payMethodCash.addEventListener('change', () => {
+        if (els.optPayCash) els.optPayCash.classList.add('selected');
+        if (els.optPayRazorpay) els.optPayRazorpay.classList.remove('selected');
+        updateCheckoutBtnText();
+      });
+    }
+  }
+
   function updateCheckoutBreakdown() {
     const { subtotal } = getCartTotals();
     els.checkoutSubtotal.textContent = `₹${subtotal}`;
@@ -2292,11 +2341,17 @@
 
     const finalPayable = Math.max(0, subtotal - discount);
     els.checkoutTotal.textContent = `₹${finalPayable}`;
+    updateCheckoutBtnText();
   }
 
-  // ========== PLACE ORDER ==========
-  function placeOrder(e) {
+  // ========== PLACE ORDER WITH RAZORPAY / CASH ==========
+  async function placeOrder(e) {
     e.preventDefault();
+
+    if (state.cart.length === 0) {
+      showToast('Your cart is empty!', 'error');
+      return;
+    }
 
     const user = MJAuth.getCurrentUser();
     let deliveryAddress = '';
@@ -2311,17 +2366,17 @@
       deliveryAddress = `${selected.title}: ${selected.fullAddress}`;
     }
 
-    state.orderCounter++;
-    localStorage.setItem('mj_orderCounter', state.orderCounter);
-
-    const orderId = `#MJ-${String(state.orderCounter).padStart(4, '0')}`;
-    const totals = getCartTotals();
-    const discount = state.appliedPromo ? state.appliedPromo.discountAmount : 0;
-    const finalTotal = Math.max(0, totals.total - discount);
-
     const customerPhone = els.custPhone.value.trim() || (user ? user.phone : '');
     const rawDigits = customerPhone.replace(/\D/g, '');
     const last10 = rawDigits.slice(-10);
+
+    const totals = getCartTotals();
+    const discount = state.appliedPromo ? state.appliedPromo.discountAmount : 0;
+    const finalTotal = Math.max(0, totals.total - discount);
+    const amountInPaise = Math.round(finalTotal * 100);
+
+    const nextOrderNum = state.orderCounter + 1;
+    const orderId = `#MJ-${String(nextOrderNum).padStart(4, '0')}`;
 
     const order = {
       id: orderId,
@@ -2339,11 +2394,158 @@
         address: deliveryAddress,
         notes: els.custNotes.value.trim()
       },
+      paymentStatus: 'pending',
+      paymentMethod: 'cash',
       status: 'pending',
       timestamp: new Date().toISOString()
     };
 
-    // Save order strictly for this user account
+    const isRazorpay = !els.payMethodCash || !els.payMethodCash.checked;
+
+    // Online Payment with Razorpay Standard Checkout
+    if (isRazorpay && amountInPaise >= 100) {
+      if (typeof window.Razorpay === 'undefined') {
+        showToast('Razorpay Checkout SDK is still loading. Please try again in a moment.', 'error');
+        return;
+      }
+
+      els.btnPlaceOrder.disabled = true;
+      els.btnPlaceOrder.innerHTML = '<span>⏳ Initializing Secure Payment...</span>';
+
+      try {
+        // STEP 1: Call Backend to Create Razorpay Order
+        const createRes = await fetch('/api/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: amountInPaise,
+            currency: 'INR',
+            receipt: orderId.replace('#', '')
+          })
+        });
+
+        const createData = await createRes.json();
+        if (!createData.success || !createData.order_id) {
+          throw new Error(createData.error || createData.message || 'Could not initiate Razorpay order');
+        }
+
+        const activeKey = createData.key || razorpayKeyId;
+
+        // STEP 2: Configure & Open Razorpay Standard Checkout Modal
+        const options = {
+          key: activeKey,
+          amount: createData.amount,
+          currency: createData.currency || 'INR',
+          name: "MJ's Corner",
+          description: `Order ${orderId} (${state.cart.length} item${state.cart.length > 1 ? 's' : ''})`,
+          image: 'LOGO.jpg',
+          order_id: createData.order_id,
+          prefill: {
+            name: order.customer.name,
+            email: order.customer.email || 'customer@mjscorner.com',
+            contact: customerPhone
+          },
+          theme: {
+            color: '#e63946'
+          },
+          modal: {
+            ondismiss: function () {
+              showToast('Payment window closed. Your cart is preserved.', 'info');
+              els.btnPlaceOrder.disabled = false;
+              updateCheckoutBtnText();
+            }
+          },
+          handler: async function (response) {
+            // STEP 3: Send verification payload to backend
+            els.btnPlaceOrder.innerHTML = '<span>🔒 Verifying Signature...</span>';
+            try {
+              const verifyRes = await fetch('/api/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderData: {
+                    ...order,
+                    paymentStatus: 'paid',
+                    paymentMethod: 'razorpay'
+                  }
+                })
+              });
+
+              const verifyData = await verifyRes.json();
+              if (verifyData.success) {
+                const verifiedOrder = verifyData.order || {
+                  ...order,
+                  paymentStatus: 'paid',
+                  paymentMethod: 'razorpay',
+                  paymentDetails: {
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature
+                  }
+                };
+                handleOrderSuccess(verifiedOrder, true);
+              } else {
+                showToast(verifyData.error || verifyData.message || 'Payment signature mismatch. Please try again.', 'error');
+                els.btnPlaceOrder.disabled = false;
+                updateCheckoutBtnText();
+              }
+            } catch (err) {
+              console.error('Signature verification network error:', err);
+              showToast('Payment verification network error: ' + err.message, 'error');
+              els.btnPlaceOrder.disabled = false;
+              updateCheckoutBtnText();
+            }
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+
+        rzp.on('payment.failed', function (response) {
+          console.error('Razorpay payment failed:', response.error);
+          showToast(`Payment failed: ${response.error.description || 'Transaction declined'}`, 'error');
+          els.btnPlaceOrder.disabled = false;
+          updateCheckoutBtnText();
+        });
+
+        rzp.open();
+      } catch (err) {
+        console.error('Razorpay order creation error:', err);
+        showToast('Payment error: ' + err.message, 'error');
+        els.btnPlaceOrder.disabled = false;
+        updateCheckoutBtnText();
+      }
+      return;
+    }
+
+    // Cash / Pay at Counter Option (or amount = 0)
+    els.btnPlaceOrder.disabled = true;
+    els.btnPlaceOrder.innerHTML = '<span>⏳ Placing Order...</span>';
+
+    order.paymentStatus = 'pending';
+    order.paymentMethod = 'cash';
+
+    // Persist to MongoDB Atlas
+    try {
+      await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+    } catch (err) {
+      console.warn('Could not save order to MongoDB Atlas:', err);
+    }
+
+    handleOrderSuccess(order, false);
+  }
+
+  function handleOrderSuccess(order, isPaid = false) {
+    state.orderCounter++;
+    localStorage.setItem('mj_orderCounter', state.orderCounter);
+
+    const user = MJAuth.getCurrentUser();
     const ordersKey = getOrdersStorageKey(user);
     const userOrders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
     userOrders.unshift(order);
@@ -2351,14 +2553,7 @@
     window.dispatchEvent(new Event('mj_orders_changed'));
     updateHeaderOrdersBadge();
 
-    // Persist order to MongoDB Atlas
-    fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
-    }).catch(err => console.warn('Could not save order to MongoDB Atlas:', err));
-
-    // Clear cart & coupon locally and MongoDB
+    // Clear cart & coupon locally and in MongoDB
     state.cart = [];
     state.appliedPromo = null;
     saveCart();
@@ -2368,25 +2563,33 @@
     // Show Success Modal
     closeCheckout();
     setTimeout(() => {
-      els.orderIdDisplay.textContent = orderId;
+      els.orderIdDisplay.textContent = order.id;
 
       const typeLabels = {
         'dine-in': '🍽️ Dine-In Order (Staff will serve at your table)',
         'pickup': '🥡 Express Counter Pickup (~15-20 mins)',
-        'delivery': `🚗 Delivery to: ${deliveryAddress}`
+        'delivery': `🚗 Delivery to: ${order.customer && order.customer.address ? order.customer.address : 'Saved Address'}`
       };
       els.orderSuccessTypeDisplay.textContent = typeLabels[order.type] || order.type;
 
+      const paymentBadge = isPaid
+        ? '💳 Paid Online via Razorpay · '
+        : '💵 Payment Pending (Pay at Counter / Delivery) · ';
+
       if (order.coupon) {
-        els.orderSuccessPromoDisplay.textContent = `🎟️ Promo applied: ${order.coupon.code} (Saved ₹${order.coupon.discountAmount}) · ⏱️ 2-min cancel window active`;
+        els.orderSuccessPromoDisplay.textContent = `${paymentBadge}🎟️ Promo applied: ${order.coupon.code} (Saved ₹${order.coupon.discountAmount}) · ⏱️ 2-min cancel window active`;
       } else {
-        els.orderSuccessPromoDisplay.textContent = '⏱️ 2-minute cancellation timer active. You can cancel from "My Orders".';
+        els.orderSuccessPromoDisplay.textContent = `${paymentBadge}⏱️ 2-minute cancellation timer active. You can cancel from "My Orders".`;
       }
 
       els.successModal.classList.add('open');
     }, 300);
 
     els.checkoutForm.reset();
+    if (els.btnPlaceOrder) {
+      els.btnPlaceOrder.disabled = false;
+      updateCheckoutBtnText();
+    }
   }
 
   function closeSuccess() {
@@ -2664,10 +2867,12 @@
   // ========== INIT ==========
   function init() {
     loadState();
+    loadServerConfig();
     initTheme();
     initHeaderProfile();
     updateHeaderOrdersBadge();
     initCheckoutOrderType();
+    initPaymentMethodSelector();
     initDietaryFilters();
     renderCategories();
     renderMenu();

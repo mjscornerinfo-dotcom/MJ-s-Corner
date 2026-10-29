@@ -297,7 +297,14 @@
         </td>
         <td>${typeIcons[order.type] || ''} ${order.type}</td>
         <td>${itemsDropdownHtml}</td>
-        <td><strong>₹${order.total}</strong></td>
+        <td>
+          <strong>₹${order.total}</strong>
+          <div style="margin-top:4px;">
+            <span class="order-payment-badge ${order.paymentStatus === 'paid' ? 'paid' : 'pending'}">
+              ${order.paymentStatus === 'paid' ? '💳 Paid (Razorpay)' : '💵 Pay at Counter'}
+            </span>
+          </div>
+        </td>
         ${time}
         <td>${statusSelectHtml}</td>
         <td>${actionsHtml}</td>

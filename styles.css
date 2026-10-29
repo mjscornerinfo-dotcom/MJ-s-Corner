@@ -3268,3 +3268,109 @@ input, select, textarea {
   border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
+/* ============================================
+   Razorpay Payment Method Selection & Checkout
+   ============================================ */
+.checkout-payment-box {
+  margin-top: 18px;
+  margin-bottom: 12px;
+}
+
+.payment-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.payment-option-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.payment-option-card:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-secondary);
+}
+
+.payment-option-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.payment-option-card input[type="radio"] {
+  margin-top: 3px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.payment-option-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.payment-option-info {
+  flex: 1;
+}
+
+.payment-option-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+.payment-badge-secure {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+  border: 1px solid var(--success);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+}
+
+.payment-option-desc {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+/* Order Payment Status Badges */
+.order-payment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+
+.order-payment-badge.paid {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.order-payment-badge.pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
