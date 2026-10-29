@@ -354,7 +354,7 @@ async function fetchJsonFromUrl(url) {
 }
 
 function getAdminPhonesList() {
-  const envVal = process.env.ADMIN_PHONES || '9999988888,9876543210';
+  const envVal = process.env.ADMIN_PHONES || '';
   return envVal.split(',').map(p => p.trim().replace(/\D/g, '')).filter(Boolean);
 }
 

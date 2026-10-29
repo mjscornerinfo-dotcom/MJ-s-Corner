@@ -1266,7 +1266,7 @@
         <div class="user-dropdown admin-user-dropdown" id="adminDropdown">
           <div class="user-dropdown-header">
             <div class="user-dropdown-name">${(user && user.name) || 'Restaurant Admin'}</div>
-            <div class="user-dropdown-email">${(user && user.phone) || (user && user.email) || '+91 99999 88888'}</div>
+            <div class="user-dropdown-email">${(user && user.phone) || (user && user.email) || 'Administrator'}</div>
             <div class="admin-dropdown-role">
               <span>🛡️</span> MongoDB Role: Admin
             </div>
