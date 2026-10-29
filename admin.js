@@ -301,7 +301,7 @@
           <strong>₹${order.total}</strong>
           <div style="margin-top:4px;">
             <span class="order-payment-badge ${order.paymentStatus === 'paid' ? 'paid' : 'pending'}">
-              ${order.paymentStatus === 'paid' ? '💳 Paid (Razorpay)' : '💵 Pay at Counter'}
+              ${order.paymentMethod === 'promo_free' ? '🎟️ Free Order' : (order.paymentStatus === 'paid' ? '💳 Paid (Razorpay)' : '💳 Payment Pending')}
             </span>
           </div>
         </td>
