@@ -971,9 +971,9 @@
         <div class="invoice-paper thermal-format" style="max-width:320px;margin:0 auto;font-family:'Courier New', monospace;font-size:12px;line-height:1.35;">
           <div style="text-align:center;margin-bottom:8px;">
             <div style="font-size:16px;font-weight:900;">MJ'S CORNER</div>
-            <div style="font-size:10px;">Authentic Italian Kitchen & Burgers</div>
-            <div style="font-size:10px;">Shop 4, City Center, Main Road</div>
-            <div style="font-size:10px;">Ph: +91 98765 43210</div>
+            <div style="font-size:10px;">Crispy Fried Chicken, Pizzas & Burgers</div>
+            <div style="font-size:10px;">Banbahar Road, Kayakuchi, Assam, 781352</div>
+            <div style="font-size:10px;">Ph: +91 88119 29283</div>
             <div style="border-bottom:1px dashed #000;margin:8px 0;"></div>
             <div style="font-size:14px;font-weight:900;">ORDER ${order.id}</div>
             <div style="font-size:10px;">${formattedDate} ${formattedTime}</div>
@@ -1021,12 +1021,12 @@
             <div>
               <h1 class="invoice-restaurant-name" style="margin:0;font-size:1.55rem;font-weight:800;color:#1e293b;">MJ's Corner</h1>
               <div class="invoice-tagline" style="font-size:0.92rem;color:#e63946;font-weight:600;margin-top:2px;">
-                Authentic Wood-Fired Pizza, Burgers & Italian Kitchen
+                Crispy Fried Chicken, Pizzas & Burgers
               </div>
             </div>
           </div>
           <div class="invoice-contact-bar" style="margin-top:10px;font-size:0.83rem;color:#64748b;border-bottom:1.5px solid #e2e8f0;padding-bottom:10px;">
-            Shop 4, Near City Center, Main Road, India | +91 98765 43210 | https://mjscorner.com
+            Banbahar Road, Kayakuchi, Assam, 781352 | +91 88119 29283 | https://mjscorner.com
           </div>
         </div>
 
@@ -1129,7 +1129,7 @@
         <!-- Footer & Customer Notes -->
         <div class="invoice-footer" style="margin-top:24px;border-top:1.5px solid #e2e8f0;padding-top:14px;font-size:0.82rem;color:#64748b;line-height:1.45;">
           <div style="font-weight:700;color:#1e293b;margin-bottom:4px;">Thank you for ordering with us! We hope you enjoy your meal.</div>
-          <div>Got an issue with your order? Reach out to our support team immediately at <strong>support@mjscorner.com</strong> or call us directly at <strong>+91 98765 43210</strong>.</div>
+          <div>Got an issue with your order? Reach out to our support team immediately at <strong>support@mjscorner.com</strong> or call us directly at <strong>+91 88119 29283</strong>.</div>
           <div style="margin-top:4px;">Follow us on social media: <strong>@mjscorner</strong></div>
           <div style="margin-top:4px;color:#e63946;font-weight:600;">Rate your experience & get 10% off your next order: https://mjscorner.com/feedback</div>
         </div>
