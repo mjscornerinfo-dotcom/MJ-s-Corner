@@ -2529,7 +2529,7 @@
         order_id: createData.order_id,
         prefill: {
           name: order.customer.name,
-          email: order.customer.email || 'customer@mjscorner.com',
+          email: order.customer.email || 'customer@mjscorner.in',
           contact: customerPhone
         },
         theme: {
@@ -2743,7 +2743,7 @@
             </div>
           </div>
           <div class="invoice-contact-bar" style="margin-top:10px;font-size:0.83rem;color:#64748b;border-bottom:1.5px solid #e2e8f0;padding-bottom:10px;">
-            Banbahar Road, Kayakuchi, Assam, 781352 | +91 88119 29283 | https://mjscorner.com
+            Banbahar Road, Kayakuchi, Assam, 781352 | +91 88119 29283 | https://mjscorner.in
           </div>
         </div>
 
@@ -2846,9 +2846,15 @@
         <!-- Footer & Customer Notes -->
         <div class="invoice-footer" style="margin-top:24px;border-top:1.5px solid #e2e8f0;padding-top:14px;font-size:0.82rem;color:#64748b;line-height:1.45;">
           <div style="font-weight:700;color:#1e293b;margin-bottom:4px;">Thank you for ordering with us! We hope you enjoy your meal.</div>
-          <div>Got an issue with your order? Reach out to our support team immediately at <strong>support@mjscorner.com</strong> or call us directly at <strong>+91 88119 29283</strong>.</div>
-          <div style="margin-top:4px;">Follow us on social media: <strong>@mjscorner</strong></div>
-          <div style="margin-top:4px;color:#e63946;font-weight:600;">Rate your experience & get 10% off your next order: https://mjscorner.com/feedback</div>
+          <div>Got an issue with your order? Reach out to our support team immediately at <strong>support@mjscorner.in</strong> or call us directly at <strong>+91 88119 29283</strong>.</div>
+          <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+            <span>Follow us on Instagram:</span>
+            <a href="https://instagram.com/mjscorner___/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;color:#d62976;text-decoration:none;font-weight:700;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+              <span>mjscorner___</span>
+            </a>
+          </div>
+          <div style="margin-top:4px;color:#e63946;font-weight:600;">Rate your experience & get 10% off your next order: https://mjscorner.in/feedback</div>
         </div>
       </div>
     `;
