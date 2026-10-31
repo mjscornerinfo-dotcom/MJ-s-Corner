@@ -287,66 +287,80 @@ const DEFAULT_PROMOS = [
 async function seedDefaultDataIfEmpty() {
   const db = getDb();
 
-  // Menu collection seeding & Cloudinary image normalization
-  const menuCount = await db.collection('menu').countDocuments();
-  if (menuCount === 0) {
-    console.log('Seeding default Cloudinary menu items into MongoDB Atlas...');
-    await db.collection('menu').insertMany(DEFAULT_MENU);
-  } else {
-    // Ensure all items pointing to old local paths use Cloudinary
-    const oldItems = await db.collection('menu').find({ image: { $regex: '^images/' } }).toArray();
-    for (const item of oldItems) {
-      const match = DEFAULT_MENU.find(d => d.id === item.id);
-      if (match) {
-        await db.collection('menu').updateOne({ _id: item._id }, { $set: { image: match.image } });
-      }
+  // Check if system has already been initialized (prevents resurrection of deleted menu/promos)
+  const initDoc = await db.collection('settings').findOne({ key: 'system_initialized' });
+  if (!initDoc) {
+    const menuCount = await db.collection('menu').countDocuments();
+    if (menuCount === 0) {
+      console.log('Seeding initial Cloudinary menu items into MongoDB Atlas...');
+      await db.collection('menu').insertMany(DEFAULT_MENU);
     }
-
-    function isItemNameVeg(name) {
-      if (!name) return false;
-      const n = name.toLowerCase();
-      if (n.includes('chicken') || n.includes('bacon') || n.includes('beef') || n.includes('meat') || n.includes('pork') || n.includes('fish') || n.includes('egg') || n.includes('wings') || n.includes('shawarma') || n.includes('pepperoni')) {
-        return false;
-      }
-      if (n.includes('veg') || n.includes('paneer') || n.includes('cheese') || n.includes('margherita') || n.includes('mushroom') || n.includes('corn') || n.includes('farmhouse') || n.includes('pasta') || n.includes('smoothie') || n.includes('shake') || n.includes('brownie') || n.includes('cake') || n.includes('fries') || n.includes('salad')) {
-        return true;
-      }
-      return false;
+    const promoCount = await db.collection('promotions').countDocuments();
+    if (promoCount === 0) {
+      console.log('Seeding initial promotions into MongoDB Atlas...');
+      await db.collection('promotions').insertMany(DEFAULT_PROMOS);
     }
-
-    // Ensure all items in MongoDB have isVeg and dietary fields
-    const allCurrent = await db.collection('menu').find({}).toArray();
-    for (const item of allCurrent) {
-      const match = DEFAULT_MENU.find(d => d.id === item.id);
-      let isVegVal = item.isVeg !== undefined ? item.isVeg : (match ? match.isVeg : isItemNameVeg(item.name));
-      if (item.name && item.name.toLowerCase().includes('farmhouse') && item.isVeg === false) {
-        isVegVal = true;
-      }
-      const dietaryVal = isVegVal ? 'veg' : 'non-veg';
-      await db.collection('menu').updateOne(
-        { _id: item._id },
-        { $set: { isVeg: isVegVal, dietary: dietaryVal } }
-      );
-    }
+    await db.collection('settings').updateOne(
+      { key: 'system_initialized' },
+      { $set: { initialized: true, initializedAt: new Date() } },
+      { upsert: true }
+    );
   }
 
-  // Promotions collection seeding
-  const promoCount = await db.collection('promotions').countDocuments();
-  if (promoCount === 0) {
-    console.log('Seeding default promotions into MongoDB Atlas...');
-    await db.collection('promotions').insertMany(DEFAULT_PROMOS);
-  }
-
-  // Settings collection seeding
-  const settingsCount = await db.collection('settings').countDocuments();
-  if (settingsCount === 0) {
+  // Ensure application settings exist
+  const settingsDoc = await db.collection('settings').findOne({ key: 'app_settings' });
+  if (!settingsDoc) {
     console.log('Seeding default application settings into MongoDB Atlas...');
     await db.collection('settings').insertOne({
       key: 'app_settings',
       promoPopupEnabled: true,
+      storeOnline: true,
+      deliveryCharge: 50,
+      packagingFee: 0,
+      gstPercent: 5,
       updatedAt: new Date()
     });
+  } else {
+    const patch = {};
+    if (settingsDoc.storeOnline === undefined) patch.storeOnline = true;
+    if (settingsDoc.deliveryCharge === undefined) patch.deliveryCharge = 50;
+    if (settingsDoc.packagingFee === undefined) patch.packagingFee = 0;
+    if (settingsDoc.gstPercent === undefined) patch.gstPercent = 5;
+    if (Object.keys(patch).length > 0) {
+      await db.collection('settings').updateOne(
+        { key: 'app_settings' },
+        { $set: patch }
+      );
+    }
   }
+
+  // Ensure atomic sequential order counter exists
+  const counterDoc = await db.collection('counters').findOne({ _id: 'order_number' });
+  if (!counterDoc) {
+    const highestOrder = await db.collection('orders').find({}).sort({ createdAt: -1, timestamp: -1 }).limit(1).toArray();
+    let startSeq = 0;
+    if (highestOrder.length > 0 && highestOrder[0].id) {
+      const match = String(highestOrder[0].id).match(/\d+/);
+      if (match) startSeq = parseInt(match[0], 10);
+    }
+    await db.collection('counters').updateOne(
+      { _id: 'order_number' },
+      { $set: { seq: startSeq } },
+      { upsert: true }
+    );
+  }
+}
+
+// Atomically generate the next sequential unique Order ID (#MJ-0001, #MJ-0002, etc.)
+async function getNextOrderId() {
+  const db = getDb();
+  const res = await db.collection('counters').findOneAndUpdate(
+    { _id: 'order_number' },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: 'after' }
+  );
+  const seq = res && res.seq ? res.seq : 1;
+  return `#MJ-${String(seq).padStart(4, '0')}`;
 }
 
 // ========== HELPER FUNCTIONS ==========
@@ -468,20 +482,51 @@ async function findOrCreateUser({ name, phone = '', email = '', countryCode = '+
 
 // ========== API ROUTES ==========
 
-// Public configuration for frontend (Phone.Email client ID, Razorpay Key ID, etc.)
-app.get('/api/config', (req, res) => {
-  res.json({
-    phoneEmailClientId: process.env.PHONE_EMAIL_CLIENT_ID || '11976801478974448261',
-    hasCloudinary: !!process.env.CLOUDINARY_API_KEY,
-    razorpayKeyId: process.env.RAZORPAY_KEY_ID || ''
-  });
+// Public configuration for frontend (Phone.Email client ID, Razorpay Key ID, store settings, etc.)
+app.get('/api/config', async (req, res) => {
+  try {
+    const db = getDb();
+    const settings = (await db.collection('settings').findOne({ key: 'app_settings' })) || {};
+    res.json({
+      phoneEmailClientId: process.env.PHONE_EMAIL_CLIENT_ID || '11976801478974448261',
+      hasCloudinary: !!process.env.CLOUDINARY_API_KEY,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID || '',
+      storeOnline: settings.storeOnline !== undefined ? settings.storeOnline : true,
+      deliveryCharge: settings.deliveryCharge !== undefined ? settings.deliveryCharge : 50,
+      packagingFee: settings.packagingFee || 0,
+      gstPercent: settings.gstPercent || 5
+    });
+  } catch (err) {
+    res.json({
+      phoneEmailClientId: process.env.PHONE_EMAIL_CLIENT_ID || '11976801478974448261',
+      hasCloudinary: !!process.env.CLOUDINARY_API_KEY,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID || '',
+      storeOnline: true,
+      deliveryCharge: 50,
+      packagingFee: 0,
+      gstPercent: 5
+    });
+  }
+});
+
+// Endpoint to inspect or reserve the next sequential Order ID (#MJ-XXXX)
+app.get('/api/orders/next-id', async (req, res) => {
+  try {
+    const db = getDb();
+    const counter = await db.collection('counters').findOne({ _id: 'order_number' });
+    const currentSeq = counter ? counter.seq : 0;
+    const nextId = `#MJ-${String(currentSeq + 1).padStart(4, '0')}`;
+    res.json({ success: true, nextOrderId: nextId });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // ========== RAZORPAY STANDARD WEB CHECKOUT ENDPOINTS ==========
 
 // 1. Create Order: Calls Razorpay API (POST https://api.razorpay.com/v1/orders)
 // Expects: { amount (in paise), currency, receipt }
-// Returns: { order_id, amount, currency, key }
+// Returns: { order_id, custom_order_id, amount, currency, key }
 app.post('/api/create-order', async (req, res) => {
   try {
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -504,12 +549,15 @@ app.post('/api/create-order', async (req, res) => {
       });
     }
 
+    const nextCustomId = await getNextOrderId();
     const rzp = getRazorpayInstance();
     const orderOptions = {
       amount: parsedAmount,
       currency: (currency || 'INR').toUpperCase(),
-      receipt: receipt || ('rcpt_' + Date.now().toString().slice(-8)),
-      notes: notes || {}
+      receipt: (receipt && receipt !== '#MJ-0001' && receipt !== 'MJ-0001')
+        ? receipt.replace('#', '')
+        : nextCustomId.replace('#', ''),
+      notes: { ...(notes || {}), custom_order_id: nextCustomId }
     };
 
     const razorpayOrder = await rzp.orders.create(orderOptions);
@@ -517,6 +565,7 @@ app.post('/api/create-order', async (req, res) => {
     return res.json({
       success: true,
       order_id: razorpayOrder.id,
+      custom_order_id: nextCustomId,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
       key: keyId
@@ -580,8 +629,21 @@ app.post('/api/verify-payment', async (req, res) => {
 
     // Payment is verified! Save order with paymentStatus: 'paid' in MongoDB Atlas
     let savedOrder = null;
-    if (orderData && orderData.id) {
+    if (orderData) {
       const db = getDb();
+      let finalOrderId = orderData.id || '';
+      if (!finalOrderId || finalOrderId === '#MJ-0001') {
+        const existing = await db.collection('orders').findOne({ id: finalOrderId });
+        if (existing || !finalOrderId) {
+          finalOrderId = await getNextOrderId();
+        }
+      } else {
+        const existing = await db.collection('orders').findOne({ id: finalOrderId });
+        if (existing) {
+          finalOrderId = await getNextOrderId();
+        }
+      }
+
       const customerPhone = (orderData.customer && orderData.customer.phone) || '';
       const customerEmail = (orderData.customer && orderData.customer.email) || '';
       const customerUserId = (orderData.customer && orderData.customer.userId) || '';
@@ -590,6 +652,7 @@ app.post('/api/verify-payment', async (req, res) => {
 
       const orderDoc = {
         ...orderData,
+        id: finalOrderId,
         paymentStatus: 'paid',
         paymentMethod: 'razorpay',
         paymentDetails: {
@@ -881,9 +944,9 @@ app.get('/api/menu', async (req, res) => {
   try {
     const db = getDb();
     const menu = await db.collection('menu').find({}).sort({ id: 1 }).toArray();
-    res.json({ success: true, menu: menu.length > 0 ? menu : DEFAULT_MENU });
+    res.json({ success: true, menu });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message, menu: DEFAULT_MENU });
+    res.status(500).json({ success: false, message: err.message, menu: [] });
   }
 });
 
@@ -905,6 +968,19 @@ app.post('/api/menu', async (req, res) => {
   }
 });
 
+app.delete('/api/menu/:id', async (req, res) => {
+  try {
+    const db = getDb();
+    const rawId = req.params.id;
+    const numId = parseInt(rawId, 10);
+    const filter = isNaN(numId) ? { id: rawId } : { $or: [{ id: numId }, { id: rawId }] };
+    await db.collection('menu').deleteOne(filter);
+    res.json({ success: true, message: 'Menu item deleted from MongoDB Atlas' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.post('/api/menu/reset', async (req, res) => {
   try {
     const db = getDb();
@@ -921,9 +997,9 @@ app.get('/api/promotions', async (req, res) => {
   try {
     const db = getDb();
     const promos = await db.collection('promotions').find({}).sort({ id: 1 }).toArray();
-    res.json({ success: true, promotions: promos.length > 0 ? promos : DEFAULT_PROMOS });
+    res.json({ success: true, promotions: promos });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message, promotions: DEFAULT_PROMOS });
+    res.status(500).json({ success: false, message: err.message, promotions: [] });
   }
 });
 
@@ -945,12 +1021,45 @@ app.post('/api/promotions', async (req, res) => {
   }
 });
 
+app.delete('/api/promotions/:id', async (req, res) => {
+  try {
+    const db = getDb();
+    const rawId = req.params.id;
+    const numId = parseInt(rawId, 10);
+    const filter = isNaN(numId) ? { id: rawId } : { $or: [{ id: numId }, { id: rawId }] };
+    await db.collection('promotions').deleteOne(filter);
+    res.json({ success: true, message: 'Promotion deleted from MongoDB Atlas' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/promotions/reset', async (req, res) => {
+  try {
+    const db = getDb();
+    await db.collection('promotions').deleteMany({});
+    await db.collection('promotions').insertMany(DEFAULT_PROMOS);
+    res.json({ success: true, promotions: DEFAULT_PROMOS, message: 'Promotions reset to defaults in MongoDB' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ========== SETTINGS ENDPOINTS (MONGODB ATLAS) ==========
 app.get('/api/settings', async (req, res) => {
   try {
     const db = getDb();
     const settings = await db.collection('settings').findOne({ key: 'app_settings' });
-    res.json({ success: true, settings: settings || { promoPopupEnabled: true } });
+    res.json({
+      success: true,
+      settings: settings || {
+        promoPopupEnabled: true,
+        storeOnline: true,
+        deliveryCharge: 50,
+        packagingFee: 0,
+        gstPercent: 5
+      }
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1102,13 +1211,26 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// Customer places an order -> persists to MongoDB Atlas & clears their cart
+// Customer places an order or Admin creates offline POS order -> persists to MongoDB Atlas
 app.post('/api/orders', async (req, res) => {
   try {
     const db = getDb();
     const orderData = req.body;
-    if (!orderData || !orderData.id) {
+    if (!orderData) {
       return res.status(400).json({ success: false, message: 'Invalid order data' });
+    }
+
+    let finalOrderId = orderData.id || '';
+    if (!finalOrderId || finalOrderId === '#MJ-0001') {
+      const existing = await db.collection('orders').findOne({ id: finalOrderId });
+      if (existing || !finalOrderId) {
+        finalOrderId = await getNextOrderId();
+      }
+    } else {
+      const existing = await db.collection('orders').findOne({ id: finalOrderId });
+      if (existing) {
+        finalOrderId = await getNextOrderId();
+      }
     }
 
     const customerPhone = (orderData.customer && orderData.customer.phone) || '';
@@ -1119,6 +1241,7 @@ app.post('/api/orders', async (req, res) => {
 
     const orderDoc = {
       ...orderData,
+      id: finalOrderId,
       customer: {
         ...orderData.customer,
         rawPhone: last10,
@@ -1130,7 +1253,7 @@ app.post('/api/orders', async (req, res) => {
 
     await db.collection('orders').insertOne(orderDoc);
 
-    // Automatically clear customer cart in MongoDB users collection upon checkout
+    // Automatically clear customer cart in MongoDB users collection upon checkout (if customer)
     const clearFilters = [];
     if (last10) {
       clearFilters.push(
@@ -1152,7 +1275,7 @@ app.post('/api/orders', async (req, res) => {
       );
     }
 
-    res.json({ success: true, order: orderDoc, message: 'Order created in MongoDB Atlas' });
+    res.json({ success: true, orderId: finalOrderId, order: orderDoc, message: 'Order created in MongoDB Atlas' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1168,8 +1291,14 @@ app.patch('/api/orders/:orderId', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Status is required' });
     }
 
+    const { ObjectId } = require('mongodb');
+    let filter = { id: orderId };
+    if (ObjectId.isValid(orderId)) {
+      filter = { $or: [{ id: orderId }, { _id: new ObjectId(orderId) }] };
+    }
+
     const result = await db.collection('orders').updateOne(
-      { id: orderId },
+      filter,
       { $set: { status: status, updatedAt: new Date() } }
     );
 
@@ -1178,6 +1307,28 @@ app.patch('/api/orders/:orderId', async (req, res) => {
     }
 
     res.json({ success: true, message: `Order status updated to ${status} in MongoDB Atlas` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Delete an order permanently from MongoDB Atlas
+app.delete('/api/orders/:orderId', async (req, res) => {
+  try {
+    const db = getDb();
+    const { orderId } = req.params;
+    const { ObjectId } = require('mongodb');
+    let filter = { id: orderId };
+    if (ObjectId.isValid(orderId)) {
+      filter = { $or: [{ id: orderId }, { _id: new ObjectId(orderId) }] };
+    }
+
+    const result = await db.collection('orders').deleteOne(filter);
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ success: false, message: 'Order not found to delete' });
+    }
+
+    res.json({ success: true, message: 'Order deleted successfully from MongoDB Atlas' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

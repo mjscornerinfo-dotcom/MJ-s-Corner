@@ -12,7 +12,20 @@
     promos: [],
     promoPopupEnabled: true,
     currentPage: 'dashboard',
-    orderFilter: 'all'
+    orderFilter: 'all',
+    storeOnline: true,
+    deliveryFee: 50,
+    billingFilter: {
+      dateRange: 'all',
+      type: 'all',
+      payment: 'all',
+      search: '',
+      from: '',
+      to: ''
+    },
+    posCart: {},
+    currentInvoiceOrder: null,
+    invoiceFormat: 'tax-invoice'
   };
 
   // ========== DOM REFERENCES ==========
@@ -30,17 +43,64 @@
     statRevenue: $('#statRevenue'),
     statPending: $('#statPending'),
     statMenuItems: $('#statMenuItems'),
+    // Dashboard Store Controls
+    btnToggleStoreMode: $('#btnToggleStoreMode'),
+    storeModeLabelText: $('#storeModeLabelText'),
+    dashboardLivePill: $('#dashboardLivePill'),
+    inputDeliveryFee: $('#inputDeliveryFee'),
+    btnSaveDeliveryFee: $('#btnSaveDeliveryFee'),
+    btnOpenPosModal: $('#btnOpenPosModal'),
     // Orders
     dashboardOrdersBody: $('#dashboardOrdersBody'),
     ordersBody: $('#ordersBody'),
     btnRefreshOrders: $('#btnRefreshOrders'),
+    // Billing & Reports
+    pageBilling: $('#pageBilling'),
+    billingTotalSales: $('#billingTotalSales'),
+    billingOnlinePaid: $('#billingOnlinePaid'),
+    billingOfflinePaid: $('#billingOfflinePaid'),
+    billingDeliveryFees: $('#billingDeliveryFees'),
+    billingDateFilter: $('#billingDateFilter'),
+    billingCustomDates: $('#billingCustomDates'),
+    billingDateFrom: $('#billingDateFrom'),
+    billingDateTo: $('#billingDateTo'),
+    billingTypeFilter: $('#billingTypeFilter'),
+    billingPaymentFilter: $('#billingPaymentFilter'),
+    billingSearchInput: $('#billingSearchInput'),
+    btnResetBillingFilters: $('#btnResetBillingFilters'),
+    billingOrdersBody: $('#billingOrdersBody'),
+    btnExportExcel: $('#btnExportExcel'),
+    btnPrintBillingReport: $('#btnPrintBillingReport'),
+    btnBillingCreatePos: $('#btnBillingCreatePos'),
+    // POS / Offline Order Modal
+    offlineOrderModal: $('#offlineOrderModal'),
+    closeOfflineOrderModalBtn: $('#closeOfflineOrderModalBtn'),
+    offlineOrderForm: $('#offlineOrderForm'),
+    posOrderType: $('#posOrderType'),
+    posCustomerName: $('#posCustomerName'),
+    posCustomerPhone: $('#posCustomerPhone'),
+    posPaymentMethod: $('#posPaymentMethod'),
+    posDeliveryAddressGroup: $('#posDeliveryAddressGroup'),
+    posDeliveryAddress: $('#posDeliveryAddress'),
+    posItemsList: $('#posItemsList'),
+    posSubtotalText: $('#posSubtotalText'),
+    posDeliveryRow: $('#posDeliveryRow'),
+    posDeliveryText: $('#posDeliveryText'),
+    posTotalText: $('#posTotalText'),
+    // Invoice Modal
+    invoiceModal: $('#invoiceModal'),
+    closeInvoiceModalBtn: $('#closeInvoiceModalBtn'),
+    invoiceModalContent: $('#invoiceModalContent'),
+    btnPrintInvoiceModal: $('#btnPrintInvoiceModal'),
     // Menu Editor
     menuEditorList: $('#menuEditorList'),
     btnSaveMenu: $('#btnSaveMenu'),
+    btnRestoreSampleMenu: $('#btnRestoreSampleMenu'),
     // Promotions
     promoList: $('#promoList'),
     promoPopupToggle: $('#promoPopupToggle'),
     btnAddPromo: $('#btnAddPromo'),
+    btnRestoreSamplePromos: $('#btnRestoreSamplePromos'),
     // Toast
     toastContainer: $('#toastContainer'),
     // Auth
@@ -121,12 +181,30 @@
     switch (state.currentPage) {
       case 'dashboard': renderDashboard(); break;
       case 'orders': renderOrders(); break;
+      case 'billing': renderBilling(); break;
       case 'menu-editor': renderMenuEditor(); break;
       case 'promotions': renderPromotions(); break;
     }
 
-    // Refresh live orders from MongoDB Atlas
+    // Refresh live orders and settings from MongoDB Atlas
     fetchOrdersFromDb();
+    fetchSettings();
+  }
+
+  async function fetchSettings() {
+    try {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.settings) {
+          if (data.settings.storeOnline !== undefined) state.storeOnline = data.settings.storeOnline;
+          if (data.settings.deliveryCharge !== undefined) state.deliveryFee = data.settings.deliveryCharge;
+          updateStoreControlsUI();
+        }
+      }
+    } catch (e) {
+      console.warn('Settings sync note:', e);
+    }
   }
 
   async function fetchOrdersFromDb() {
@@ -138,11 +216,11 @@
           state.orders = data.orders;
           localStorage.setItem('mj_orders', JSON.stringify(data.orders));
           if (state.currentPage === 'dashboard') {
-            renderMetrics();
-            renderStats();
-            renderRecentOrders();
+            renderDashboard();
           } else if (state.currentPage === 'orders') {
             renderOrders();
+          } else if (state.currentPage === 'billing') {
+            renderBilling();
           }
         }
       }
@@ -271,7 +349,7 @@
       </div>
     `;
 
-    // Actions: Next-status advance button + Cancel option
+    // Actions: Next-status advance button + Cancel + Print Invoice + Delete
     const nextStatus = getNextStatus(order.status);
     const nextBtn = (nextStatus && order.status !== 'cancelled')
       ? `<button class="btn-admin primary" data-order-id="${order.id}" data-next-status="${nextStatus}" data-action="update-status" title="Advance to ${nextStatus}">${getStatusAction(nextStatus)}</button>`
@@ -281,10 +359,15 @@
       ? `<button class="btn-admin danger" data-order-id="${order.id}" data-action="cancel-order" title="Cancel this order">❌ Cancel</button>`
       : `<span style="font-size:0.78rem;color:var(--danger);font-weight:700;">Cancelled</span>`;
 
+    const invoiceBtn = `<button class="btn-admin secondary" data-order-id="${order.id}" data-action="print-invoice" title="View & Print Invoice" style="padding:5px 9px;font-size:0.75rem;">🖨️ Invoice</button>`;
+    const deleteBtn = `<button class="btn-admin danger delete-order-btn" data-order-id="${order.id}" data-action="delete-order" title="Permanently delete this order" style="padding:5px 8px;font-size:0.75rem;">🗑️</button>`;
+
     const actionsHtml = `
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
         ${nextBtn}
         ${cancelBtn}
+        ${invoiceBtn}
+        ${deleteBtn}
       </div>
     `;
 
@@ -323,7 +406,7 @@
   }
 
   function updateOrderStatus(orderId, newStatus) {
-    const order = state.orders.find(o => o.id === orderId);
+    const order = state.orders.find(o => String(o.id) === String(orderId) || String(o._id) === String(orderId));
     if (order) {
       order.status = newStatus;
       localStorage.setItem('mj_orders', JSON.stringify(state.orders));
@@ -355,12 +438,44 @@
       });
     });
 
-    // 3. Cancel order button
+    // 3. Cancel order button (Admin can cancel any active order)
     container.querySelectorAll('[data-action="cancel-order"]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const orderId = btn.dataset.orderId;
         if (confirm(`Are you sure you want to cancel order ${orderId}?`)) {
           updateOrderStatus(orderId, 'cancelled');
+        }
+      });
+    });
+
+    // 4. Print invoice button
+    container.querySelectorAll('[data-action="print-invoice"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openInvoiceModal(btn.dataset.orderId);
+      });
+    });
+
+    // 5. Delete order button
+    container.querySelectorAll('[data-action="delete-order"]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const orderId = btn.dataset.orderId;
+        if (confirm(`Are you sure you want to permanently delete order ${orderId}? This cannot be undone.`)) {
+          try {
+            const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, { method: 'DELETE' });
+            if (res.ok) {
+              state.orders = state.orders.filter(o => String(o.id) !== String(orderId) && String(o._id) !== String(orderId));
+              localStorage.setItem('mj_orders', JSON.stringify(state.orders));
+              showToast(`Order ${orderId} deleted permanently.`, 'info');
+              loadData();
+            } else {
+              showToast('Failed to delete order from server', 'error');
+            }
+          } catch (err) {
+            showToast('Network error while deleting order', 'error');
+          }
         }
       });
     });
@@ -376,6 +491,825 @@
     if (mins < 60) return `${mins}m ago`;
     if (mins < 1440) return `${Math.floor(mins / 60)}h ago`;
     return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+
+  // ========== STORE CONTROLS (ONLINE/OFFLINE & DELIVERY CHARGE) ==========
+  function initStoreControls() {
+    updateStoreControlsUI();
+
+    if (els.btnToggleStoreMode) {
+      els.btnToggleStoreMode.addEventListener('click', async () => {
+        state.storeOnline = !state.storeOnline;
+        updateStoreControlsUI();
+        showToast(`Store is now ${state.storeOnline ? 'ONLINE (Accepting Orders)' : 'OFFLINE (Orders Paused)'}`, state.storeOnline ? 'success' : 'info');
+
+        try {
+          await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ storeOnline: state.storeOnline })
+          });
+        } catch (e) {
+          console.warn('Could not save store status to MongoDB:', e);
+        }
+      });
+    }
+
+    if (els.btnSaveDeliveryFee && els.inputDeliveryFee) {
+      els.btnSaveDeliveryFee.addEventListener('click', async () => {
+        const fee = Math.max(0, parseInt(els.inputDeliveryFee.value, 10) || 0);
+        state.deliveryFee = fee;
+        showToast(`Delivery fee saved: ₹${fee}`, 'success');
+
+        try {
+          await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deliveryCharge: fee })
+          });
+        } catch (e) {
+          console.warn('Could not save delivery fee to MongoDB:', e);
+        }
+      });
+    }
+
+    if (els.btnOpenPosModal) {
+      els.btnOpenPosModal.addEventListener('click', openPosModal);
+    }
+    if (els.btnBillingCreatePos) {
+      els.btnBillingCreatePos.addEventListener('click', openPosModal);
+    }
+  }
+
+  function updateStoreControlsUI() {
+    if (els.btnToggleStoreMode && els.storeModeLabelText) {
+      if (state.storeOnline) {
+        els.btnToggleStoreMode.className = 'btn-store-mode online';
+        els.storeModeLabelText.textContent = '🟢 Store is ONLINE (Accepting Orders)';
+        if (els.dashboardLivePill) {
+          els.dashboardLivePill.className = 'store-live-pill';
+          els.dashboardLivePill.textContent = 'Live';
+        }
+      } else {
+        els.btnToggleStoreMode.className = 'btn-store-mode offline';
+        els.storeModeLabelText.textContent = '🔴 Store is OFFLINE (Orders Paused)';
+        if (els.dashboardLivePill) {
+          els.dashboardLivePill.className = 'store-live-pill offline';
+          els.dashboardLivePill.textContent = 'Offline';
+        }
+      }
+    }
+
+    if (els.inputDeliveryFee) {
+      els.inputDeliveryFee.value = state.deliveryFee || 50;
+    }
+  }
+
+  // ========== BILLING & REVENUE REPORTS ==========
+  function renderBilling() {
+    if (!els.pageBilling) return;
+
+    const orders = state.orders;
+    const totalSales = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
+    const onlinePaid = orders.filter(o => o.paymentMethod === 'razorpay' && o.paymentStatus === 'paid').reduce((sum, o) => sum + (o.total || 0), 0);
+    const offlinePaid = orders.filter(o => o.paymentMethod !== 'razorpay' && o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
+    const deliveryFees = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.deliveryFee || 0), 0);
+
+    if (els.billingTotalSales) els.billingTotalSales.textContent = `₹${totalSales.toLocaleString('en-IN')}`;
+    if (els.billingOnlinePaid) els.billingOnlinePaid.textContent = `₹${onlinePaid.toLocaleString('en-IN')}`;
+    if (els.billingOfflinePaid) els.billingOfflinePaid.textContent = `₹${offlinePaid.toLocaleString('en-IN')}`;
+    if (els.billingDeliveryFees) els.billingDeliveryFees.textContent = `₹${deliveryFees.toLocaleString('en-IN')}`;
+
+    const filtered = getFilteredBillingOrders();
+    if (!els.billingOrdersBody) return;
+
+    if (filtered.length === 0) {
+      els.billingOrdersBody.innerHTML = `
+        <tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text-tertiary);">
+          No billing records found matching your filters.
+        </td></tr>`;
+    } else {
+      els.billingOrdersBody.innerHTML = filtered.map(order => renderBillingRow(order)).join('');
+      bindOrderActions(els.billingOrdersBody);
+    }
+  }
+
+  function getFilteredBillingOrders() {
+    let list = [...state.orders];
+    const filter = state.billingFilter;
+
+    // Date Range Filter
+    const now = new Date();
+    if (filter.dateRange === 'today') {
+      const todayStr = now.toDateString();
+      list = list.filter(o => new Date(o.timestamp || o.createdAt || Date.now()).toDateString() === todayStr);
+    } else if (filter.dateRange === 'yesterday') {
+      const yest = new Date(now);
+      yest.setDate(now.getDate() - 1);
+      const yestStr = yest.toDateString();
+      list = list.filter(o => new Date(o.timestamp || o.createdAt || Date.now()).toDateString() === yestStr);
+    } else if (filter.dateRange === 'week') {
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      list = list.filter(o => new Date(o.timestamp || o.createdAt || Date.now()) >= weekAgo);
+    } else if (filter.dateRange === 'month') {
+      const month = now.getMonth();
+      const year = now.getFullYear();
+      list = list.filter(o => {
+        const d = new Date(o.timestamp || o.createdAt || Date.now());
+        return d.getMonth() === month && d.getFullYear() === year;
+      });
+    } else if (filter.dateRange === 'custom' && filter.from) {
+      const fromD = new Date(filter.from);
+      fromD.setHours(0, 0, 0, 0);
+      const toD = filter.to ? new Date(filter.to) : new Date();
+      toD.setHours(23, 59, 59, 999);
+      list = list.filter(o => {
+        const d = new Date(o.timestamp || o.createdAt || Date.now());
+        return d >= fromD && d <= toD;
+      });
+    }
+
+    // Type Filter
+    if (filter.type !== 'all') {
+      list = list.filter(o => o.type === filter.type);
+    }
+
+    // Payment Filter
+    if (filter.payment !== 'all') {
+      list = list.filter(o => o.paymentStatus === filter.payment);
+    }
+
+    // Search query
+    if (filter.search && filter.search.trim()) {
+      const q = filter.search.trim().toLowerCase();
+      list = list.filter(o => {
+        const idMatch = (o.id || '').toLowerCase().includes(q);
+        const nameMatch = (o.customer && o.customer.name || '').toLowerCase().includes(q);
+        const phoneMatch = (o.customer && o.customer.phone || '').includes(q);
+        return idMatch || nameMatch || phoneMatch;
+      });
+    }
+
+    return list;
+  }
+
+  function renderBillingRow(order) {
+    const items = order.items || [];
+    const totalQty = items.reduce((acc, i) => acc + (i.qty || 1), 0);
+    const d = new Date(order.timestamp || order.createdAt || Date.now());
+    const dateStr = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    const timeStr = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const typeIcons = { 'dine-in': '🍽️', 'pickup': '🥡', 'delivery': '🚗' };
+
+    const itemsSummary = items.map(i => `${escapeHtml(i.name)} × ${i.qty || 1}`).join(', ');
+    const discount = (order.coupon && order.coupon.discountAmount) || 0;
+    const delivery = order.deliveryFee || 0;
+    const subtotal = order.subtotal || Math.max(0, (order.total || 0) + discount - delivery);
+
+    let paymentBadge = `<span class="order-payment-badge paid">💳 Razorpay</span>`;
+    if (order.paymentMethod === 'cash') paymentBadge = `<span class="order-payment-badge ${order.paymentStatus === 'paid' ? 'paid' : 'pending'}">💵 Cash</span>`;
+    else if (order.paymentMethod === 'upi_pos') paymentBadge = `<span class="order-payment-badge paid">⚡ UPI Counter</span>`;
+    else if (order.paymentMethod === 'card_pos') paymentBadge = `<span class="order-payment-badge paid">💳 Card POS</span>`;
+    else if (order.paymentMethod === 'promo_free') paymentBadge = `<span class="order-payment-badge paid">🎟️ Free</span>`;
+
+    const statusBadge = `<span class="status-badge ${order.status}">${order.status.toUpperCase()}</span>`;
+
+    return `
+      <tr>
+        <td><strong>${escapeHtml(order.id)}</strong></td>
+        <td>
+          <div style="font-weight:600;">${dateStr}</div>
+          <div style="font-size:0.75rem;color:var(--text-tertiary);">${timeStr}</div>
+        </td>
+        <td>
+          <div style="font-weight:600;">${escapeHtml(order.customer && order.customer.name || 'Walk-in')}</div>
+          <div style="font-size:0.75rem;color:var(--text-tertiary);">${escapeHtml(order.customer && order.customer.phone || '')}</div>
+        </td>
+        <td>${typeIcons[order.type] || ''} ${order.type}</td>
+        <td>
+          <span title="${escapeHtml(itemsSummary)}" style="cursor:help;border-bottom:1px dotted var(--text-tertiary);">
+            ${totalQty} items
+          </span>
+        </td>
+        <td>₹${subtotal}</td>
+        <td>₹${delivery}</td>
+        <td>${discount > 0 ? `<span style="color:var(--success);">-₹${discount}</span>` : '₹0'}</td>
+        <td><strong style="color:var(--accent);">₹${order.total || 0}</strong></td>
+        <td>${paymentBadge}</td>
+        <td>${statusBadge}</td>
+        <td>
+          <div style="display:flex;gap:5px;">
+            <button class="btn-admin secondary" data-order-id="${order.id}" data-action="print-invoice" title="View & Print Invoice" style="padding:4px 8px;font-size:0.75rem;">🖨️</button>
+            <button class="btn-admin danger delete-order-btn" data-order-id="${order.id}" data-action="delete-order" title="Delete Order" style="padding:4px 8px;font-size:0.75rem;">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  // ========== EXCEL (.XLSX/.CSV) EXPORT ==========
+  function exportOrdersToExcel(ordersToExport) {
+    if (!ordersToExport || ordersToExport.length === 0) {
+      showToast('No orders available to export', 'error');
+      return;
+    }
+
+    const headers = [
+      'Order ID',
+      'Date & Time',
+      'Customer Name',
+      'Phone',
+      'Delivery Address',
+      'Order Type',
+      'Items Summary',
+      'Subtotal (INR)',
+      'Delivery Fee (INR)',
+      'Discount (INR)',
+      'Grand Total (INR)',
+      'Payment Method',
+      'Payment Status',
+      'Razorpay Order ID',
+      'Razorpay Payment ID',
+      'Order Status'
+    ];
+
+    const rows = ordersToExport.map(o => {
+      const itemsSummary = (o.items || []).map(i => `${i.name}${i.selectedSize ? ' (' + i.selectedSize.name + ')' : ''} x${i.qty || 1}`).join('; ');
+      const discount = o.coupon ? (o.coupon.discountAmount || 0) : 0;
+      const delivery = o.deliveryFee || 0;
+      const subtotal = o.subtotal || Math.max(0, (o.total || 0) + discount - delivery);
+      const razorpayOrder = (o.paymentDetails && o.paymentDetails.razorpay_order_id) || '';
+      const razorpayPayment = (o.paymentDetails && o.paymentDetails.razorpay_payment_id) || '';
+
+      return [
+        `"${o.id || ''}"`,
+        `"${new Date(o.timestamp || o.createdAt || Date.now()).toLocaleString('en-IN')}"`,
+        `"${(o.customer && o.customer.name ? o.customer.name.replace(/"/g, '""') : '')}"`,
+        `"${(o.customer && o.customer.phone ? o.customer.phone : '')}"`,
+        `"${(o.customer && o.customer.address ? o.customer.address.replace(/"/g, '""') : '')}"`,
+        `"${o.type || ''}"`,
+        `"${itemsSummary.replace(/"/g, '""')}"`,
+        subtotal,
+        delivery,
+        discount,
+        o.total || 0,
+        `"${o.paymentMethod || 'online'}"`,
+        `"${o.paymentStatus || 'pending'}"`,
+        `"${razorpayOrder}"`,
+        `"${razorpayPayment}"`,
+        `"${o.status || 'pending'}"`
+      ].join(',');
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `MJs_Corner_Billing_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Excel/CSV billing report downloaded successfully!', 'success');
+  }
+
+  // ========== PRINT FINANCIAL REPORT (PDF) ==========
+  function printBillingReport(ordersToPrint) {
+    if (!ordersToPrint || ordersToPrint.length === 0) {
+      showToast('No orders available to print report', 'error');
+      return;
+    }
+
+    const totalSales = ordersToPrint.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
+    const totalCount = ordersToPrint.length;
+    const onlinePaid = ordersToPrint.filter(o => o.paymentMethod === 'razorpay' && o.paymentStatus === 'paid').reduce((sum, o) => sum + (o.total || 0), 0);
+    const offlinePaid = ordersToPrint.filter(o => o.paymentMethod !== 'razorpay' && o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
+
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      showToast('Popup blocker prevented opening print window. Please allow popups.', 'error');
+      return;
+    }
+
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MJ's Corner - Billing & Financial Report</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #0f172a; line-height: 1.4; }
+          .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px; }
+          .title { font-size: 22px; font-weight: 800; margin: 0; }
+          .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
+          .stats-row { display: flex; gap: 14px; margin-bottom: 18px; }
+          .stat-box { flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; text-align: center; background: #f8fafc; }
+          .stat-val { font-size: 18px; font-weight: 800; color: #e63946; }
+          .stat-lbl { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-top: 2px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+          th { background: #f1f5f9; font-weight: 700; }
+          .footer { margin-top: 20px; font-size: 11px; color: #64748b; text-align: center; border-top: 1px solid #cbd5e1; padding-top: 8px; }
+          @media print { body { padding: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">MJ'S CORNER — FINANCIAL & BILLING STATEMENT</div>
+          <div class="subtitle">Generated on ${new Date().toLocaleString('en-IN')} | Total Orders: ${totalCount}</div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-box"><div class="stat-val">₹${totalSales.toLocaleString('en-IN')}</div><div class="stat-lbl">Gross Revenue</div></div>
+          <div class="stat-box"><div class="stat-val">${totalCount}</div><div class="stat-lbl">Total Orders</div></div>
+          <div class="stat-box"><div class="stat-val">₹${onlinePaid.toLocaleString('en-IN')}</div><div class="stat-lbl">Online Paid</div></div>
+          <div class="stat-box"><div class="stat-val">₹${offlinePaid.toLocaleString('en-IN')}</div><div class="stat-lbl">Counter / Cash</div></div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th><th>Date/Time</th><th>Customer</th><th>Type</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ordersToPrint.map(o => `
+              <tr>
+                <td><strong>${escapeHtml(o.id)}</strong></td>
+                <td>${new Date(o.timestamp || o.createdAt || Date.now()).toLocaleDateString('en-IN')}</td>
+                <td>${escapeHtml((o.customer && o.customer.name) || 'Walk-in')}</td>
+                <td>${o.type}</td>
+                <td>${(o.items || []).map(i => `${escapeHtml(i.name)} (${i.qty})`).join(', ')}</td>
+                <td><strong>₹${o.total}</strong></td>
+                <td>${o.paymentStatus === 'paid' ? 'PAID (' + (o.paymentMethod || '') + ')' : 'PENDING'}</td>
+                <td>${(o.status || '').toUpperCase()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="footer">Confidential Financial Summary · MJ's Corner Restaurant Management Portal</div>
+        <script>window.onload = function() { window.print(); };</script>
+      </body>
+      </html>
+    `;
+
+    printWin.document.open();
+    printWin.document.write(reportHtml);
+    printWin.document.close();
+  }
+
+  // ========== INVOICE MODAL & MULTI-FORMAT PRINTING ==========
+  function openInvoiceModal(orderId) {
+    const order = state.orders.find(o => String(o.id) === String(orderId) || String(o._id) === String(orderId));
+    if (!order) {
+      showToast('Order not found', 'error');
+      return;
+    }
+
+    state.currentInvoiceOrder = order;
+    state.invoiceFormat = 'tax-invoice';
+
+    // Update active tab UI
+    $$('.btn-inv-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.invFormat === state.invoiceFormat);
+    });
+
+    renderCurrentInvoice();
+
+    if (els.invoiceModal) {
+      els.invoiceModal.classList.add('open');
+    }
+  }
+
+  function renderCurrentInvoice() {
+    if (!els.invoiceModalContent || !state.currentInvoiceOrder) return;
+    els.invoiceModalContent.innerHTML = renderInvoiceHtml(state.currentInvoiceOrder, state.invoiceFormat);
+  }
+
+  function renderInvoiceHtml(order, format = 'tax-invoice') {
+    if (!order) return '<p>No order selected.</p>';
+
+    const d = new Date(order.timestamp || order.createdAt || Date.now());
+    const formattedDate = d.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedTime = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+    const orderType = (order.type || 'takeout').toLowerCase();
+    const isDelivery = orderType === 'delivery';
+    const isTakeout = orderType === 'pickup' || orderType === 'takeout';
+    const isDineIn = orderType === 'dine-in';
+
+    const customer = order.customer || {};
+    const items = order.items || [];
+
+    const subtotal = order.subtotal || items.reduce((s, i) => s + ((i.offerPrice || i.price || 0) * (i.qty || 1)), 0);
+    const deliveryFee = order.deliveryFee || (isDelivery ? (state.deliveryFee || 50) : 0);
+    const discount = (order.coupon && order.coupon.discountAmount) || 0;
+    const gstPercent = 5;
+    const gstAmount = Math.round((subtotal * gstPercent) / 100);
+    const grandTotal = order.total || Math.max(0, subtotal - discount + deliveryFee);
+
+    let paymentMethodLabel = 'Paid Online via Razorpay';
+    if (order.paymentMethod === 'cash') paymentMethodLabel = 'Cash at Counter';
+    else if (order.paymentMethod === 'upi_pos') paymentMethodLabel = 'UPI / QR at Counter';
+    else if (order.paymentMethod === 'card_pos') paymentMethodLabel = 'Card Machine / POS';
+    else if (order.paymentMethod === 'complimentary') paymentMethodLabel = 'Complimentary / Staff';
+    else if (order.paymentMethod === 'promo_free') paymentMethodLabel = '100% Promo Coupon Discount';
+
+    const isPaid = order.paymentStatus === 'paid';
+    const txnId = (order.paymentDetails && order.paymentDetails.razorpay_payment_id)
+      || (order.paymentDetails && order.paymentDetails.razorpay_order_id)
+      || ('TXN-' + (order.id || '').replace('#', '') + '-' + d.getTime().toString().slice(-4));
+
+    if (format === 'kot') {
+      // Kitchen Order Ticket
+      return `
+        <div class="invoice-paper kot-format">
+          <div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:10px;margin-bottom:12px;">
+            <h2 style="margin:0;font-size:1.5rem;font-weight:900;">KITCHEN ORDER TICKET (KOT)</h2>
+            <div style="font-size:1.3rem;font-weight:900;margin:6px 0;">ORDER ${order.id}</div>
+            <div style="font-size:1rem;font-weight:700;">TYPE: ${order.type ? order.type.toUpperCase() : 'TAKEOUT'}</div>
+            <div style="font-size:0.85rem;margin-top:4px;">Time: ${formattedDate} | ${formattedTime}</div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div><strong>Customer:</strong> ${escapeHtml(customer.name || 'Walk-in')}</div>
+            ${customer.phone ? `<div><strong>Phone:</strong> ${escapeHtml(customer.phone)}</div>` : ''}
+            ${customer.notes ? `<div style="margin-top:4px;padding:6px;background:#f0f0f0;border-radius:4px;"><strong>Special Instructions:</strong> “${escapeHtml(customer.notes)}”</div>` : ''}
+          </div>
+          <table class="kot-table" style="width:100%;border-collapse:collapse;margin-bottom:14px;">
+            <thead>
+              <tr style="border-bottom:1.5px solid #000;text-align:left;">
+                <th style="padding:6px 0;">Item</th>
+                <th style="padding:6px 0;text-align:right;">Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(i => {
+                const size = i.selectedSize ? ` <span style="font-weight:700;">[${escapeHtml(i.selectedSize.name)}]</span>` : '';
+                const addons = i.selectedAddons && i.selectedAddons.length > 0 ? `<div style="font-size:0.8rem;color:#444;">+ ${i.selectedAddons.map(a => escapeHtml(a.name)).join(', ')}</div>` : '';
+                return `
+                  <tr style="border-bottom:1px dashed #ccc;">
+                    <td style="padding:8px 0;font-size:1rem;font-weight:700;">
+                      ${escapeHtml(i.name)}${size}
+                      ${addons}
+                    </td>
+                    <td style="padding:8px 0;text-align:right;font-size:1.2rem;font-weight:900;">
+                      × ${i.qty || 1}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+          <div style="text-align:center;font-size:0.85rem;border-top:2px dashed #000;padding-top:8px;">
+            Chef's Station Copy · Expedite Order Promptly
+          </div>
+        </div>
+      `;
+    }
+
+    if (format === 'thermal') {
+      // 80mm Thermal Receipt format
+      return `
+        <div class="invoice-paper thermal-format" style="max-width:320px;margin:0 auto;font-family:'Courier New', monospace;font-size:12px;line-height:1.35;">
+          <div style="text-align:center;margin-bottom:8px;">
+            <div style="font-size:16px;font-weight:900;">MJ'S CORNER</div>
+            <div style="font-size:10px;">Authentic Italian Kitchen & Burgers</div>
+            <div style="font-size:10px;">Shop 4, City Center, Main Road</div>
+            <div style="font-size:10px;">Ph: +91 98765 43210</div>
+            <div style="border-bottom:1px dashed #000;margin:8px 0;"></div>
+            <div style="font-size:14px;font-weight:900;">ORDER ${order.id}</div>
+            <div style="font-size:10px;">${formattedDate} ${formattedTime}</div>
+            <div style="font-size:11px;font-weight:700;">[${order.type ? order.type.toUpperCase() : 'TAKEOUT'}]</div>
+          </div>
+          <div style="border-bottom:1px dashed #000;margin-bottom:6px;padding-bottom:4px;">
+            <div>Cust: ${escapeHtml(customer.name || 'Guest')}</div>
+            ${customer.phone ? `<div>Ph: ${escapeHtml(customer.phone)}</div>` : ''}
+            ${customer.address ? `<div>Addr: ${escapeHtml(customer.address)}</div>` : ''}
+          </div>
+          <table style="width:100%;margin-bottom:6px;">
+            ${items.map(i => `
+              <tr>
+                <td style="padding:2px 0;">${escapeHtml(i.name)} ${i.selectedSize ? '(' + i.selectedSize.name + ')' : ''}</td>
+                <td style="text-align:right;">${i.qty}x</td>
+                <td style="text-align:right;">₹${((i.offerPrice || i.price || 0) * (i.qty || 1))}</td>
+              </tr>
+            `).join('')}
+          </table>
+          <div style="border-top:1px dashed #000;padding-top:4px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;"><span>Subtotal:</span><span>₹${subtotal}</span></div>
+            ${deliveryFee > 0 ? `<div style="display:flex;justify-content:space-between;"><span>Delivery:</span><span>₹${deliveryFee}</span></div>` : ''}
+            ${discount > 0 ? `<div style="display:flex;justify-content:space-between;"><span>Discount:</span><span>-₹${discount}</span></div>` : ''}
+            <div style="display:flex;justify-content:space-between;font-weight:900;font-size:14px;border-top:1px solid #000;margin-top:4px;padding-top:2px;">
+              <span>TOTAL:</span><span>₹${grandTotal}</span>
+            </div>
+            <div style="font-size:10px;margin-top:4px;">Payment: ${paymentMethodLabel}</div>
+            <div style="font-size:10px;">Status: ${isPaid ? 'PAID' : 'PENDING'} (${txnId})</div>
+          </div>
+          <div style="text-align:center;font-size:10px;border-top:1px dashed #000;padding-top:6px;">
+            Thank you for ordering with us!<br>
+            Visit again: https://mjscorner.com
+          </div>
+        </div>
+      `;
+    }
+
+    // Standard Tax Invoice (adhering strictly to user's requested layout)
+    return `
+      <div class="invoice-paper tax-invoice-format">
+        <!-- Restaurant Header -->
+        <div class="invoice-header">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:58px;height:58px;border-radius:10px;object-fit:cover;border:1px solid #ddd;">
+            <div>
+              <h1 class="invoice-restaurant-name" style="margin:0;font-size:1.55rem;font-weight:800;color:#1e293b;">MJ's Corner</h1>
+              <div class="invoice-tagline" style="font-size:0.92rem;color:#e63946;font-weight:600;margin-top:2px;">
+                Authentic Wood-Fired Pizza, Burgers & Italian Kitchen
+              </div>
+            </div>
+          </div>
+          <div class="invoice-contact-bar" style="margin-top:10px;font-size:0.83rem;color:#64748b;border-bottom:1.5px solid #e2e8f0;padding-bottom:10px;">
+            Shop 4, Near City Center, Main Road, India | +91 98765 43210 | https://mjscorner.com
+          </div>
+        </div>
+
+        <!-- Order & Customer Details -->
+        <div class="invoice-section-title" style="margin-top:16px;font-size:1.05rem;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:0.04em;">
+          Order & Customer Details
+        </div>
+        <div class="invoice-meta-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:0.9rem;">
+          <div>
+            <div style="margin-bottom:6px;"><strong>Invoice / Order Number:</strong> <span style="font-weight:800;color:#e63946;">${escapeHtml(order.id)}</span></div>
+            <div style="margin-bottom:6px;"><strong>Date & Time:</strong> ${formattedDate} | ${formattedTime}</div>
+            <div style="margin-top:8px;">
+              <strong>Order Type:</strong><br>
+              <span style="display:inline-flex;gap:14px;margin-top:4px;">
+                <span>[${isDelivery ? 'X' : '&nbsp;'}] Delivery</span>
+                <span>[${isTakeout ? 'X' : '&nbsp;'}] Takeout</span>
+                <span>[${isDineIn ? 'X' : '&nbsp;'}] Dine-In</span>
+              </span>
+            </div>
+          </div>
+          <div>
+            <div style="margin-bottom:6px;"><strong>Customer Name:</strong> ${escapeHtml(customer.name || 'Walk-in Customer')}</div>
+            <div style="margin-bottom:6px;"><strong>Phone Number:</strong> ${escapeHtml(customer.phone || 'N/A')}</div>
+            ${isDelivery ? `<div style="margin-bottom:6px;"><strong>Delivery Address:</strong> ${escapeHtml(customer.address || 'Address provided at order')}</div>` : ''}
+            <div><strong>Delivery Instructions:</strong> “${escapeHtml(customer.notes || 'Please prepare freshly and ring the doorbell.')}”</div>
+          </div>
+        </div>
+
+        <!-- Itemized Order Summary -->
+        <div class="invoice-section-title" style="margin-top:20px;font-size:1.05rem;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:0.04em;">
+          Itemized Order Summary
+        </div>
+        <table class="invoice-table" style="width:100%;border-collapse:collapse;margin-top:10px;font-size:0.88rem;">
+          <thead>
+            <tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;text-align:left;">
+              <th style="padding:10px 12px;">Item Description</th>
+              <th style="padding:10px 8px;text-align:center;">Qty</th>
+              <th style="padding:10px 12px;text-align:right;">Unit Price</th>
+              <th style="padding:10px 12px;text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => {
+              const unitPrice = item.offerPrice || item.price || 0;
+              const qty = item.qty || 1;
+              const itemTotal = unitPrice * qty;
+              const sizeTxt = item.selectedSize ? `<div style="font-size:0.8rem;color:#e63946;font-weight:600;">Size: ${escapeHtml(item.selectedSize.name)}</div>` : '';
+              const addonsTxt = item.selectedAddons && item.selectedAddons.length > 0
+                ? `<div style="font-size:0.78rem;color:#64748b;">Addons: ${item.selectedAddons.map(a => escapeHtml(a.name)).join(', ')}</div>`
+                : '';
+              return `
+                <tr style="border-bottom:1px solid #e2e8f0;">
+                  <td style="padding:10px 12px;">
+                    <div style="font-weight:700;color:#1e293b;">${escapeHtml(item.name)}</div>
+                    ${sizeTxt}
+                    ${addonsTxt}
+                  </td>
+                  <td style="padding:10px 8px;text-align:center;font-weight:600;">${qty}</td>
+                  <td style="padding:10px 12px;text-align:right;">₹${unitPrice.toFixed(2)}</td>
+                  <td style="padding:10px 12px;text-align:right;font-weight:700;">₹${itemTotal.toFixed(2)}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <!-- Payment & Totals Breakdown -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
+          <!-- Estimated Fulfillment -->
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:0.86rem;">
+            <div style="font-weight:800;color:#0f172a;text-transform:uppercase;margin-bottom:8px;">Estimated Fulfillment</div>
+            <div style="margin-bottom:6px;"><strong>Estimated ${isDelivery ? 'Delivery' : 'Pickup'} Time:</strong> 30 – 45 Minutes</div>
+            <div style="margin-bottom:6px;"><strong>Assigned Driver / Delivery Executive:</strong> ${isDelivery ? 'Ramesh K. (Courier Partner)' : 'N/A (Counter Pickup)'}</div>
+            <div style="margin-top:12px;border-top:1px dashed #cbd5e1;padding-top:8px;">
+              <div style="font-weight:700;color:#1e293b;">Payment Method:</div>
+              <div style="color:#475569;">${escapeHtml(paymentMethodLabel)}</div>
+              <div style="margin-top:4px;">
+                <strong style="color:${isPaid ? '#10b981' : '#f59e0b'};">Transaction Status: ${isPaid ? 'PAID' : 'PENDING'}</strong>
+                <div style="font-size:0.78rem;color:#64748b;">(Transaction ID: ${escapeHtml(txnId)})</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Totals Breakdown -->
+          <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:14px;font-size:0.88rem;">
+            <div style="font-weight:800;color:#0f172a;text-transform:uppercase;margin-bottom:8px;">Payment & Totals Breakdown</div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Subtotal:</span><span>₹${subtotal.toFixed(2)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Packaging & Container Fee:</span><span>₹0.00</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>GST (5%):</span><span>Included (₹${gstAmount.toFixed(2)})</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Delivery Fee:</span><span>₹${deliveryFee.toFixed(2)}</span></div>
+            ${discount > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;color:#10b981;font-weight:600;"><span>Promo Discount (${escapeHtml((order.coupon && order.coupon.code) || 'OFFER')}):</span><span>-₹${discount.toFixed(2)}</span></div>` : ''}
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Tip / Delivery Partner Contribution:</span><span>₹0.00</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:6px;border-top:2px solid #0f172a;font-size:1.15rem;font-weight:900;color:#e63946;">
+              <span>Grand Total:</span>
+              <span>₹${grandTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer & Customer Notes -->
+        <div class="invoice-footer" style="margin-top:24px;border-top:1.5px solid #e2e8f0;padding-top:14px;font-size:0.82rem;color:#64748b;line-height:1.45;">
+          <div style="font-weight:700;color:#1e293b;margin-bottom:4px;">Thank you for ordering with us! We hope you enjoy your meal.</div>
+          <div>Got an issue with your order? Reach out to our support team immediately at <strong>support@mjscorner.com</strong> or call us directly at <strong>+91 98765 43210</strong>.</div>
+          <div style="margin-top:4px;">Follow us on social media: <strong>@mjscorner</strong></div>
+          <div style="margin-top:4px;color:#e63946;font-weight:600;">Rate your experience & get 10% off your next order: https://mjscorner.com/feedback</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ========== MANUAL OFFLINE / POS ORDER BUILDER ==========
+  function openPosModal() {
+    state.posCart = {};
+    if (els.posOrderType) els.posOrderType.value = 'dine-in';
+    if (els.posCustomerName) els.posCustomerName.value = 'Walk-in Customer';
+    if (els.posCustomerPhone) els.posCustomerPhone.value = '';
+    if (els.posDeliveryAddress) els.posDeliveryAddress.value = '';
+    if (els.posDeliveryAddressGroup) els.posDeliveryAddressGroup.style.display = 'none';
+
+    renderPosItems();
+    updatePosTotals();
+
+    if (els.offlineOrderModal) {
+      els.offlineOrderModal.classList.add('open');
+    }
+  }
+
+  function renderPosItems() {
+    if (!els.posItemsList) return;
+    const menu = state.menu.filter(m => m.available);
+    if (menu.length === 0) {
+      els.posItemsList.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-tertiary);">No menu items found. Please add menu items first.</div>';
+      return;
+    }
+
+    els.posItemsList.innerHTML = menu.map(item => {
+      const qty = state.posCart[item.id] || 0;
+      return `
+        <div class="pos-item-row" style="display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid var(--border);background:var(--bg-card);margin-bottom:4px;border-radius:var(--radius-sm);">
+          <div>
+            <div style="font-weight:700;font-size:0.88rem;">${escapeHtml(item.name)}</div>
+            <div style="font-size:0.78rem;color:var(--accent);font-weight:600;">₹${item.offerPrice || item.price || 0}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" class="btn-admin secondary pos-qty-btn" data-pos-action="minus" data-item-id="${item.id}" style="padding:2px 8px;font-size:0.9rem;font-weight:800;">-</button>
+            <span style="font-weight:800;min-width:20px;text-align:center;" id="pos-qty-${item.id}">${qty}</span>
+            <button type="button" class="btn-admin primary pos-qty-btn" data-pos-action="plus" data-item-id="${item.id}" style="padding:2px 8px;font-size:0.9rem;font-weight:800;">+</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    els.posItemsList.querySelectorAll('.pos-qty-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.itemId;
+        const action = btn.dataset.posAction;
+        const cur = state.posCart[id] || 0;
+        if (action === 'plus') {
+          state.posCart[id] = cur + 1;
+        } else if (action === 'minus') {
+          state.posCart[id] = Math.max(0, cur - 1);
+        }
+        const qtyEl = $(`#pos-qty-${id}`);
+        if (qtyEl) qtyEl.textContent = state.posCart[id];
+        updatePosTotals();
+      });
+    });
+  }
+
+  function updatePosTotals() {
+    let subtotal = 0;
+    Object.entries(state.posCart).forEach(([itemId, qty]) => {
+      if (qty > 0) {
+        const item = state.menu.find(m => String(m.id) === String(itemId));
+        if (item) {
+          subtotal += (item.offerPrice || item.price || 0) * qty;
+        }
+      }
+    });
+
+    const isDelivery = els.posOrderType && els.posOrderType.value === 'delivery';
+    const deliveryFee = isDelivery ? (state.deliveryFee || 50) : 0;
+    const total = subtotal + deliveryFee;
+
+    if (els.posSubtotalText) els.posSubtotalText.textContent = `₹${subtotal}`;
+    if (els.posDeliveryRow) els.posDeliveryRow.style.display = isDelivery ? 'flex' : 'none';
+    if (els.posDeliveryText) els.posDeliveryText.textContent = `₹${deliveryFee}`;
+    if (els.posTotalText) els.posTotalText.textContent = `₹${total}`;
+  }
+
+  async function submitPosOrder(e) {
+    e.preventDefault();
+
+    const selectedItems = [];
+    Object.entries(state.posCart).forEach(([itemId, qty]) => {
+      if (qty > 0) {
+        const item = state.menu.find(m => String(m.id) === String(itemId));
+        if (item) {
+          selectedItems.push({
+            id: item.id,
+            name: item.name,
+            offerPrice: item.offerPrice || item.price || 0,
+            price: item.mrp || item.offerPrice || 0,
+            image: item.image,
+            qty: qty,
+            selectedSize: item.sizes && item.sizes.length > 0 ? item.sizes[0] : null,
+            selectedAddons: []
+          });
+        }
+      }
+    });
+
+    if (selectedItems.length === 0) {
+      showToast('Please select at least 1 menu item for the order.', 'error');
+      return;
+    }
+
+    const orderType = (els.posOrderType && els.posOrderType.value) || 'dine-in';
+    const custName = (els.posCustomerName && els.posCustomerName.value.trim()) || 'Walk-in Customer';
+    const custPhone = (els.posCustomerPhone && els.posCustomerPhone.value.trim()) || '';
+    const payMethod = (els.posPaymentMethod && els.posPaymentMethod.value) || 'cash';
+    const deliveryAddress = (els.posDeliveryAddress && els.posDeliveryAddress.value.trim()) || '';
+
+    let subtotal = 0;
+    selectedItems.forEach(i => subtotal += (i.offerPrice * i.qty));
+    const deliveryFee = orderType === 'delivery' ? (state.deliveryFee || 50) : 0;
+    const grandTotal = subtotal + deliveryFee;
+
+    const btn = $('#btnSubmitPosOrder');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '⏳ Creating Order...';
+    }
+
+    try {
+      const payload = {
+        type: orderType,
+        items: selectedItems,
+        subtotal: subtotal,
+        deliveryFee: deliveryFee,
+        total: grandTotal,
+        customer: {
+          userId: 'pos_counter',
+          name: custName,
+          phone: custPhone,
+          address: deliveryAddress,
+          notes: 'POS Counter Order'
+        },
+        paymentStatus: payMethod === 'complimentary' ? 'paid' : (payMethod ? 'paid' : 'pending'),
+        paymentMethod: payMethod,
+        status: 'pending',
+        source: 'pos',
+        timestamp: new Date().toISOString()
+      };
+
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (data.success && data.order) {
+        showToast(`Offline Order ${data.orderId || data.order.id} created successfully!`, 'success');
+        state.orders.unshift(data.order);
+        localStorage.setItem('mj_orders', JSON.stringify(state.orders));
+
+        if (els.offlineOrderModal) els.offlineOrderModal.classList.remove('open');
+
+        // Immediately open printable invoice
+        openInvoiceModal(data.order.id);
+        loadData();
+      } else {
+        showToast((data && data.message) || 'Failed to create offline order', 'error');
+      }
+    } catch (err) {
+      showToast('Network error creating order: ' + err.message, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '✓ Confirm & Place Order (Print Invoice)';
+      }
+    }
   }
 
   function renderSizesInputs(item) {
@@ -748,11 +1682,15 @@
     // Delete item handler
     els.menuEditorList.querySelectorAll('[data-delete-item]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = parseInt(btn.dataset.deleteItem);
+        const id = btn.dataset.deleteItem;
         if (confirm('Are you sure you want to delete this menu item?')) {
-          state.menu = state.menu.filter(i => i.id !== id);
+          if (window.MJData && MJData.deleteMenuItem) {
+            MJData.deleteMenuItem(id);
+          }
+          state.menu = state.menu.filter(i => String(i.id) !== String(id));
           saveMenu();
           renderMenuEditor();
+          showToast('Menu item deleted permanently.', 'info');
         }
       });
     });
@@ -1011,11 +1949,16 @@
     // Bind promo delete
     els.promoList.querySelectorAll('[data-promo-delete]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = parseInt(btn.dataset.promoDelete);
-        state.promos = state.promos.filter(p => p.id !== id);
-        savePromos();
-        renderPromotions();
-        showToast('Promotion deleted', 'info');
+        const id = btn.dataset.promoDelete;
+        if (confirm('Are you sure you want to delete this promotion?')) {
+          if (window.MJData && MJData.deletePromo) {
+            MJData.deletePromo(id);
+          }
+          state.promos = state.promos.filter(p => String(p.id) !== String(id));
+          savePromos();
+          renderPromotions();
+          showToast('Promotion deleted permanently.', 'info');
+        }
       });
     });
   }
@@ -1206,6 +2149,151 @@
 
     // Promo popup toggle
     els.promoPopupToggle.addEventListener('change', togglePromoPopup);
+
+    // Restore Sample Menu
+    if (els.btnRestoreSampleMenu) {
+      els.btnRestoreSampleMenu.addEventListener('click', async () => {
+        if (confirm('Restore sample menu items? Any custom menu changes will be reset to defaults.')) {
+          if (window.MJData && MJData.resetMenu) {
+            await MJData.resetMenu();
+          }
+          loadData();
+          showToast('Sample menu restored successfully!', 'success');
+        }
+      });
+    }
+
+    // Restore Sample Promos
+    if (els.btnRestoreSamplePromos) {
+      els.btnRestoreSamplePromos.addEventListener('click', async () => {
+        if (confirm('Restore sample promotional coupons?')) {
+          if (window.MJData && MJData.resetPromos) {
+            await MJData.resetPromos();
+          }
+          loadData();
+          showToast('Sample promotions restored successfully!', 'success');
+        }
+      });
+    }
+
+    // Billing Exports
+    if (els.btnExportExcel) {
+      els.btnExportExcel.addEventListener('click', () => {
+        exportOrdersToExcel(getFilteredBillingOrders());
+      });
+    }
+
+    if (els.btnPrintBillingReport) {
+      els.btnPrintBillingReport.addEventListener('click', () => {
+        printBillingReport(getFilteredBillingOrders());
+      });
+    }
+
+    // Billing Filters
+    if (els.billingDateFilter) {
+      els.billingDateFilter.addEventListener('change', () => {
+        state.billingFilter.dateRange = els.billingDateFilter.value;
+        if (els.billingCustomDates) {
+          els.billingCustomDates.classList.toggle('hidden', state.billingFilter.dateRange !== 'custom');
+        }
+        renderBilling();
+      });
+    }
+
+    if (els.billingDateFrom) {
+      els.billingDateFrom.addEventListener('change', () => {
+        state.billingFilter.from = els.billingDateFrom.value;
+        renderBilling();
+      });
+    }
+
+    if (els.billingDateTo) {
+      els.billingDateTo.addEventListener('change', () => {
+        state.billingFilter.to = els.billingDateTo.value;
+        renderBilling();
+      });
+    }
+
+    if (els.billingTypeFilter) {
+      els.billingTypeFilter.addEventListener('change', () => {
+        state.billingFilter.type = els.billingTypeFilter.value;
+        renderBilling();
+      });
+    }
+
+    if (els.billingPaymentFilter) {
+      els.billingPaymentFilter.addEventListener('change', () => {
+        state.billingFilter.payment = els.billingPaymentFilter.value;
+        renderBilling();
+      });
+    }
+
+    if (els.billingSearchInput) {
+      els.billingSearchInput.addEventListener('input', () => {
+        state.billingFilter.search = els.billingSearchInput.value;
+        renderBilling();
+      });
+    }
+
+    if (els.btnResetBillingFilters) {
+      els.btnResetBillingFilters.addEventListener('click', () => {
+        state.billingFilter = { dateRange: 'all', type: 'all', payment: 'all', search: '', from: '', to: '' };
+        if (els.billingDateFilter) els.billingDateFilter.value = 'all';
+        if (els.billingTypeFilter) els.billingTypeFilter.value = 'all';
+        if (els.billingPaymentFilter) els.billingPaymentFilter.value = 'all';
+        if (els.billingSearchInput) els.billingSearchInput.value = '';
+        if (els.billingDateFrom) els.billingDateFrom.value = '';
+        if (els.billingDateTo) els.billingDateTo.value = '';
+        if (els.billingCustomDates) els.billingCustomDates.classList.add('hidden');
+        renderBilling();
+      });
+    }
+
+    // Invoice Modal format tabs & print
+    $$('.btn-inv-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        state.invoiceFormat = tab.dataset.invFormat;
+        $$('.btn-inv-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderCurrentInvoice();
+      });
+    });
+
+    if (els.btnPrintInvoiceModal) {
+      els.btnPrintInvoiceModal.addEventListener('click', () => {
+        window.print();
+      });
+    }
+
+    if (els.closeInvoiceModalBtn && els.invoiceModal) {
+      els.closeInvoiceModalBtn.addEventListener('click', () => {
+        els.invoiceModal.classList.remove('open');
+      });
+    }
+
+    // POS / Offline order modal events
+    if (els.closeOfflineOrderModalBtn && els.offlineOrderModal) {
+      els.closeOfflineOrderModalBtn.addEventListener('click', () => {
+        els.offlineOrderModal.classList.remove('open');
+      });
+    }
+
+    if (els.posOrderType) {
+      els.posOrderType.addEventListener('change', () => {
+        const isDelivery = els.posOrderType.value === 'delivery';
+        if (els.posDeliveryAddressGroup) {
+          els.posDeliveryAddressGroup.style.display = isDelivery ? 'block' : 'none';
+        }
+        updatePosTotals();
+      });
+    }
+
+    if (els.offlineOrderForm) {
+      els.offlineOrderForm.addEventListener('submit', submitPosOrder);
+    }
+
+    // Init store operations controls
+    initStoreControls();
 
     // Auto-refresh (poll every 5 seconds for new orders)
     setInterval(() => {

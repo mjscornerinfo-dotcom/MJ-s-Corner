@@ -72,6 +72,9 @@
       <div class="admin-nav-item" data-page="orders" id="navOrders">
         <span class="icon">📋</span> Orders
       </div>
+      <div class="admin-nav-item" data-page="billing" id="navBilling">
+        <span class="icon">🧾</span> Billing & Reports
+      </div>
       <div class="admin-nav-item" data-page="menu-editor" id="navMenuEditor">
         <span class="icon">🍔</span> Menu & Pricing
       </div>
@@ -86,6 +89,48 @@
       <!-- ===== Dashboard Page ===== -->
       <div class="admin-page" id="pageDashboard">
         <h1 class="admin-page-title">📊 Dashboard</h1>
+
+        <!-- Store Controls & Offline POS Operations -->
+        <div class="dashboard-store-controls">
+          <div class="store-control-card store-mode-card">
+            <div class="store-control-header">
+              <span class="store-control-badge">Store Operations</span>
+              <span class="store-live-pill" id="dashboardLivePill">Live</span>
+            </div>
+            <div class="store-control-title">Online Store Status</div>
+            <p class="store-control-desc">Control whether online customers can place orders or if the store is offline/paused.</p>
+            <button type="button" class="btn-store-mode online" id="btnToggleStoreMode">
+              <span class="store-mode-indicator"></span>
+              <span id="storeModeLabelText">🟢 Store is ONLINE (Accepting Orders)</span>
+            </button>
+          </div>
+
+          <div class="store-control-card delivery-setting-card">
+            <div class="store-control-header">
+              <span class="store-control-badge">Delivery Settings</span>
+            </div>
+            <div class="store-control-title">Delivery Charge</div>
+            <p class="store-control-desc">Set the delivery fee added to delivery orders at checkout.</p>
+            <div class="delivery-charge-form">
+              <div class="delivery-input-wrap">
+                <span class="currency-symbol">₹</span>
+                <input type="number" id="inputDeliveryFee" min="0" max="500" value="50" step="5" placeholder="50">
+              </div>
+              <button type="button" class="btn-admin primary" id="btnSaveDeliveryFee">Save Fee</button>
+            </div>
+          </div>
+
+          <div class="store-control-card pos-card">
+            <div class="store-control-header">
+              <span class="store-control-badge">Manual POS</span>
+            </div>
+            <div class="store-control-title">Counter / Offline Orders</div>
+            <p class="store-control-desc">Create walk-in, dine-in, or phone orders offline and print instant invoices.</p>
+            <button type="button" class="btn-admin primary" id="btnOpenPosModal" style="width:100%;padding:10px 14px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;">
+              <span>➕ Create Offline / POS Order</span>
+            </button>
+          </div>
+        </div>
 
         <!-- Stats -->
         <div class="stats-grid" id="statsGrid">
@@ -174,12 +219,130 @@
         </div>
       </div>
 
+      <!-- ===== Billing & Reports Page ===== -->
+      <div class="admin-page hidden" id="pageBilling">
+        <div class="billing-header-row">
+          <div>
+            <h1 class="admin-page-title" style="margin-bottom:4px;">🧾 Billing & Revenue Reports</h1>
+            <p style="color:var(--text-secondary);font-size:0.9rem;margin:0;">Manage invoices, track payments, generate bills and export spreadsheets</p>
+          </div>
+          <div class="billing-export-actions">
+            <button type="button" class="btn-admin primary" id="btnBillingCreatePos">
+              <span>➕ New Offline Order</span>
+            </button>
+            <button type="button" class="btn-admin secondary" id="btnExportExcel">
+              <span>📊 Export to Excel (.xlsx/.csv)</span>
+            </button>
+            <button type="button" class="btn-admin secondary" id="btnPrintBillingReport">
+              <span>📄 Print Financial Report (PDF)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Billing KPI Cards -->
+        <div class="stats-grid billing-stats-grid" id="billingStatsGrid">
+          <div class="stat-card">
+            <div class="stat-icon green">💰</div>
+            <div class="stat-value" id="billingTotalSales">₹0</div>
+            <div class="stat-label">Total Gross Sales</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">💳</div>
+            <div class="stat-value" id="billingOnlinePaid">₹0</div>
+            <div class="stat-label">Razorpay Online Paid</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">💵</div>
+            <div class="stat-value" id="billingOfflinePaid">₹0</div>
+            <div class="stat-label">Counter / POS Paid</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon yellow">🚗</div>
+            <div class="stat-value" id="billingDeliveryFees">₹0</div>
+            <div class="stat-label">Delivery Fees Collected</div>
+          </div>
+        </div>
+
+        <!-- Billing Filters Bar -->
+        <div class="billing-filter-bar">
+          <div class="filter-item">
+            <label>Date Range:</label>
+            <select id="billingDateFilter">
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">Last 7 Days</option>
+              <option value="month">This Month</option>
+              <option value="custom">Custom Date Range</option>
+            </select>
+          </div>
+          <div class="filter-item custom-date-range hidden" id="billingCustomDates">
+            <label>From:</label>
+            <input type="date" id="billingDateFrom">
+            <label>To:</label>
+            <input type="date" id="billingDateTo">
+          </div>
+          <div class="filter-item">
+            <label>Order Type:</label>
+            <select id="billingTypeFilter">
+              <option value="all">All Types</option>
+              <option value="delivery">🚗 Delivery</option>
+              <option value="pickup">🥡 Takeout</option>
+              <option value="dine-in">🍽️ Dine-In</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Payment Status:</label>
+            <select id="billingPaymentFilter">
+              <option value="all">All Payments</option>
+              <option value="paid">💳 Paid</option>
+              <option value="pending">⏳ Pending</option>
+            </select>
+          </div>
+          <div class="filter-item search-filter" style="flex:1;min-width:220px;">
+            <label>Search Orders:</label>
+            <input type="text" id="billingSearchInput" placeholder="Order ID, name, phone...">
+          </div>
+          <button type="button" class="btn-admin secondary" id="btnResetBillingFilters" style="align-self:flex-end;">Reset</button>
+        </div>
+
+        <!-- Billing Ledger Table -->
+        <div class="admin-table-wrap">
+          <div class="table-responsive">
+            <table class="admin-table" id="billingTable">
+              <thead>
+                <tr>
+                  <th>Order #</th>
+                  <th>Date & Time</th>
+                  <th>Customer</th>
+                  <th>Type</th>
+                  <th>Items</th>
+                  <th>Subtotal</th>
+                  <th>Delivery</th>
+                  <th>Discount</th>
+                  <th>Total</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="billingOrdersBody">
+                <tr><td colspan="12" style="text-align:center;padding:32px;color:var(--text-tertiary);">No billing records found</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== Menu & Pricing Editor ===== -->
       <div class="admin-page hidden" id="pageMenuEditor">
         <h1 class="admin-page-title">🍔 Menu & Pricing Editor</h1>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
           <p style="color:var(--text-secondary);margin:0;">Edit item prices, offer percentages, local photos, and availability. Changes sync to the customer portal in real-time.</p>
-          <div style="display:flex;gap:10px;">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-admin secondary" id="btnRestoreSampleMenu" title="Restore sample menu items if needed">
+              🔄 Restore Sample Menu
+            </button>
             <button class="btn-admin secondary" id="btnOpenNewItemModal" style="padding:10px 18px;">
               ➕ Add New Item
             </button>
@@ -296,9 +459,12 @@
           </div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h3 style="font-weight:700;">Active Promotions</h3>
-          <button class="btn-admin primary" id="btnAddPromo">+ Add Promotion</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <h3 style="font-weight:700;margin:0;">Active Promotions</h3>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-admin secondary" id="btnRestoreSamplePromos">🔄 Restore Sample Promos</button>
+            <button class="btn-admin primary" id="btnAddPromo">+ Add Promotion</button>
+          </div>
         </div>
 
         <div id="promoList">
@@ -306,6 +472,107 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ===== Offline POS Order Modal ===== -->
+  <div class="modal-overlay" id="offlineOrderModal">
+    <div class="modal" style="max-width:680px;max-height:92vh;display:flex;flex-direction:column;">
+      <div class="modal-header">
+        <h2>➕ Create Offline / POS Order</h2>
+        <button class="cart-close-btn" id="closeOfflineOrderModalBtn">✕</button>
+      </div>
+      <div class="modal-body" style="overflow-y:auto;padding:16px 20px;">
+        <form id="offlineOrderForm">
+          <!-- Order Type & Customer Details -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label for="posOrderType">Order Type *</label>
+              <select id="posOrderType" style="width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-weight:600;">
+                <option value="dine-in">🍽️ Dine-In</option>
+                <option value="pickup">🥡 Takeout / Counter</option>
+                <option value="delivery">🚗 Delivery</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label for="posCustomerName">Customer / Table Name</label>
+              <input type="text" id="posCustomerName" placeholder="e.g. Table 4 / Alex Morgan" value="Walk-in Customer">
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label for="posCustomerPhone">Customer Phone</label>
+              <input type="tel" id="posCustomerPhone" placeholder="e.g. 9876543210">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label for="posPaymentMethod">Payment Mode *</label>
+              <select id="posPaymentMethod" style="width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-weight:600;">
+                <option value="cash">💵 Cash at Counter</option>
+                <option value="upi_pos">⚡ UPI / QR at Counter</option>
+                <option value="card_pos">💳 Card Machine / POS</option>
+                <option value="complimentary">🎟️ Complimentary / Staff</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" id="posDeliveryAddressGroup" style="display:none;margin-bottom:14px;">
+            <label for="posDeliveryAddress">Delivery Address</label>
+            <input type="text" id="posDeliveryAddress" placeholder="Enter delivery address...">
+          </div>
+
+          <!-- Item Selector Grid -->
+          <div class="form-group" style="margin-bottom:14px;">
+            <label style="font-weight:700;margin-bottom:8px;display:block;">Select Menu Items</label>
+            <div id="posItemsList" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-md);padding:8px;background:var(--bg-secondary);">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Order Summary / Totals Breakdown -->
+          <div class="pos-totals-box" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.88rem;margin-bottom:6px;">
+              <span>Subtotal:</span>
+              <strong id="posSubtotalText">₹0</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.88rem;margin-bottom:6px;" id="posDeliveryRow">
+              <span>Delivery Fee:</span>
+              <strong id="posDeliveryText">₹0</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:800;border-top:1px dashed var(--border);padding-top:8px;margin-top:6px;color:var(--accent);">
+              <span>Grand Total:</span>
+              <span id="posTotalText">₹0</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-admin primary" id="btnSubmitPosOrder" style="width:100%;padding:14px;font-size:1rem;font-weight:700;">
+            ✓ Confirm & Place Order (Print Invoice)
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Printable Invoice Modal ===== -->
+  <div class="modal-overlay" id="invoiceModal">
+    <div class="modal invoice-modal" style="max-width:760px;max-height:92vh;display:flex;flex-direction:column;">
+      <div class="modal-header no-print">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <h2 style="margin:0;font-size:1.25rem;">🧾 Order Invoice</h2>
+          <div class="invoice-view-tabs">
+            <button type="button" class="btn-inv-tab active" data-inv-format="tax-invoice">Standard Tax Invoice</button>
+            <button type="button" class="btn-inv-tab" data-inv-format="kot">Kitchen KOT</button>
+            <button type="button" class="btn-inv-tab" data-inv-format="thermal">Thermal (80mm)</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-admin primary" id="btnPrintInvoiceModal">🖨️ Print / Save PDF</button>
+          <button type="button" class="cart-close-btn" id="closeInvoiceModalBtn">✕</button>
+        </div>
+      </div>
+      <div class="modal-body invoice-modal-body" id="invoiceModalContent" style="overflow-y:auto;padding:24px;">
+        <!-- Dynamically rendered printable invoice -->
+      </div>
     </div>
   </div>
 

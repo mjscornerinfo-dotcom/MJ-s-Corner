@@ -271,8 +271,14 @@ var MJData = (function () {
   // Seed storage if never initialized and migrate images to Cloudinary
   function initStorage() {
     if (typeof localStorage === 'undefined') return;
+    const isInitialized = localStorage.getItem('mj_initialized') === 'true';
+
     if (localStorage.getItem(STORAGE_KEY_MENU) === null) {
-      localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(DEFAULT_MENU));
+      if (!isInitialized) {
+        localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(DEFAULT_MENU));
+      } else {
+        localStorage.setItem(STORAGE_KEY_MENU, '[]');
+      }
     } else {
       // Migrate existing menu items to have Cloudinary URLs, sizes & addons
       try {
@@ -312,21 +318,17 @@ var MJData = (function () {
       } catch (e) {}
     }
     if (localStorage.getItem(STORAGE_KEY_PROMOS) === null) {
-      localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOS));
+      if (!isInitialized) {
+        localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOS));
+      } else {
+        localStorage.setItem(STORAGE_KEY_PROMOS, '[]');
+      }
     } else {
       // Migrate existing promos to support discountType, discountValue, scope, comboCategories
       try {
         const stored = JSON.parse(localStorage.getItem(STORAGE_KEY_PROMOS));
         if (Array.isArray(stored)) {
           let modified = false;
-          const hasCombo = stored.some(p => p.scope === 'combo' || p.code === 'PIZZADRINK');
-          if (!hasCombo) {
-            const pizzaCombo = DEFAULT_PROMOS.find(p => p.code === 'PIZZADRINK');
-            if (pizzaCombo) {
-              stored.splice(1, 0, JSON.parse(JSON.stringify(pizzaCombo)));
-              modified = true;
-            }
-          }
           stored.forEach(promo => {
             if (!promo.discountType) {
               if (promo.flatDiscount) {
@@ -437,14 +439,59 @@ var MJData = (function () {
     }).catch(err => console.warn('Could not save settings to MongoDB:', err));
   }
 
+  function deleteMenuItem(id) {
+    initStorage();
+    let menu = getMenu();
+    menu = menu.filter(item => String(item.id) !== String(id));
+    localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(menu));
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    fetch(`/api/menu/${encodeURIComponent(id)}`, { method: 'DELETE' })
+      .catch(err => console.warn('Could not delete menu item in MongoDB:', err));
+  }
+
+  function deletePromo(id) {
+    initStorage();
+    let promos = getPromos();
+    promos = promos.filter(p => String(p.id) !== String(id));
+    localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(promos));
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    fetch(`/api/promotions/${encodeURIComponent(id)}`, { method: 'DELETE' })
+      .catch(err => console.warn('Could not delete promo in MongoDB:', err));
+  }
+
+  function resetMenu() {
+    localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(DEFAULT_MENU));
+    localStorage.setItem('mj_initialized', 'true');
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    return fetch('/api/menu/reset', { method: 'POST' })
+      .then(r => r.json())
+      .catch(err => console.warn('Could not reset menu in MongoDB:', err));
+  }
+
+  function resetPromos() {
+    localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOS));
+    localStorage.setItem('mj_initialized', 'true');
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    return fetch('/api/promotions/reset', { method: 'POST' })
+      .then(r => r.json())
+      .catch(err => console.warn('Could not reset promos in MongoDB:', err));
+  }
+
   function resetToDefaults() {
     localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(DEFAULT_MENU));
     localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOS));
     localStorage.setItem(STORAGE_KEY_POPUP, 'true');
+    localStorage.setItem('mj_initialized', 'true');
     window.dispatchEvent(new Event('mj_data_changed'));
 
     fetch('/api/menu/reset', { method: 'POST' })
       .catch(err => console.warn('Could not reset menu in MongoDB:', err));
+    fetch('/api/promotions/reset', { method: 'POST' })
+      .catch(err => console.warn('Could not reset promos in MongoDB:', err));
   }
 
   // Sync menu, promos, and settings from MongoDB Atlas
@@ -454,8 +501,9 @@ var MJData = (function () {
       const menuResp = await fetch('/api/menu');
       if (menuResp.ok) {
         const menuData = await menuResp.json();
-        if (menuData.success && Array.isArray(menuData.menu) && menuData.menu.length > 0) {
+        if (menuData.success && Array.isArray(menuData.menu)) {
           localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(menuData.menu));
+          localStorage.setItem('mj_initialized', 'true');
         }
       }
 
@@ -463,8 +511,9 @@ var MJData = (function () {
       const promoResp = await fetch('/api/promotions');
       if (promoResp.ok) {
         const promoData = await promoResp.json();
-        if (promoData.success && Array.isArray(promoData.promotions) && promoData.promotions.length > 0) {
+        if (promoData.success && Array.isArray(promoData.promotions)) {
           localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(promoData.promotions));
+          localStorage.setItem('mj_initialized', 'true');
         }
       }
 
@@ -494,8 +543,12 @@ var MJData = (function () {
   return {
     getMenu,
     saveMenu,
+    deleteMenuItem,
+    resetMenu,
     getPromos,
     savePromos,
+    deletePromo,
+    resetPromos,
     isPromoPopupEnabled,
     setPromoPopupEnabled,
     resetToDefaults,

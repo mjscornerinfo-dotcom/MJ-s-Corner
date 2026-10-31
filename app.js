@@ -244,9 +244,26 @@
       if (res.ok) {
         const data = await res.json();
         if (data.razorpayKeyId) razorpayKeyId = data.razorpayKeyId;
+        if (typeof data.storeOnline === 'boolean') {
+          state.storeOnline = data.storeOnline;
+        }
+        if (typeof data.deliveryCharge === 'number') {
+          state.deliveryCharge = data.deliveryCharge;
+        }
+        updateStoreOnlineUI();
       }
     } catch (e) {
       console.warn('Could not load server config:', e);
+    }
+  }
+
+  function updateStoreOnlineUI() {
+    if (els.storeOfflineBanner) {
+      if (state.storeOnline === false) {
+        els.storeOfflineBanner.classList.remove('hidden');
+      } else {
+        els.storeOfflineBanner.classList.add('hidden');
+      }
     }
   }
 
@@ -258,6 +275,10 @@
     activeCategory: 'All',
     dietaryFilter: 'all', // 'all' | 'veg' | 'non-veg'
     orderCounter: parseInt(localStorage.getItem('mj_orderCounter') || '0'),
+    storeOnline: true,
+    deliveryCharge: 50,
+    lastCreatedOrder: null,
+    currentInvoiceOrder: null,
     promos: [],
     promoPopupEnabled: true,
     appliedPromo: null,
@@ -361,6 +382,7 @@
     menuSection: $('#menuSection'),
     categoryNavInner: $('#categoryNavInner'),
     menuContainer: $('#menuContainer'),
+    storeOfflineBanner: $('#storeOfflineBanner'),
     // Floating bar
     floatingCheckoutBar: $('#floatingCheckoutBar'),
     floatingBarInfo: $('#floatingBarInfo'),
@@ -409,6 +431,8 @@
     appliedCouponText: $('#appliedCouponText'),
     btnRemoveCoupon: $('#btnRemoveCoupon'),
     checkoutSubtotal: $('#checkoutSubtotal'),
+    checkoutDeliveryRow: $('#checkoutDeliveryRow'),
+    checkoutDeliveryFee: $('#checkoutDeliveryFee'),
     checkoutCouponRow: $('#checkoutCouponRow'),
     checkoutCouponLabel: $('#checkoutCouponLabel'),
     checkoutCouponDiscount: $('#checkoutCouponDiscount'),
@@ -462,6 +486,12 @@
     orderSuccessPromoDisplay: $('#orderSuccessPromoDisplay'),
     btnTrackOrderInSuccess: $('#btnTrackOrderInSuccess'),
     btnNewOrder: $('#btnNewOrder'),
+    btnPrintCustomerSuccessInvoice: $('#btnPrintCustomerSuccessInvoice'),
+    // Customer Invoice Modal
+    invoiceModal: $('#invoiceModal'),
+    btnPrintInvoiceModal: $('#btnPrintInvoiceModal'),
+    closeInvoiceModalBtn: $('#closeInvoiceModalBtn'),
+    invoiceModalContent: $('#invoiceModalContent'),
     // Promo popup
     promoPopupOverlay: $('#promoPopupOverlay'),
     promoPopupClose: $('#promoPopupClose'),
@@ -992,19 +1022,33 @@
             ` : ''}
           </div>
 
-          <!-- Footer with Total & Cancel button -->
+          <!-- Footer with Total & Invoice / Cancel button -->
           <div class="customer-order-footer">
             <div class="customer-order-pricing">
               ${order.coupon ? `<div class="customer-order-coupon-text">Saved ₹${order.coupon.discountAmount} with ${order.coupon.code}</div>` : ''}
               <div class="customer-order-total-amount">Total: ₹${order.total}</div>
             </div>
-            <div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn-admin secondary btn-view-cust-invoice" data-invoice-order="${order.id}" style="padding:6px 12px;font-size:0.8rem;border-radius:var(--radius-full);display:inline-flex;align-items:center;gap:4px;">
+                🖨️ Invoice
+              </button>
               ${cancelSectionHtml}
             </div>
           </div>
         </div>
       `;
     }).join('');
+
+    // Bind invoice buttons
+    container.querySelectorAll('[data-invoice-order]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.invoiceOrder;
+        const found = myOrders.find(o => o.id === id);
+        if (found) {
+          openCustomerInvoiceModal(found);
+        }
+      });
+    });
 
     // Bind cancel order buttons
     container.querySelectorAll('[data-cancel-order]').forEach(btn => {
@@ -1643,7 +1687,9 @@
     });
 
     const savings = Math.max(0, originalTotal - subtotal);
-    return { subtotal, savings, total: subtotal, itemCount };
+    const deliveryFee = state.orderType === 'delivery' ? (state.deliveryCharge !== undefined ? state.deliveryCharge : 50) : 0;
+    const total = subtotal + deliveryFee;
+    return { subtotal, savings, deliveryFee, total, itemCount };
   }
 
   // ========== PROMO EVALUATION & IN-CART COMBOS ==========
@@ -2138,6 +2184,7 @@
       els.deliveryAddressGroup.classList.remove('hidden');
       renderCheckoutAddresses();
     }
+    updateCheckoutBreakdown();
   }
 
   function renderCheckoutAddresses() {
@@ -2183,6 +2230,11 @@
   }
 
   function openCheckout() {
+    if (state.storeOnline === false) {
+      showToast('Online ordering is currently paused by the restaurant. Please check back later!', 'error');
+      return;
+    }
+
     if (state.cart.length === 0) {
       showToast('Please add items to your cart first!', 'error');
       return;
@@ -2295,9 +2347,9 @@
 
   function updateCheckoutBtnText() {
     if (!els.btnPlaceOrder) return;
-    const { subtotal } = getCartTotals();
+    const totals = getCartTotals();
     const discount = state.appliedPromo ? state.appliedPromo.discountAmount : 0;
-    const finalPayable = Math.max(0, subtotal - discount);
+    const finalPayable = Math.max(0, totals.subtotal - discount + totals.deliveryFee);
     if (finalPayable === 0) {
       els.btnPlaceOrder.innerHTML = `Confirm Order (Free with Coupon)`;
     } else {
@@ -2306,8 +2358,8 @@
   }
 
   function updateCheckoutBreakdown() {
-    const { subtotal } = getCartTotals();
-    els.checkoutSubtotal.textContent = `₹${subtotal}`;
+    const totals = getCartTotals();
+    els.checkoutSubtotal.textContent = `₹${totals.subtotal}`;
 
     let discount = 0;
     if (state.appliedPromo) {
@@ -2319,7 +2371,16 @@
       els.checkoutCouponRow.classList.add('hidden');
     }
 
-    const finalPayable = Math.max(0, subtotal - discount);
+    if (els.checkoutDeliveryRow && els.checkoutDeliveryFee) {
+      if (state.orderType === 'delivery') {
+        els.checkoutDeliveryRow.classList.remove('hidden');
+        els.checkoutDeliveryFee.textContent = `₹${totals.deliveryFee}`;
+      } else {
+        els.checkoutDeliveryRow.classList.add('hidden');
+      }
+    }
+
+    const finalPayable = Math.max(0, totals.subtotal - discount + totals.deliveryFee);
     els.checkoutTotal.textContent = `₹${finalPayable}`;
     updateCheckoutBtnText();
   }
@@ -2327,6 +2388,11 @@
   // ========== PLACE ORDER (ONLINE PAYMENT VIA RAZORPAY) ==========
   async function placeOrder(e) {
     e.preventDefault();
+
+    if (state.storeOnline === false) {
+      showToast('Online ordering is currently paused by the restaurant. Please check back later!', 'error');
+      return;
+    }
 
     if (state.cart.length === 0) {
       showToast('Your cart is empty!', 'error');
@@ -2352,17 +2418,30 @@
 
     const totals = getCartTotals();
     const discount = state.appliedPromo ? state.appliedPromo.discountAmount : 0;
-    const finalTotal = Math.max(0, totals.total - discount);
+    const finalTotal = Math.max(0, totals.subtotal - discount + totals.deliveryFee);
     const amountInPaise = Math.round(finalTotal * 100);
 
-    const nextOrderNum = state.orderCounter + 1;
-    const orderId = `#MJ-${String(nextOrderNum).padStart(4, '0')}`;
+    let orderId = '';
+    try {
+      const idRes = await fetch('/api/orders/next-id');
+      if (idRes.ok) {
+        const idData = await idRes.json();
+        if (idData.orderId) orderId = idData.orderId;
+      }
+    } catch (e) {
+      console.warn('Could not fetch atomic next-id:', e);
+    }
+    if (!orderId) {
+      const nextOrderNum = state.orderCounter + 1;
+      orderId = `#MJ-${String(nextOrderNum).padStart(4, '0')}`;
+    }
 
     const order = {
       id: orderId,
       type: state.orderType,
       items: [...state.cart],
       subtotal: totals.subtotal,
+      deliveryFee: totals.deliveryFee,
       total: finalTotal,
       coupon: state.appliedPromo ? { ...state.appliedPromo } : null,
       customer: {
@@ -2387,11 +2466,17 @@
       order.paymentMethod = 'promo_free';
 
       try {
-        await fetch('/api/orders', {
+        const saveRes = await fetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(order)
         });
+        if (saveRes.ok) {
+          const saveDoc = await saveRes.json();
+          if (saveDoc.order && saveDoc.order.id) {
+            order.id = saveDoc.order.id;
+          }
+        }
       } catch (err) {
         console.warn('Could not save order to MongoDB Atlas:', err);
       }
@@ -2424,6 +2509,11 @@
       const createData = await createRes.json();
       if (!createData.success || !createData.order_id) {
         throw new Error(createData.error || createData.message || 'Could not initiate Razorpay order');
+      }
+
+      if (createData.custom_order_id) {
+        order.id = createData.custom_order_id;
+        orderId = createData.custom_order_id;
       }
 
       const activeKey = createData.key || razorpayKeyId;
@@ -2517,6 +2607,7 @@
   }
 
   function handleOrderSuccess(order, isPaid = true) {
+    state.lastCreatedOrder = order;
     state.orderCounter++;
     localStorage.setItem('mj_orderCounter', state.orderCounter);
 
@@ -2583,6 +2674,184 @@
 
   function closePromoPopup() {
     els.promoPopupOverlay.classList.remove('open');
+  }
+
+  // ========== CUSTOMER INVOICE PRINTING ==========
+  function openCustomerInvoiceModal(order) {
+    if (!order) return;
+    state.currentInvoiceOrder = order;
+    if (els.invoiceModalContent) {
+      els.invoiceModalContent.innerHTML = renderCustomerInvoiceHtml(order);
+    }
+    if (els.invoiceModal) {
+      els.invoiceModal.classList.add('open');
+    }
+  }
+
+  function closeCustomerInvoiceModal() {
+    if (els.invoiceModal) {
+      els.invoiceModal.classList.remove('open');
+    }
+  }
+
+  function renderCustomerInvoiceHtml(order) {
+    if (!order) return '<p>No order selected.</p>';
+
+    const d = new Date(order.timestamp || order.createdAt || Date.now());
+    const formattedDate = d.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedTime = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+    const orderType = (order.type || 'takeout').toLowerCase();
+    const isDelivery = orderType === 'delivery';
+    const isTakeout = orderType === 'pickup' || orderType === 'takeout';
+    const isDineIn = orderType === 'dine-in';
+
+    const customer = order.customer || {};
+    const items = order.items || [];
+
+    const subtotal = order.subtotal || items.reduce((s, i) => s + ((i.offerPrice || i.price || 0) * (i.qty || 1)), 0);
+    const deliveryFee = order.deliveryFee || (isDelivery ? (state.deliveryCharge || 50) : 0);
+    const discount = (order.coupon && order.coupon.discountAmount) || 0;
+    const packagingFee = 0;
+    const gstPercent = 5;
+    const gstAmount = Math.round((subtotal * gstPercent) / 100);
+    const grandTotal = order.total || Math.max(0, subtotal - discount + deliveryFee);
+
+    let paymentMethodLabel = 'Paid Online via Razorpay';
+    if (order.paymentMethod === 'cash') paymentMethodLabel = 'Cash at Counter';
+    else if (order.paymentMethod === 'upi_pos') paymentMethodLabel = 'UPI / QR at Counter';
+    else if (order.paymentMethod === 'card_pos') paymentMethodLabel = 'Card Machine / POS';
+    else if (order.paymentMethod === 'complimentary') paymentMethodLabel = 'Complimentary / Staff';
+    else if (order.paymentMethod === 'promo_free') paymentMethodLabel = '100% Promo Coupon Discount';
+
+    const isPaid = order.paymentStatus === 'paid';
+    const txnId = (order.paymentDetails && order.paymentDetails.razorpay_payment_id)
+      || (order.paymentDetails && order.paymentDetails.razorpay_order_id)
+      || ('TXN-' + (order.id || '').replace('#', '') + '-' + d.getTime().toString().slice(-4));
+
+    return `
+      <div class="invoice-paper tax-invoice-format">
+        <!-- Restaurant Header -->
+        <div class="invoice-header">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:58px;height:58px;border-radius:10px;object-fit:cover;border:1px solid #ddd;">
+            <div>
+              <h1 class="invoice-restaurant-name" style="margin:0;font-size:1.55rem;font-weight:800;color:#1e293b;">MJ's Corner</h1>
+              <div class="invoice-tagline" style="font-size:0.92rem;color:#e63946;font-weight:600;margin-top:2px;">
+                Authentic Wood-Fired Pizza, Burgers & Italian Kitchen
+              </div>
+            </div>
+          </div>
+          <div class="invoice-contact-bar" style="margin-top:10px;font-size:0.83rem;color:#64748b;border-bottom:1.5px solid #e2e8f0;padding-bottom:10px;">
+            Shop 4, Near City Center, Main Road, India | +91 98765 43210 | https://mjscorner.com
+          </div>
+        </div>
+
+        <!-- Order & Customer Details -->
+        <div class="invoice-section-title" style="margin-top:16px;font-size:1.05rem;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:0.04em;">
+          Order & Customer Details
+        </div>
+        <div class="invoice-meta-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:0.9rem;">
+          <div>
+            <div style="margin-bottom:6px;"><strong>Invoice / Order Number:</strong> <span style="font-weight:800;color:#e63946;">${escapeHtml(order.id)}</span></div>
+            <div style="margin-bottom:6px;"><strong>Date & Time:</strong> ${formattedDate} | ${formattedTime}</div>
+            <div style="margin-top:8px;">
+              <strong>Order Type:</strong><br>
+              <span style="display:inline-flex;gap:14px;margin-top:4px;">
+                <span>[${isDelivery ? 'X' : '&nbsp;'}] Delivery</span>
+                <span>[${isTakeout ? 'X' : '&nbsp;'}] Takeout</span>
+                <span>[${isDineIn ? 'X' : '&nbsp;'}] Dine-In</span>
+              </span>
+            </div>
+          </div>
+          <div>
+            <div style="margin-bottom:6px;"><strong>Customer Name:</strong> ${escapeHtml(customer.name || 'Valued Customer')}</div>
+            <div style="margin-bottom:6px;"><strong>Phone Number:</strong> ${escapeHtml(customer.phone || 'N/A')}</div>
+            ${isDelivery ? `<div style="margin-bottom:6px;"><strong>Delivery Address:</strong> ${escapeHtml(customer.address || 'Address provided at order')}</div>` : ''}
+            <div><strong>Delivery Instructions:</strong> “${escapeHtml(customer.notes || 'Please prepare freshly and ring the doorbell.')}”</div>
+          </div>
+        </div>
+
+        <!-- Itemized Order Summary -->
+        <div class="invoice-section-title" style="margin-top:20px;font-size:1.05rem;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:0.04em;">
+          Itemized Order Summary
+        </div>
+        <table class="invoice-table" style="width:100%;border-collapse:collapse;margin-top:10px;font-size:0.88rem;">
+          <thead>
+            <tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;text-align:left;">
+              <th style="padding:10px 12px;">Item Description</th>
+              <th style="padding:10px 8px;text-align:center;">Qty</th>
+              <th style="padding:10px 12px;text-align:right;">Unit Price</th>
+              <th style="padding:10px 12px;text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => {
+              const unitPrice = item.offerPrice || item.price || 0;
+              const qty = item.qty || 1;
+              const itemTotal = unitPrice * qty;
+              const sizeTxt = item.selectedSize ? `<div style="font-size:0.8rem;color:#e63946;font-weight:600;">Size: ${escapeHtml(item.selectedSize.name)}</div>` : '';
+              const addonsTxt = item.selectedAddons && item.selectedAddons.length > 0
+                ? `<div style="font-size:0.78rem;color:#64748b;">Addons: ${item.selectedAddons.map(a => escapeHtml(a.name)).join(', ')}</div>`
+                : '';
+              return `
+                <tr style="border-bottom:1px solid #e2e8f0;">
+                  <td style="padding:10px 12px;">
+                    <div style="font-weight:700;color:#1e293b;">${escapeHtml(item.name)}</div>
+                    ${sizeTxt}
+                    ${addonsTxt}
+                  </td>
+                  <td style="padding:10px 8px;text-align:center;font-weight:600;">${qty}</td>
+                  <td style="padding:10px 12px;text-align:right;">₹${unitPrice.toFixed(2)}</td>
+                  <td style="padding:10px 12px;text-align:right;font-weight:700;">₹${itemTotal.toFixed(2)}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <!-- Payment & Totals Breakdown -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
+          <!-- Estimated Fulfillment -->
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:0.86rem;">
+            <div style="font-weight:800;color:#0f172a;text-transform:uppercase;margin-bottom:8px;">Estimated Fulfillment</div>
+            <div style="margin-bottom:6px;"><strong>Estimated ${isDelivery ? 'Delivery' : 'Pickup'} Time:</strong> 30 – 45 Minutes</div>
+            <div style="margin-bottom:6px;"><strong>Assigned Driver / Delivery Executive:</strong> ${isDelivery ? 'Ramesh K. (Courier Partner)' : 'N/A (Counter Pickup)'}</div>
+            <div style="margin-top:12px;border-top:1px dashed #cbd5e1;padding-top:8px;">
+              <div style="font-weight:700;color:#1e293b;">Payment Method:</div>
+              <div style="color:#475569;">${escapeHtml(paymentMethodLabel)}</div>
+              <div style="margin-top:4px;">
+                <strong style="color:${isPaid ? '#10b981' : '#f59e0b'};">Transaction Status: ${isPaid ? 'PAID' : 'PENDING'}</strong>
+                <div style="font-size:0.78rem;color:#64748b;">(Transaction ID: ${escapeHtml(txnId)})</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Totals Breakdown -->
+          <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;padding:14px;font-size:0.88rem;">
+            <div style="font-weight:800;color:#0f172a;text-transform:uppercase;margin-bottom:8px;">Payment & Totals Breakdown</div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Subtotal:</span><span>₹${subtotal.toFixed(2)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Packaging & Container Fee:</span><span>₹${packagingFee.toFixed(2)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>GST (5%):</span><span>Included (₹${gstAmount.toFixed(2)})</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Delivery Fee:</span><span>₹${deliveryFee.toFixed(2)}</span></div>
+            ${discount > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;color:#10b981;font-weight:600;"><span>Promo Discount (${escapeHtml((order.coupon && order.coupon.code) || 'OFFER')}):</span><span>-₹${discount.toFixed(2)}</span></div>` : ''}
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Tip / Delivery Partner Contribution:</span><span>₹0.00</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:6px;border-top:2px solid #0f172a;font-size:1.15rem;font-weight:900;color:#e63946;">
+              <span>Grand Total:</span>
+              <span>₹${grandTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer & Customer Notes -->
+        <div class="invoice-footer" style="margin-top:24px;border-top:1.5px solid #e2e8f0;padding-top:14px;font-size:0.82rem;color:#64748b;line-height:1.45;">
+          <div style="font-weight:700;color:#1e293b;margin-bottom:4px;">Thank you for ordering with us! We hope you enjoy your meal.</div>
+          <div>Got an issue with your order? Reach out to our support team immediately at <strong>support@mjscorner.com</strong> or call us directly at <strong>+91 98765 43210</strong>.</div>
+          <div style="margin-top:4px;">Follow us on social media: <strong>@mjscorner</strong></div>
+          <div style="margin-top:4px;color:#e63946;font-weight:600;">Rate your experience & get 10% off your next order: https://mjscorner.com/feedback</div>
+        </div>
+      </div>
+    `;
   }
 
   // ========== EVENT BINDINGS ==========
@@ -2709,6 +2978,31 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
+    if (els.btnPrintCustomerSuccessInvoice) {
+      els.btnPrintCustomerSuccessInvoice.addEventListener('click', () => {
+        if (state.lastCreatedOrder) {
+          openCustomerInvoiceModal(state.lastCreatedOrder);
+        } else {
+          showToast('No recent order found to print invoice.', 'info');
+        }
+      });
+    }
+
+    // Customer Invoice Modal
+    if (els.btnPrintInvoiceModal) {
+      els.btnPrintInvoiceModal.addEventListener('click', () => {
+        window.print();
+      });
+    }
+    if (els.closeInvoiceModalBtn) {
+      els.closeInvoiceModalBtn.addEventListener('click', closeCustomerInvoiceModal);
+    }
+    if (els.invoiceModal) {
+      els.invoiceModal.addEventListener('click', (e) => {
+        if (e.target === els.invoiceModal) closeCustomerInvoiceModal();
+      });
+    }
+
     // Promo Popup
     els.promoPopupClose.addEventListener('click', closePromoPopup);
     els.promoDismiss.addEventListener('click', closePromoPopup);
@@ -2755,6 +3049,7 @@
         closeOrdersModal();
         closeSuccess();
         closePromoPopup();
+        closeCustomerInvoiceModal();
       }
     });
 
@@ -2871,6 +3166,9 @@
 
     // Live 1-second ticking countdown timer for 2-minute order cancellation window
     setInterval(updateCancelTimers, 1000);
+
+    // Live config polling for store online status & delivery fee updates
+    setInterval(loadServerConfig, 15000);
 
     // Show promo popup once after a short delay
     if (state.promoPopupEnabled) {
