@@ -2734,10 +2734,9 @@
         <!-- Restaurant Header -->
         <div class="invoice-header">
           <div style="display:flex;align-items:center;gap:16px;">
-            <img src="LOGO.jpg" alt="MJ's Corner Logo" style="width:58px;height:58px;border-radius:10px;object-fit:cover;border:1px solid #ddd;">
+            <img src="header-brand-logo.jpg" alt="MJ's Corner" style="height:62px;width:auto;border-radius:8px;object-fit:contain;border:1px solid #e2e8f0;padding:2px 6px;background:#fff;">
             <div>
-              <h1 class="invoice-restaurant-name" style="margin:0;font-size:1.55rem;font-weight:800;color:#1e293b;">MJ's Corner</h1>
-              <div class="invoice-tagline" style="font-size:0.92rem;color:#e63946;font-weight:600;margin-top:2px;">
+              <div class="invoice-tagline" style="font-size:0.95rem;color:#e63946;font-weight:700;margin-top:2px;">
                 Crispy Fried Chicken, Pizzas & Burgers
               </div>
             </div>
