@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://mjscorner.in/</loc>
+    <lastmod>2026-10-31T19:17:11+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0000</priority>
+  </url>
+  <url>
+    <loc>https://mjscorner.in/menu</loc>
+    <lastmod>2026-10-31T19:17:11+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9000</priority>
+  </url>
+  <url>
+    <loc>https://mjscorner.in/index.html</loc>
+    <lastmod>2026-10-31T19:17:11+00:00</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8000</priority>
+  </url>
+  <url>
+    <loc>https://mjscorner.in/login</loc>
+    <lastmod>2026-10-31T19:17:11+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7000</priority>
+  </url>
+  <url>
+    <loc>https://mjscorner.in/login.html</loc>
+    <lastmod>2026-10-31T19:17:11+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7000</priority>
+  </url>
+  <url>
+    <loc>https://mjscorner.in/login.html?redirect=index.html</loc>
+    <lastmod>2026-10-31T19:17:11+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6400</priority>
+  </url>
+</urlset>

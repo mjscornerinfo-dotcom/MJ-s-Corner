@@ -1347,6 +1347,17 @@ app.get('/menu', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// ========== SITEMAP & ROBOTS.TXT FOR SEARCH ENGINES ==========
+app.get(['/sitemap', '/sitemap.xml'], (req, res) => {
+  res.header('Content-Type', 'application/xml');
+  res.sendFile(path.join(__dirname, 'sitemap.xml'));
+});
+
+app.get('/robots.txt', (req, res) => {
+  res.header('Content-Type', 'text/plain');
+  res.sendFile(path.join(__dirname, 'robots.txt'));
+});
+
 // Fallback to index.html for root or any unmatched routes
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
