@@ -279,6 +279,7 @@
     deliveryCharge: 50,
     lastCreatedOrder: null,
     currentInvoiceOrder: null,
+    pendingCheckout: false,
     promos: [],
     promoPopupEnabled: true,
     appliedPromo: null,
@@ -302,7 +303,32 @@
     const cur = user !== undefined ? user : (window.MJAuth ? MJAuth.getCurrentUser() : null);
     const key = getCartStorageKey(cur);
     try {
-      const saved = localStorage.getItem(key);
+      let saved = localStorage.getItem(key);
+
+      // If user is logged in, migrate and merge any existing guest cart items
+      if (cur) {
+        const guestSaved = localStorage.getItem('mj_cart_guest');
+        if (guestSaved) {
+          try {
+            const guestItems = JSON.parse(guestSaved);
+            if (Array.isArray(guestItems) && guestItems.length > 0) {
+              const userItems = saved ? JSON.parse(saved) : [];
+              guestItems.forEach(g => {
+                const existing = userItems.find(u => u.cartKey === g.cartKey);
+                if (existing) {
+                  existing.qty = Math.max(existing.qty, g.qty);
+                } else {
+                  userItems.push(g);
+                }
+              });
+              saved = JSON.stringify(userItems);
+              localStorage.setItem(key, saved);
+              localStorage.removeItem('mj_cart_guest');
+            }
+          } catch (e) {}
+        }
+      }
+
       state.cart = saved ? JSON.parse(saved) : [];
       state.cart.forEach(c => {
         if (!c.cartKey) {
@@ -492,6 +518,13 @@
     btnPrintInvoiceModal: $('#btnPrintInvoiceModal'),
     closeInvoiceModalBtn: $('#closeInvoiceModalBtn'),
     invoiceModalContent: $('#invoiceModalContent'),
+    // Customer Login Popup Modal
+    customerLoginModal: $('#customerLoginModal'),
+    closeCustomerLoginModalBtn: $('#closeCustomerLoginModalBtn'),
+    btnDoLoginLater: $('#btnDoLoginLater'),
+    loginModalTitle: $('#loginModalTitle'),
+    loginModalSubtitle: $('#loginModalSubtitle'),
+    btnGoToLoginPage: $('#btnGoToLoginPage'),
     // Promo popup
     promoPopupOverlay: $('#promoPopupOverlay'),
     promoPopupClose: $('#promoPopupClose'),
@@ -543,7 +576,16 @@
     if (!auth) return;
     const user = auth.getCurrentUser();
     if (!user) {
-      window.location.replace('login.html');
+      if (els.btnHeaderProfile) {
+        els.btnHeaderProfile.title = 'Sign In / Account';
+      }
+      if (els.headerUserAvatar) {
+        els.headerUserAvatar.textContent = '👤';
+        els.headerUserAvatar.style.background = 'transparent';
+        els.headerUserAvatar.style.color = 'inherit';
+      }
+      const adminLink = $('#headerAdminLink');
+      if (adminLink) adminLink.remove();
       return;
     }
 
@@ -590,7 +632,10 @@
 
   function openProfileModal(tab = 'details') {
     const user = MJAuth.getCurrentUser();
-    if (!user) return;
+    if (!user) {
+      openCustomerLoginModal();
+      return;
+    }
 
     // Populate personal details form
     els.profName.value = user.name || '';
@@ -2240,6 +2285,17 @@
       return;
     }
 
+    const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+    if (!user) {
+      closeCart();
+      state.pendingCheckout = true;
+      openCustomerLoginModal({
+        title: 'Sign In to Complete Order 🔒',
+        subtitle: 'Please sign in or verify your mobile number to confirm delivery address, review totals, and place your order.'
+      });
+      return;
+    }
+
     closeCart();
     setTimeout(() => {
       els.checkoutModal.classList.add('open');
@@ -2859,6 +2915,81 @@
     `;
   }
 
+  // ========== CUSTOMER LOGIN POPUP MODAL ==========
+  function openCustomerLoginModal(options = {}) {
+    if (els.loginModalTitle && options.title) {
+      els.loginModalTitle.textContent = options.title;
+    } else if (els.loginModalTitle) {
+      els.loginModalTitle.textContent = 'Welcome to MJ\'s Corner! 👋';
+    }
+
+    if (els.loginModalSubtitle && options.subtitle) {
+      els.loginModalSubtitle.textContent = options.subtitle;
+    } else if (els.loginModalSubtitle) {
+      els.loginModalSubtitle.textContent = 'Sign in to save delivery addresses, unlock exclusive coupons, and track your orders in real-time.';
+    }
+
+    if (els.btnGoToLoginPage) {
+      const redirectParam = state.pendingCheckout
+        ? 'index.html?action=checkout'
+        : 'index.html';
+      els.btnGoToLoginPage.href = `login.html?redirect=${encodeURIComponent(redirectParam)}`;
+    }
+
+    if (els.customerLoginModal) {
+      els.customerLoginModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeCustomerLoginModal() {
+    if (els.customerLoginModal) {
+      els.customerLoginModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Unified Phone.Email verification callbacks for inline login in popup
+  async function processInlinePhoneEmailVerification(userObj) {
+    const user_json_url = typeof userObj === 'string' ? userObj : (userObj && userObj.user_json_url);
+    if (!user_json_url) {
+      showToast('Verification failed: No verification URL returned', 'error');
+      return;
+    }
+
+    showToast('Verified! Signing into MJ\'s Corner...', 'info');
+
+    try {
+      const res = await MJAuth.loginWithPhoneEmail({ user_json_url });
+      if (res.success && res.user) {
+        showToast(`Welcome to MJ's Corner, ${res.user.name || 'Customer'}!`, 'success');
+        closeCustomerLoginModal();
+        initHeaderProfile();
+        loadCartForUser(res.user);
+        updateCartUI();
+        renderMenu();
+        updateHeaderOrdersBadge();
+
+        if (state.pendingCheckout && state.cart.length > 0) {
+          state.pendingCheckout = false;
+          openCheckout();
+        }
+      } else {
+        showToast(res.message || 'Authentication failed. Please try again.', 'error');
+      }
+    } catch (err) {
+      showToast('Authentication network error: ' + err.message, 'error');
+    }
+  }
+
+  window.phoneEmailListener = function (userObj) {
+    processInlinePhoneEmailVerification(userObj);
+  };
+
+  window.phoneEmailReceiver = function (userObj) {
+    processInlinePhoneEmailVerification(userObj);
+  };
+
   // ========== EVENT BINDINGS ==========
   function bindEvents() {
     els.themeToggle.addEventListener('click', toggleTheme);
@@ -3008,6 +3139,39 @@
       });
     }
 
+    // Customer Login Modal triggers
+    if (els.closeCustomerLoginModalBtn) {
+      els.closeCustomerLoginModalBtn.addEventListener('click', () => {
+        closeCustomerLoginModal();
+        sessionStorage.setItem('mj_login_modal_seen', '1');
+        if (state.pendingCheckout) {
+          state.pendingCheckout = false;
+          showToast('Sign in anytime to checkout. Your cart is preserved!', 'info');
+        }
+      });
+    }
+
+    if (els.btnDoLoginLater) {
+      els.btnDoLoginLater.addEventListener('click', () => {
+        closeCustomerLoginModal();
+        sessionStorage.setItem('mj_login_modal_seen', '1');
+        if (state.pendingCheckout) {
+          state.pendingCheckout = false;
+          showToast('Sign in anytime to checkout. Your cart is preserved!', 'info');
+        }
+      });
+    }
+
+    if (els.customerLoginModal) {
+      els.customerLoginModal.addEventListener('click', (e) => {
+        if (e.target === els.customerLoginModal) {
+          closeCustomerLoginModal();
+          sessionStorage.setItem('mj_login_modal_seen', '1');
+          if (state.pendingCheckout) state.pendingCheckout = false;
+        }
+      });
+    }
+
     // Promo Popup
     els.promoPopupClose.addEventListener('click', closePromoPopup);
     els.promoDismiss.addEventListener('click', closePromoPopup);
@@ -3055,6 +3219,7 @@
         closeSuccess();
         closePromoPopup();
         closeCustomerInvoiceModal();
+        closeCustomerLoginModal();
       }
     });
 
@@ -3181,6 +3346,23 @@
       if (activePromo) {
         setTimeout(() => showPromoPopup(activePromo), 1500);
       }
+    }
+
+    // Show Login Popup on landing page if visitor is not logged in and hasn't dismissed it this session
+    const currentUser = window.MJAuth ? MJAuth.getCurrentUser() : null;
+    if (!currentUser && !sessionStorage.getItem('mj_login_modal_seen')) {
+      setTimeout(() => {
+        openCustomerLoginModal({
+          title: 'Welcome to MJ\'s Corner! 👋',
+          subtitle: 'Sign in to save delivery addresses, unlock exclusive coupons, and track your orders in real-time.'
+        });
+      }, 700);
+    }
+
+    // Auto-resume checkout if user just redirected back from login
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'checkout' && currentUser && state.cart.length > 0) {
+      setTimeout(openCheckout, 400);
     }
   }
 

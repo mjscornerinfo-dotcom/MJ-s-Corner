@@ -1169,6 +1169,13 @@ input, select, textarea {
   }
 }
 
+.customer-login-modal {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+  position: relative;
+}
+
 .modal-header {
   display: flex;
   align-items: center;

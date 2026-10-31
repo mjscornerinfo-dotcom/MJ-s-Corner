@@ -9,18 +9,7 @@
   <meta name="theme-color" content="#e63946">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="auth.css">
-  <!-- Auth Guard: Ensure non-logged-in customers land directly on the login page -->
   <script src="auth.js"></script>
-  <script>
-    (function() {
-      const auth = window.MJAuth || (typeof MJAuth !== 'undefined' ? MJAuth : null);
-      if (!auth) return;
-      const user = auth.getCurrentUser();
-      if (!user) {
-        window.location.replace('login.html');
-      }
-    })();
-  </script>
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -506,6 +495,46 @@
     </div>
   </div>
 
+  <!-- ========== CUSTOMER LOGIN POPUP MODAL ========== -->
+  <div class="modal-overlay" id="customerLoginModal">
+    <div class="modal customer-login-modal" style="max-width:440px;text-align:center;position:relative;padding:32px 24px;border-radius:var(--radius-lg);box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+      <button type="button" class="cart-close-btn" id="closeCustomerLoginModalBtn" aria-label="Close and continue as guest" style="position:absolute;top:16px;right:16px;width:34px;height:34px;font-size:1.1rem;">✕</button>
+      
+      <div style="margin-bottom:14px;display:flex;justify-content:center;">
+        <img src="header-brand-logo.jpg" alt="MJ's Corner" style="height:54px;width:auto;border-radius:8px;background:#fff;padding:2px 6px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+      </div>
+
+      <h2 id="loginModalTitle" style="font-size:1.35rem;font-weight:800;margin:0 0 6px;color:var(--text-primary);">
+        Welcome to MJ's Corner! 👋
+      </h2>
+      <p id="loginModalSubtitle" style="font-size:0.88rem;color:var(--text-secondary);margin:0 0 22px;line-height:1.45;">
+        Sign in to save delivery addresses, unlock exclusive coupons, and track your orders in real-time.
+      </p>
+
+      <div class="login-modal-auth-options" style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px;">
+        <!-- Phone.Email OTP Button -->
+        <div style="padding:14px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:6px;">
+            <span>📱</span> <span>Instant Mobile Number OTP</span>
+          </div>
+          <div class="pe-button-wrapper" style="min-height:40px;display:flex;justify-content:center;align-items:center;">
+            <div class="pe_signin_button" data-client-id="11976801478974448261"></div>
+          </div>
+        </div>
+
+        <!-- Direct link to Full Login Page -->
+        <a href="login.html?redirect=index.html" class="btn-admin primary" id="btnGoToLoginPage" style="width:100%;justify-content:center;padding:12px;font-weight:700;text-decoration:none;border-radius:var(--radius-md);display:flex;align-items:center;gap:6px;">
+          <span>📱 Sign In / Register with OTP</span>
+        </a>
+      </div>
+
+      <!-- Dismiss / Do it Later button -->
+      <button type="button" class="btn-admin secondary" id="btnDoLoginLater" style="width:100%;justify-content:center;padding:10px 14px;font-size:0.88rem;border-radius:var(--radius-md);color:var(--text-secondary);">
+        🍴 Explore Menu First / Do it Later
+      </button>
+    </div>
+  </div>
+
   <!-- ========== PROMO POPUP ========== -->
   <div class="promo-popup-overlay" id="promoPopupOverlay">
     <div class="promo-popup" style="position:relative;">
@@ -524,6 +553,9 @@
 
   <!-- ========== TOAST CONTAINER ========== -->
   <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Phone.Email OTP Integration -->
+  <script src="https://www.phone.email/sign_in_button_v1.js" async></script>
 
   <!-- Razorpay Standard Web Checkout SDK -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
