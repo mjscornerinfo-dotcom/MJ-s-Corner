@@ -25,7 +25,9 @@
     },
     posCart: {},
     currentInvoiceOrder: null,
-    invoiceFormat: 'tax-invoice'
+    invoiceFormat: 'tax-invoice',
+    categories: [],
+    menuFilterCategory: 'All'
   };
 
   // ========== DOM REFERENCES ==========
@@ -92,10 +94,26 @@
     closeInvoiceModalBtn: $('#closeInvoiceModalBtn'),
     invoiceModalContent: $('#invoiceModalContent'),
     btnPrintInvoiceModal: $('#btnPrintInvoiceModal'),
-    // Menu Editor
+    // Menu Editor & Categories
     menuEditorList: $('#menuEditorList'),
     btnSaveMenu: $('#btnSaveMenu'),
     btnRestoreSampleMenu: $('#btnRestoreSampleMenu'),
+    categoryManagerCard: $('#categoryManagerCard'),
+    categoryChipsList: $('#categoryChipsList'),
+    categoryFilterActiveHint: $('#categoryFilterActiveHint'),
+    newCategoryInput: $('#newCategoryInput'),
+    btnAddCategoryBtn: $('#btnAddCategoryBtn'),
+    renameCategoryModal: $('#renameCategoryModal'),
+    renameCategoryForm: $('#renameCategoryForm'),
+    renameCategoryOldName: $('#renameCategoryOldName'),
+    renameCategoryCurrentDisplay: $('#renameCategoryCurrentDisplay'),
+    renameCategoryNewName: $('#renameCategoryNewName'),
+    closeRenameCategoryModalBtn: $('#closeRenameCategoryModalBtn'),
+    btnCancelRenameCategory: $('#btnCancelRenameCategory'),
+    btnToggleNewCustomCat: $('#btnToggleNewCustomCat'),
+    newItemCustomCatGroup: $('#newItemCustomCatGroup'),
+    newItemCustomCatInput: $('#newItemCustomCatInput'),
+    newItemCategory: $('#newItemCategory'),
     // Promotions
     promoList: $('#promoList'),
     promoPopupToggle: $('#promoPopupToggle'),
@@ -177,6 +195,10 @@
     state.menu = window.MJData ? MJData.getMenu() : JSON.parse(localStorage.getItem('mj_menu') || '[]');
     state.promos = window.MJData ? MJData.getPromos() : JSON.parse(localStorage.getItem('mj_promos') || '[]');
     state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
+    state.categories = (window.MJData && MJData.getCategories)
+      ? MJData.getCategories()
+      : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
+    state.menuFilterCategory = state.menuFilterCategory || 'All';
 
     switch (state.currentPage) {
       case 'dashboard': renderDashboard(); break;
@@ -199,6 +221,12 @@
         if (data.success && data.settings) {
           if (data.settings.storeOnline !== undefined) state.storeOnline = data.settings.storeOnline;
           if (data.settings.deliveryCharge !== undefined) state.deliveryFee = data.settings.deliveryCharge;
+          if (Array.isArray(data.settings.categories) && data.settings.categories.length > 0) {
+            state.categories = data.settings.categories;
+            if (state.currentPage === 'menu-editor') {
+              renderCategoryManager();
+            }
+          }
           updateStoreControlsUI();
         }
       }
@@ -1420,23 +1448,257 @@
     });
   }
 
+  // ========== CATEGORY CUSTOMIZATION & ICONS ==========
+  function getCategoryIcon(cat) {
+    if (!cat) return '🍽️';
+    const c = String(cat).toLowerCase();
+    if (c.includes('chicken') || c.includes('crispy') || c.includes('fried')) return '🍗';
+    if (c.includes('burger')) return '🍔';
+    if (c.includes('pizza')) return '🍕';
+    if (c.includes('pasta') || c.includes('spaghetti')) return '🍝';
+    if (c.includes('side') || c.includes('fries')) return '🍟';
+    if (c.includes('salad') || c.includes('healthy') || c.includes('bowl')) return '🥗';
+    if (c.includes('drink') || c.includes('beverage') || c.includes('shake') || c.includes('smoothie')) return '🥤';
+    if (c.includes('dessert') || c.includes('sweet') || c.includes('cake') || c.includes('ice cream')) return '🍰';
+    if (c.includes('momo') || c.includes('dimsum') || c.includes('dumpling')) return '🥟';
+    if (c.includes('roll') || c.includes('wrap') || c.includes('shawarma')) return '🌯';
+    if (c.includes('combo') || c.includes('thali') || c.includes('meal')) return '🍱';
+    if (c.includes('biryani') || c.includes('rice')) return '🍚';
+    if (c.includes('coffee') || c.includes('tea') || c.includes('chai')) return '☕';
+    if (c.includes('sandwich')) return '🥪';
+    if (c.includes('snack') || c.includes('starter')) return '🍿';
+    if (c.includes('soup')) return '🍲';
+    if (cat === 'All') return '🍴';
+    return '🍽️';
+  }
+
+  function getActiveCategories() {
+    let cats = (state.categories && state.categories.length > 0)
+      ? state.categories
+      : (window.MJData && MJData.getCategories ? MJData.getCategories() : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts']);
+    state.categories = cats;
+    return cats;
+  }
+
+  function renderCategoryManager() {
+    if (!els.categoryChipsList) return;
+    const cats = getActiveCategories();
+
+    // Calculate count of items in each category
+    const countMap = {};
+    state.menu.forEach(item => {
+      const c = item.category || 'Uncategorized';
+      countMap[c] = (countMap[c] || 0) + 1;
+    });
+
+    if (els.categoryFilterActiveHint) {
+      els.categoryFilterActiveHint.textContent = (state.menuFilterCategory === 'All')
+        ? 'Showing All Categories'
+        : `Filtered: ${state.menuFilterCategory} (${countMap[state.menuFilterCategory] || 0} items)`;
+    }
+
+    let chipsHtml = `
+      <div class="category-chip ${state.menuFilterCategory === 'All' ? 'active' : ''}" data-cat-filter="All">
+        <span>🍴 All</span>
+        <span class="category-chip-count">${state.menu.length}</span>
+      </div>
+    `;
+
+    cats.forEach(cat => {
+      const count = countMap[cat] || 0;
+      const isActive = state.menuFilterCategory === cat;
+      chipsHtml += `
+        <div class="category-chip ${isActive ? 'active' : ''}" data-cat-filter="${cat}">
+          <span>${getCategoryIcon(cat)} ${cat}</span>
+          <span class="category-chip-count">${count}</span>
+          <span class="category-chip-actions">
+            <button type="button" class="category-chip-btn btn-cat-rename" data-cat="${cat}" title="Rename '${cat}'">✏️</button>
+            <button type="button" class="category-chip-btn btn-cat-delete" data-cat="${cat}" title="Delete '${cat}'">🗑️</button>
+          </span>
+        </div>
+      `;
+    });
+
+    if (countMap['Uncategorized'] && !cats.includes('Uncategorized')) {
+      const isUncatActive = state.menuFilterCategory === 'Uncategorized';
+      chipsHtml += `
+        <div class="category-chip ${isUncatActive ? 'active' : ''}" data-cat-filter="Uncategorized">
+          <span>❓ Uncategorized</span>
+          <span class="category-chip-count">${countMap['Uncategorized']}</span>
+        </div>
+      `;
+    }
+
+    els.categoryChipsList.innerHTML = chipsHtml;
+
+    // Filter by category when clicking chip
+    els.categoryChipsList.querySelectorAll('.category-chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        if (e.target.closest('.category-chip-btn')) return;
+        const targetCat = chip.dataset.catFilter;
+        if (state.menuFilterCategory === targetCat && targetCat !== 'All') {
+          state.menuFilterCategory = 'All';
+        } else {
+          state.menuFilterCategory = targetCat;
+        }
+        renderCategoryManager();
+        renderMenuEditor();
+      });
+    });
+
+    // Rename button
+    els.categoryChipsList.querySelectorAll('.btn-cat-rename').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openRenameCategoryModal(btn.dataset.cat);
+      });
+    });
+
+    // Delete button
+    els.categoryChipsList.querySelectorAll('.btn-cat-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const catName = btn.dataset.cat;
+        const count = countMap[catName] || 0;
+        let msg = `Are you sure you want to delete category '${catName}'?`;
+        if (count > 0) {
+          msg = `Category '${catName}' currently contains ${count} item(s).\nDeleting it will move these items to 'Uncategorized'. Are you sure?`;
+        }
+        if (confirm(msg)) {
+          if (window.MJData && MJData.deleteCategory) {
+            MJData.deleteCategory(catName);
+          }
+          state.categories = state.categories.filter(c => c !== catName);
+          state.menu.forEach(item => {
+            if (item.category === catName) item.category = 'Uncategorized';
+          });
+          if (state.menuFilterCategory === catName) {
+            state.menuFilterCategory = 'All';
+          }
+          renderCategoryManager();
+          renderMenuEditor();
+          renderPromotions();
+          showToast(`🗑️ Category '${catName}' removed.`, 'info');
+        }
+      });
+    });
+  }
+
+  function openRenameCategoryModal(catName) {
+    if (!els.renameCategoryModal) return;
+    if (els.renameCategoryOldName) els.renameCategoryOldName.value = catName;
+    if (els.renameCategoryCurrentDisplay) els.renameCategoryCurrentDisplay.value = catName;
+    if (els.renameCategoryNewName) {
+      els.renameCategoryNewName.value = catName;
+      setTimeout(() => {
+        els.renameCategoryNewName.focus();
+        els.renameCategoryNewName.select();
+      }, 50);
+    }
+    els.renameCategoryModal.classList.add('open');
+  }
+
+  function closeRenameCategoryModal() {
+    if (els.renameCategoryModal) els.renameCategoryModal.classList.remove('open');
+  }
+
+  function populateNewItemCategorySelect(preselectedCat = '') {
+    if (!els.newItemCategory) return;
+    const cats = getActiveCategories();
+    let optionsHtml = '';
+    cats.forEach(c => {
+      const selected = (preselectedCat && preselectedCat === c) ? 'selected' : '';
+      optionsHtml += `<option value="${c}" ${selected}>${c}</option>`;
+    });
+    optionsHtml += `<option value="__custom__">➕ New Category...</option>`;
+    els.newItemCategory.innerHTML = optionsHtml;
+
+    if (els.newItemCustomCatGroup) els.newItemCustomCatGroup.classList.add('hidden');
+    if (els.newItemCustomCatInput) els.newItemCustomCatInput.value = '';
+  }
+
+  async function uploadImageToCloudinary(base64Data, itemName = 'food') {
+    try {
+      showToast(`☁️ Uploading to Cloudinary CDN...`, 'info');
+      const res = await fetch('/api/upload-food-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Data })
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        return data.url;
+      } else {
+        throw new Error(data.message || 'Upload failed');
+      }
+    } catch (err) {
+      console.warn('Cloudinary upload error, using local data:', err);
+      showToast('Cloudinary notice: ' + (err.message || 'Saved locally'), 'info');
+      return base64Data;
+    }
+  }
+
   // ========== MENU EDITOR ==========
   function renderMenuEditor() {
+    renderCategoryManager();
+
     if (state.menu.length === 0) {
       els.menuEditorList.innerHTML = '<p style="color:var(--text-tertiary);text-align:center;padding:32px;">No menu items found.</p>';
       return;
     }
 
+    const allCats = getActiveCategories();
+
+    // Filter items based on active category filter
+    let itemsToDisplay = state.menu;
+    if (state.menuFilterCategory && state.menuFilterCategory !== 'All') {
+      itemsToDisplay = itemsToDisplay.filter(item => item.category === state.menuFilterCategory);
+    }
+
+    if (itemsToDisplay.length === 0) {
+      els.menuEditorList.innerHTML = `
+        <div class="empty-category-notice">
+          <div style="font-size:2.2rem;margin-bottom:8px;">${getCategoryIcon(state.menuFilterCategory)}</div>
+          <div style="font-weight:700;font-size:1.05rem;color:var(--text-primary);margin-bottom:6px;">No items in '${state.menuFilterCategory}' yet</div>
+          <p style="margin:0 0 16px;color:var(--text-secondary);font-size:0.85rem;">Click below to add a new dish directly to this category.</p>
+          <button type="button" class="btn-admin primary" id="btnQuickAddCategoryItem" style="padding:9px 20px;">
+            ➕ Add Item to ${state.menuFilterCategory}
+          </button>
+        </div>
+      `;
+      const quickBtn = $('#btnQuickAddCategoryItem');
+      if (quickBtn) {
+        quickBtn.addEventListener('click', () => {
+          populateNewItemCategorySelect(state.menuFilterCategory);
+          const modal = $('#newItemModal');
+          if (modal) modal.classList.add('open');
+        });
+      }
+      return;
+    }
+
     // Group by category
     const grouped = {};
-    state.menu.forEach(item => {
-      if (!grouped[item.category]) grouped[item.category] = [];
-      grouped[item.category].push(item);
+    itemsToDisplay.forEach(item => {
+      const c = item.category || 'Uncategorized';
+      if (!grouped[c]) grouped[c] = [];
+      grouped[c].push(item);
     });
 
     let html = '';
     Object.entries(grouped).forEach(([category, items]) => {
-      html += `<h3 style="font-family:var(--font-display);margin:24px 0 12px;font-size:1.15rem;">${category}</h3>`;
+      html += `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px;">
+          <h3 style="font-family:var(--font-display);margin:0;font-size:1.15rem;display:flex;align-items:center;gap:8px;">
+            <span>${getCategoryIcon(category)}</span>
+            <span>${category}</span>
+            <span style="font-size:0.75rem;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--bg-secondary);color:var(--text-secondary);">${items.length} item${items.length === 1 ? '' : 's'}</span>
+          </h3>
+          <button type="button" class="btn-admin secondary btn-add-item-to-cat" data-cat="${category}" style="padding:4px 10px;font-size:0.75rem;">
+            ➕ Add Item to ${category}
+          </button>
+        </div>
+      `;
       items.forEach(item => {
         const discount = item.mrp > 0 ? Math.round(((item.mrp - item.offerPrice) / item.mrp) * 100) : 0;
         html += `
@@ -1455,11 +1717,19 @@
                 </span>
                 <span>${item.name}</span>
               </div>
-              <div class="edit-card-category" style="margin-bottom:8px;">
-                ${item.category} ${item.badge ? `· <span style="font-weight:600;color:var(--accent);">${item.badge}</span>` : ''} 
+              <div class="edit-card-category" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span class="category-tag-pill">🏷️ ${item.category}</span>
+                ${item.badge ? `· <span style="font-weight:600;color:var(--accent);">${item.badge}</span>` : ''} 
                 · <span class="offer-pct-badge" id="badge-pct-${item.id}">${discount}% OFF</span>
               </div>
               <div class="edit-card-fields" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;">
+                <div>
+                  <label style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:2px;">Category</label>
+                  <select data-field="category" data-id="${item.id}" style="width:100%;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-size:0.82rem;font-weight:600;">
+                    ${allCats.map(c => `<option value="${c}" ${item.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    <option value="__add_new_category__">➕ Add New Category...</option>
+                  </select>
+                </div>
                 <div>
                   <label style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:2px;">Dietary</label>
                   <select data-field="dietary" data-id="${item.id}" style="width:100%;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-size:0.82rem;font-weight:600;">
@@ -1534,28 +1804,17 @@
 
     els.menuEditorList.innerHTML = html;
 
-  async function uploadImageToCloudinary(base64Data, itemName = 'food') {
-    try {
-      showToast(`☁️ Uploading to Cloudinary CDN...`, 'info');
-      const res = await fetch('/api/upload-food-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64Data })
+    // Quick add item to category buttons
+    els.menuEditorList.querySelectorAll('.btn-add-item-to-cat').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cat = btn.dataset.cat;
+        populateNewItemCategorySelect(cat);
+        const modal = $('#newItemModal');
+        if (modal) modal.classList.add('open');
       });
-      const data = await res.json();
-      if (data.success && data.url) {
-        return data.url;
-      } else {
-        throw new Error(data.message || 'Upload failed');
-      }
-    } catch (err) {
-      console.warn('Cloudinary upload error, using local data:', err);
-      showToast('Cloudinary notice: ' + (err.message || 'Saved locally'), 'info');
-      return base64Data;
-    }
-  }
+    });
 
-  // Bind local file uploads for each card
+    // Bind local file uploads for each card
     els.menuEditorList.querySelectorAll('input[type="file"][data-upload-id]').forEach(input => {
       input.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -1591,7 +1850,43 @@
       const priceInput = card.querySelector('input[data-field="offerPrice"]');
       const badgeInput = card.querySelector('input[data-field="badge"]');
       const availInput = card.querySelector('input[data-field="available"]');
+      const catSelect = card.querySelector('select[data-field="category"]');
+      const dietarySelect = card.querySelector('select[data-field="dietary"]');
       const pctBadge = card.querySelector(`#badge-pct-${id}`);
+
+      // Category change handler per item
+      if (catSelect) {
+        catSelect.addEventListener('change', () => {
+          if (catSelect.value === '__add_new_category__') {
+            const newCatName = prompt('Enter name for the new category:');
+            if (newCatName && newCatName.trim()) {
+              const clean = newCatName.trim();
+              if (window.MJData && MJData.addCategory) {
+                MJData.addCategory(clean);
+              }
+              if (!state.categories.includes(clean)) {
+                state.categories.push(clean);
+              }
+              item.category = clean;
+              saveMenu();
+              renderCategoryManager();
+              renderMenuEditor();
+              showToast(`Category '${clean}' created and item updated!`, 'success');
+            } else {
+              catSelect.value = item.category;
+            }
+          } else {
+            const oldCat = item.category;
+            item.category = catSelect.value;
+            saveMenu();
+            renderCategoryManager();
+            if (state.menuFilterCategory !== 'All' && state.menuFilterCategory === oldCat) {
+              renderMenuEditor();
+            }
+            showToast(`Item '${item.name}' moved to '${item.category}'!`, 'info');
+          }
+        });
+      }
 
       // 1. Changing Offer % -> auto calculates Offer Price
       if (pctInput) {
@@ -1628,7 +1923,6 @@
       }
 
       // 4. Dietary, Badge & Availability
-      const dietarySelect = card.querySelector('select[data-field="dietary"]');
       if (dietarySelect) {
         dietarySelect.addEventListener('change', () => {
           item.dietary = dietarySelect.value;
@@ -1695,6 +1989,7 @@
           }
           state.menu = state.menu.filter(i => String(i.id) !== String(id));
           saveMenu();
+          renderCategoryManager();
           renderMenuEditor();
           showToast('Menu item deleted permanently.', 'info');
         }
@@ -1721,9 +2016,7 @@
 
   // ========== PROMOTIONS ==========
   function getMenuCategories() {
-    const defaultCats = ['Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
-    const fromMenu = state.menu.map(m => m.category).filter(Boolean);
-    return Array.from(new Set(defaultCats.concat(fromMenu)));
+    return getActiveCategories();
   }
 
   function renderPromotions() {
@@ -2059,6 +2352,7 @@
 
     if (btnOpenNewItemModal && newItemModal) {
       btnOpenNewItemModal.addEventListener('click', () => {
+        populateNewItemCategorySelect(state.menuFilterCategory !== 'All' ? state.menuFilterCategory : '');
         newItemModal.classList.add('open');
       });
     }
@@ -2067,6 +2361,106 @@
       closeNewItemModalBtn.addEventListener('click', () => {
         newItemModal.classList.remove('open');
       });
+    }
+
+    // Toggle custom category in new item modal
+    if (els.btnToggleNewCustomCat) {
+      els.btnToggleNewCustomCat.addEventListener('click', () => {
+        if (els.newItemCustomCatGroup) {
+          els.newItemCustomCatGroup.classList.toggle('hidden');
+          if (!els.newItemCustomCatGroup.classList.contains('hidden') && els.newItemCustomCatInput) {
+            els.newItemCustomCatInput.focus();
+          }
+        }
+      });
+    }
+
+    if (els.newItemCategory) {
+      els.newItemCategory.addEventListener('change', () => {
+        if (els.newItemCategory.value === '__custom__') {
+          if (els.newItemCustomCatGroup) {
+            els.newItemCustomCatGroup.classList.remove('hidden');
+            if (els.newItemCustomCatInput) els.newItemCustomCatInput.focus();
+          }
+        } else {
+          if (els.newItemCustomCatGroup) {
+            els.newItemCustomCatGroup.classList.add('hidden');
+          }
+        }
+      });
+    }
+
+    // Category Manager - Add Category
+    const handleAddCategory = () => {
+      if (!els.newCategoryInput) return;
+      const name = els.newCategoryInput.value.trim();
+      if (!name) {
+        showToast('Please enter a category name', 'error');
+        return;
+      }
+      if (window.MJData && MJData.addCategory) {
+        MJData.addCategory(name);
+      }
+      if (!state.categories.includes(name)) {
+        state.categories.push(name);
+      }
+      els.newCategoryInput.value = '';
+      renderCategoryManager();
+      renderMenuEditor();
+      renderPromotions();
+      showToast(`✨ Category '${name}' created successfully!`, 'success');
+    };
+
+    if (els.btnAddCategoryBtn) {
+      els.btnAddCategoryBtn.addEventListener('click', handleAddCategory);
+    }
+    if (els.newCategoryInput) {
+      els.newCategoryInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleAddCategory();
+        }
+      });
+    }
+
+    // Rename Category Form submit
+    if (els.renameCategoryForm) {
+      els.renameCategoryForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const oldName = els.renameCategoryOldName ? els.renameCategoryOldName.value.trim() : '';
+        const newName = els.renameCategoryNewName ? els.renameCategoryNewName.value.trim() : '';
+        if (!oldName || !newName) return;
+        if (oldName === newName) {
+          closeRenameCategoryModal();
+          return;
+        }
+
+        if (window.MJData && MJData.renameCategory) {
+          MJData.renameCategory(oldName, newName);
+        }
+        state.categories = state.categories.map(c => c === oldName ? newName : c);
+        if (!state.categories.includes(newName)) state.categories.push(newName);
+
+        state.menu.forEach(item => {
+          if (item.category === oldName) item.category = newName;
+        });
+        if (state.menuFilterCategory === oldName) {
+          state.menuFilterCategory = newName;
+        }
+
+        closeRenameCategoryModal();
+        renderCategoryManager();
+        renderMenuEditor();
+        renderPromotions();
+        showToast(`✏️ Category '${oldName}' renamed to '${newName}'!`, 'success');
+      });
+    }
+
+    if (els.closeRenameCategoryModalBtn) {
+      els.closeRenameCategoryModalBtn.addEventListener('click', closeRenameCategoryModal);
+    }
+    if (els.btnCancelRenameCategory) {
+      els.btnCancelRenameCategory.addEventListener('click', closeRenameCategoryModal);
     }
 
     // Interlinked calculations for new item
@@ -2114,7 +2508,19 @@
       newItemForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const name = $('#newItemName').value.trim();
-        const category = $('#newItemCategory').value;
+        let category = $('#newItemCategory').value;
+        const customCatVal = els.newItemCustomCatInput ? els.newItemCustomCatInput.value.trim() : '';
+        if (category === '__custom__' || customCatVal !== '') {
+          if (customCatVal) {
+            category = customCatVal;
+            if (window.MJData && MJData.addCategory) {
+              MJData.addCategory(customCatVal);
+            }
+            if (!state.categories.includes(customCatVal)) {
+              state.categories.push(customCatVal);
+            }
+          }
+        }
         const desc = $('#newItemDesc').value.trim();
         const mrp = parseInt(newItemMrp.value) || 0;
         const offerPrice = parseInt(newItemOfferPrice.value) || mrp;
@@ -2141,9 +2547,11 @@
 
         state.menu.unshift(newItem);
         saveMenu();
+        renderCategoryManager();
         renderMenuEditor();
         newItemModal.classList.remove('open');
         newItemForm.reset();
+        if (els.newItemCustomCatGroup) els.newItemCustomCatGroup.classList.add('hidden');
         newItemImageData = 'images/burger.jpg';
         if (newItemImgPreview) newItemImgPreview.src = newItemImageData;
         showToast(`'${name}' successfully added to the menu!`, 'success');

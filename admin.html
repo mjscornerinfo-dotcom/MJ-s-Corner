@@ -349,6 +349,33 @@
           </div>
         </div>
 
+        <!-- ===== Category Management Section ===== -->
+        <div class="category-manager-card" id="categoryManagerCard">
+          <div class="category-manager-header">
+            <div class="category-manager-title-group">
+              <div class="category-manager-title">🏷️ Manage Menu Categories</div>
+              <p class="category-manager-subtitle">Add custom categories, rename existing ones, or click any category to filter the menu below.</p>
+            </div>
+            <div class="category-add-inline">
+              <input type="text" id="newCategoryInput" placeholder="New category name (e.g. Crispy Fried Chicken)" maxlength="32">
+              <button type="button" class="btn-admin primary" id="btnAddCategoryBtn" style="padding:9px 18px;white-space:nowrap;">
+                ➕ Add Category
+              </button>
+            </div>
+          </div>
+
+          <!-- Category Chips / Filter Bar -->
+          <div class="category-chips-wrapper">
+            <div class="category-chips-header">
+              <span class="category-filter-label">Filter & Manage Categories:</span>
+              <span class="category-filter-hint" id="categoryFilterActiveHint">Showing All Categories</span>
+            </div>
+            <div class="category-chips-list" id="categoryChipsList">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+
         <div id="menuEditorList">
           <!-- Rendered by JS -->
         </div>
@@ -372,16 +399,18 @@
                 <input type="text" id="newItemName" placeholder="e.g. Truffle Mushroom Burger" required>
               </div>
               <div class="form-group">
-                <label for="newItemCategory">Category *</label>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <label for="newItemCategory" style="margin-bottom:0;">Category *</label>
+                  <button type="button" id="btnToggleNewCustomCat" style="background:none;border:none;color:var(--accent);font-size:0.78rem;font-weight:700;cursor:pointer;padding:0;">
+                    + New Category
+                  </button>
+                </div>
                 <select id="newItemCategory" style="width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);" required>
-                  <option value="Burgers">Burgers</option>
-                  <option value="Pizza">Pizza</option>
-                  <option value="Pasta">Pasta</option>
-                  <option value="Sides">Sides</option>
-                  <option value="Salads">Salads</option>
-                  <option value="Drinks">Drinks</option>
-                  <option value="Desserts">Desserts</option>
+                  <!-- Populated dynamically by JS -->
                 </select>
+                <div id="newItemCustomCatGroup" class="hidden" style="margin-top:8px;">
+                  <input type="text" id="newItemCustomCatInput" placeholder="Enter new category name (e.g. Crispy Fried Chicken)" maxlength="32" style="width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid var(--accent);background:var(--bg-card);color:var(--text-primary);font-size:0.88rem;">
+                </div>
               </div>
               <div class="form-group">
                 <label>Dietary Classification *</label>
@@ -433,6 +462,34 @@
               <button type="submit" class="btn-admin primary" style="width:100%;padding:14px;margin-top:8px;">
                 ✓ Add Item to Menu
               </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Rename Category Modal ===== -->
+      <div class="modal-overlay" id="renameCategoryModal">
+        <div class="modal" style="max-width:440px;">
+          <div class="modal-header">
+            <h2>✏️ Rename Category</h2>
+            <button class="cart-close-btn" id="closeRenameCategoryModalBtn">✕</button>
+          </div>
+          <div class="modal-body">
+            <form id="renameCategoryForm">
+              <input type="hidden" id="renameCategoryOldName">
+              <div class="form-group">
+                <label style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);">Current Name</label>
+                <input type="text" id="renameCategoryCurrentDisplay" disabled style="opacity:0.75;background:var(--bg-secondary);">
+              </div>
+              <div class="form-group">
+                <label for="renameCategoryNewName" style="font-size:0.82rem;font-weight:600;color:var(--text-primary);">New Category Name *</label>
+                <input type="text" id="renameCategoryNewName" placeholder="Enter updated name" maxlength="32" required>
+                <small style="color:var(--text-tertiary);font-size:0.75rem;margin-top:4px;display:block;">All menu items and promotions under this category will automatically update.</small>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+                <button type="button" class="btn-admin secondary" id="btnCancelRenameCategory">Cancel</button>
+                <button type="submit" class="btn-admin primary">Update Category</button>
+              </div>
             </form>
           </div>
         </div>

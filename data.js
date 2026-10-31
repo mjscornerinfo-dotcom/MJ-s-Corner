@@ -9,6 +9,18 @@ var MJData = (function () {
   const STORAGE_KEY_MENU = 'mj_menu';
   const STORAGE_KEY_PROMOS = 'mj_promos';
   const STORAGE_KEY_POPUP = 'mj_promoPopup';
+  const STORAGE_KEY_CATEGORIES = 'mj_categories';
+
+  const DEFAULT_CATEGORIES = [
+    'Crispy Fried Chicken',
+    'Burgers',
+    'Pizza',
+    'Pasta',
+    'Sides',
+    'Salads',
+    'Drinks',
+    'Desserts'
+  ];
 
   const DEFAULT_MENU = [
     // ---- Burgers ----
@@ -371,6 +383,9 @@ var MJData = (function () {
     if (localStorage.getItem(STORAGE_KEY_POPUP) === null) {
       localStorage.setItem(STORAGE_KEY_POPUP, 'true');
     }
+    if (localStorage.getItem(STORAGE_KEY_CATEGORIES) === null) {
+      localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
+    }
   }
 
   function getMenu() {
@@ -461,6 +476,126 @@ var MJData = (function () {
       .catch(err => console.warn('Could not delete promo in MongoDB:', err));
   }
 
+  // ========== CATEGORY CUSTOMIZATION (SHARED DATA) ==========
+  function getCategories() {
+    initStorage();
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_CATEGORIES);
+      let cats = data !== null ? JSON.parse(data) : [...DEFAULT_CATEGORIES];
+      if (!Array.isArray(cats) || cats.length === 0) cats = [...DEFAULT_CATEGORIES];
+      
+      // Auto-include any category present in menu items
+      const menu = getMenu();
+      menu.forEach(item => {
+        if (item.category && !cats.includes(item.category)) {
+          cats.push(item.category);
+        }
+      });
+      return Array.from(new Set(cats.map(c => String(c).trim()).filter(Boolean)));
+    } catch (e) {
+      return [...DEFAULT_CATEGORIES];
+    }
+  }
+
+  function saveCategories(categories) {
+    if (!Array.isArray(categories)) return;
+    const clean = Array.from(new Set(categories.map(c => String(c).trim()).filter(Boolean)));
+    localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(clean));
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ categories: clean })
+    }).catch(err => console.warn('Could not save categories to MongoDB:', err));
+  }
+
+  function addCategory(name) {
+    if (!name || !String(name).trim()) return;
+    const clean = String(name).trim();
+    const current = getCategories();
+    if (!current.includes(clean)) {
+      current.push(clean);
+      saveCategories(current);
+    }
+    return clean;
+  }
+
+  function renameCategory(oldName, newName) {
+    if (!oldName || !newName || !String(newName).trim()) return;
+    const cleanOld = String(oldName).trim();
+    const cleanNew = String(newName).trim();
+
+    // 1. Update menu items
+    const menu = getMenu();
+    let modifiedMenu = false;
+    menu.forEach(item => {
+      if (item.category === cleanOld) {
+        item.category = cleanNew;
+        modifiedMenu = true;
+      }
+    });
+    if (modifiedMenu) {
+      saveMenu(menu);
+    }
+
+    // 2. Update promotions targeting this category
+    const promos = getPromos();
+    let modifiedPromos = false;
+    promos.forEach(p => {
+      if (p.targetCategory === cleanOld) {
+        p.targetCategory = cleanNew;
+        modifiedPromos = true;
+      }
+      if (Array.isArray(p.comboCategories) && p.comboCategories.includes(cleanOld)) {
+        p.comboCategories = p.comboCategories.map(c => c === cleanOld ? cleanNew : c);
+        modifiedPromos = true;
+      }
+    });
+    if (modifiedPromos) {
+      savePromos(promos);
+    }
+
+    // 3. Update category list
+    let cats = getCategories().map(c => c === cleanOld ? cleanNew : c);
+    if (!cats.includes(cleanNew)) cats.push(cleanNew);
+    saveCategories(cats);
+
+    // 4. Notify backend
+    fetch('/api/categories/rename', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldName: cleanOld, newName: cleanNew })
+    }).catch(err => console.warn('Could not rename category in MongoDB:', err));
+  }
+
+  function deleteCategory(name) {
+    if (!name) return;
+    const clean = String(name).trim();
+
+    // 1. Move menu items to 'Uncategorized'
+    const menu = getMenu();
+    let modifiedMenu = false;
+    menu.forEach(item => {
+      if (item.category === clean) {
+        item.category = 'Uncategorized';
+        modifiedMenu = true;
+      }
+    });
+    if (modifiedMenu) {
+      saveMenu(menu);
+    }
+
+    // 2. Remove from categories list
+    let cats = getCategories().filter(c => c !== clean);
+    saveCategories(cats);
+
+    // 3. Notify backend
+    fetch(`/api/categories/${encodeURIComponent(clean)}`, {
+      method: 'DELETE'
+    }).catch(err => console.warn('Could not delete category in MongoDB:', err));
+  }
+
   function resetMenu() {
     localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(DEFAULT_MENU));
     localStorage.setItem('mj_initialized', 'true');
@@ -517,13 +652,25 @@ var MJData = (function () {
         }
       }
 
-      // 3. Settings
+      // 3. Categories
+      const catResp = await fetch('/api/categories');
+      if (catResp.ok) {
+        const catData = await catResp.json();
+        if (catData.success && Array.isArray(catData.categories) && catData.categories.length > 0) {
+          localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(catData.categories));
+        }
+      }
+
+      // 4. Settings
       const setResp = await fetch('/api/settings');
       if (setResp.ok) {
         const setData = await setResp.json();
         if (setData.success && setData.settings) {
           if (setData.settings.promoPopupEnabled !== undefined) {
             localStorage.setItem(STORAGE_KEY_POPUP, JSON.stringify(setData.settings.promoPopupEnabled));
+          }
+          if (Array.isArray(setData.settings.categories) && setData.settings.categories.length > 0) {
+            localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(setData.settings.categories));
           }
         }
       }
@@ -549,12 +696,18 @@ var MJData = (function () {
     savePromos,
     deletePromo,
     resetPromos,
+    getCategories,
+    saveCategories,
+    addCategory,
+    renameCategory,
+    deleteCategory,
     isPromoPopupEnabled,
     setPromoPopupEnabled,
     resetToDefaults,
     syncFromDb,
     DEFAULT_MENU,
-    DEFAULT_PROMOS
+    DEFAULT_PROMOS,
+    DEFAULT_CATEGORIES
   };
 })();
 

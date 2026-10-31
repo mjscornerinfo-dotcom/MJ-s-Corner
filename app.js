@@ -1113,8 +1113,20 @@
   // ========== CATEGORIES & MENU ==========
   function getCategories() {
     const cats = ['All'];
+    const knownCats = (window.MJData && MJData.getCategories)
+      ? MJData.getCategories()
+      : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
+
+    // Display categories in order of knownCats if they have available items
+    knownCats.forEach(cat => {
+      if (state.menu.some(item => item.category === cat && item.available) && !cats.includes(cat)) {
+        cats.push(cat);
+      }
+    });
+
+    // Also include any other category present in menu items
     state.menu.forEach(item => {
-      if (!cats.includes(item.category)) {
+      if (item.available && item.category && !cats.includes(item.category)) {
         cats.push(item.category);
       }
     });
@@ -1143,17 +1155,26 @@
   }
 
   function getCategoryIcon(cat) {
-    const icons = {
-      'All': '🍴',
-      'Burgers': '🍔',
-      'Pizza': '🍕',
-      'Pasta': '🍝',
-      'Sides': '🍟',
-      'Salads': '🥗',
-      'Drinks': '🥤',
-      'Desserts': '🍰'
-    };
-    return icons[cat] || '🍽️';
+    if (!cat) return '🍽️';
+    const c = String(cat).toLowerCase();
+    if (c.includes('chicken') || c.includes('crispy') || c.includes('fried')) return '🍗';
+    if (c.includes('burger')) return '🍔';
+    if (c.includes('pizza')) return '🍕';
+    if (c.includes('pasta') || c.includes('spaghetti')) return '🍝';
+    if (c.includes('side') || c.includes('fries')) return '🍟';
+    if (c.includes('salad') || c.includes('healthy') || c.includes('bowl')) return '🥗';
+    if (c.includes('drink') || c.includes('beverage') || c.includes('shake') || c.includes('smoothie')) return '🥤';
+    if (c.includes('dessert') || c.includes('sweet') || c.includes('cake') || c.includes('ice cream')) return '🍰';
+    if (c.includes('momo') || c.includes('dimsum') || c.includes('dumpling')) return '🥟';
+    if (c.includes('roll') || c.includes('wrap') || c.includes('shawarma')) return '🌯';
+    if (c.includes('combo') || c.includes('thali') || c.includes('meal')) return '🍱';
+    if (c.includes('biryani') || c.includes('rice')) return '🍚';
+    if (c.includes('coffee') || c.includes('tea') || c.includes('chai')) return '☕';
+    if (c.includes('sandwich')) return '🥪';
+    if (c.includes('snack') || c.includes('starter')) return '🍿';
+    if (c.includes('soup')) return '🍲';
+    if (cat === 'All') return '🍴';
+    return '🍽️';
   }
 
   function renderMenu() {

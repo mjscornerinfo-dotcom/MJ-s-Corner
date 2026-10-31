@@ -308,6 +308,7 @@ async function seedDefaultDataIfEmpty() {
   }
 
   // Ensure application settings exist
+  const DEFAULT_CATEGORIES = ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
   const settingsDoc = await db.collection('settings').findOne({ key: 'app_settings' });
   if (!settingsDoc) {
     console.log('Seeding default application settings into MongoDB Atlas...');
@@ -318,6 +319,7 @@ async function seedDefaultDataIfEmpty() {
       deliveryCharge: 50,
       packagingFee: 0,
       gstPercent: 5,
+      categories: DEFAULT_CATEGORIES,
       updatedAt: new Date()
     });
   } else {
@@ -326,6 +328,9 @@ async function seedDefaultDataIfEmpty() {
     if (settingsDoc.deliveryCharge === undefined) patch.deliveryCharge = 50;
     if (settingsDoc.packagingFee === undefined) patch.packagingFee = 0;
     if (settingsDoc.gstPercent === undefined) patch.gstPercent = 5;
+    if (!settingsDoc.categories || !Array.isArray(settingsDoc.categories) || settingsDoc.categories.length === 0) {
+      patch.categories = DEFAULT_CATEGORIES;
+    }
     if (Object.keys(patch).length > 0) {
       await db.collection('settings').updateOne(
         { key: 'app_settings' },
@@ -992,6 +997,126 @@ app.post('/api/menu/reset', async (req, res) => {
   }
 });
 
+// ========== CATEGORIES ENDPOINTS (MONGODB ATLAS) ==========
+app.get('/api/categories', async (req, res) => {
+  try {
+    const db = getDb();
+    const settings = await db.collection('settings').findOne({ key: 'app_settings' });
+    const savedCats = settings && Array.isArray(settings.categories) ? settings.categories : [];
+    const menuCats = await db.collection('menu').distinct('category');
+    const defaultCats = ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
+
+    const merged = Array.from(new Set([...savedCats, ...menuCats, ...defaultCats])).filter(Boolean);
+    res.json({ success: true, categories: merged });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message, categories: [] });
+  }
+});
+
+app.post('/api/categories', async (req, res) => {
+  try {
+    const db = getDb();
+    const { name, categories } = req.body;
+    const settings = await db.collection('settings').findOne({ key: 'app_settings' });
+    let currentCats = (settings && Array.isArray(settings.categories))
+      ? [...settings.categories]
+      : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
+
+    if (Array.isArray(categories)) {
+      currentCats = Array.from(new Set(categories.map(c => String(c).trim()).filter(Boolean)));
+    } else if (name && String(name).trim()) {
+      const cleanName = String(name).trim();
+      if (!currentCats.includes(cleanName)) {
+        currentCats.push(cleanName);
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'Category name or categories array required' });
+    }
+
+    await db.collection('settings').updateOne(
+      { key: 'app_settings' },
+      { $set: { categories: currentCats, updatedAt: new Date() } },
+      { upsert: true }
+    );
+    res.json({ success: true, categories: currentCats, message: 'Categories saved in MongoDB Atlas' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/categories/rename', async (req, res) => {
+  try {
+    const db = getDb();
+    const { oldName, newName } = req.body;
+    if (!oldName || !newName || !String(newName).trim()) {
+      return res.status(400).json({ success: false, message: 'oldName and newName are required' });
+    }
+    const cleanOld = String(oldName).trim();
+    const cleanNew = String(newName).trim();
+
+    // 1. Cascade update to all menu items in this category
+    await db.collection('menu').updateMany(
+      { category: cleanOld },
+      { $set: { category: cleanNew } }
+    );
+
+    // 2. Cascade update to promotions targeting this category
+    await db.collection('promotions').updateMany(
+      { targetCategory: cleanOld },
+      { $set: { targetCategory: cleanNew } }
+    );
+
+    // 3. Update category list in settings
+    const settings = await db.collection('settings').findOne({ key: 'app_settings' });
+    let currentCats = (settings && Array.isArray(settings.categories))
+      ? [...settings.categories]
+      : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
+
+    currentCats = currentCats.map(c => c === cleanOld ? cleanNew : c);
+    if (!currentCats.includes(cleanNew)) currentCats.push(cleanNew);
+    currentCats = Array.from(new Set(currentCats));
+
+    await db.collection('settings').updateOne(
+      { key: 'app_settings' },
+      { $set: { categories: currentCats, updatedAt: new Date() } },
+      { upsert: true }
+    );
+
+    res.json({ success: true, categories: currentCats, message: `Category '${cleanOld}' renamed to '${cleanNew}'` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/categories/:name', async (req, res) => {
+  try {
+    const db = getDb();
+    const catName = decodeURIComponent(req.params.name).trim();
+
+    // Reassign items in this category to 'Uncategorized'
+    await db.collection('menu').updateMany(
+      { category: catName },
+      { $set: { category: 'Uncategorized' } }
+    );
+
+    // Remove from settings.categories
+    const settings = await db.collection('settings').findOne({ key: 'app_settings' });
+    let currentCats = (settings && Array.isArray(settings.categories))
+      ? settings.categories.filter(c => c !== catName)
+      : [];
+
+    await db.collection('settings').updateOne(
+      { key: 'app_settings' },
+      { $set: { categories: currentCats, updatedAt: new Date() } },
+      { upsert: true }
+    );
+
+    res.json({ success: true, categories: currentCats, message: `Category '${catName}' removed and items reassigned` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ========== PROMOTIONS ENDPOINTS (MONGODB ATLAS) ==========
 app.get('/api/promotions', async (req, res) => {
   try {
@@ -1057,7 +1182,8 @@ app.get('/api/settings', async (req, res) => {
         storeOnline: true,
         deliveryCharge: 50,
         packagingFee: 0,
-        gstPercent: 5
+        gstPercent: 5,
+        categories: ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts']
       }
     });
   } catch (err) {
