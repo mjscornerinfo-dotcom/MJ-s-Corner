@@ -889,7 +889,7 @@
           <div style="font-size:3.5rem;margin-bottom:12px;">🔒</div>
           <h3 style="font-size:1.15rem;font-weight:700;color:var(--text-primary);margin-bottom:6px;">Sign In to View Orders</h3>
           <p style="font-size:0.88rem;max-width:320px;margin:0 auto 18px;">Please log in with your mobile OTP to view your isolated order history and track deliveries.</p>
-          <a href="login.html" class="btn-admin primary" style="display:inline-block;padding:10px 22px;border-radius:var(--radius-full);text-decoration:none;">
+          <a href="${window.IS_DINE_IN ? 'login.html?redirect=dinein.html' : 'login.html'}" class="btn-admin primary" style="display:inline-block;padding:10px 22px;border-radius:var(--radius-full);text-decoration:none;">
             📱 Login with Mobile OTP
           </a>
         </div>
@@ -2075,46 +2075,52 @@
     const totalSavings = totals.savings + couponDiscount;
 
     // 1. Header Badge
-    els.cartBadge.textContent = totals.itemCount;
-    els.cartBadge.classList.toggle('show', totals.itemCount > 0);
+    if (els.cartBadge) {
+      els.cartBadge.textContent = totals.itemCount;
+      els.cartBadge.classList.toggle('show', totals.itemCount > 0);
+    }
 
     // 2. Floating "Go to Checkout" Bar
-    if (totals.itemCount > 0) {
-      els.floatingCheckoutBar.classList.remove('hidden');
-      els.floatingItemCount.textContent = `${totals.itemCount} ${totals.itemCount === 1 ? 'item' : 'items'}`;
-      els.floatingTotal.textContent = `₹${finalTotal}`;
-      els.floatingSavings.textContent = totalSavings > 0 ? `Saved ₹${totalSavings}` : '';
-    } else {
-      els.floatingCheckoutBar.classList.add('hidden');
+    if (els.floatingCheckoutBar) {
+      if (totals.itemCount > 0) {
+        els.floatingCheckoutBar.classList.remove('hidden');
+        if (els.floatingItemCount) els.floatingItemCount.textContent = `${totals.itemCount} ${totals.itemCount === 1 ? 'item' : 'items'}`;
+        if (els.floatingTotal) els.floatingTotal.textContent = `₹${finalTotal}`;
+        if (els.floatingSavings) els.floatingSavings.textContent = totalSavings > 0 ? `Saved ₹${totalSavings}` : '';
+      } else {
+        els.floatingCheckoutBar.classList.add('hidden');
+      }
     }
 
     // 3. Cart Drawer Contents
     if (state.cart.length === 0) {
-      els.cartEmpty.classList.remove('hidden');
+      if (els.cartEmpty) els.cartEmpty.classList.remove('hidden');
       if (els.cartPromoBanners) els.cartPromoBanners.innerHTML = '';
-      els.cartItemsList.innerHTML = '';
-      els.cartFooter.classList.add('hidden');
+      if (els.cartItemsList) els.cartItemsList.innerHTML = '';
+      if (els.cartFooter) els.cartFooter.classList.add('hidden');
       return;
     }
 
-    els.cartEmpty.classList.add('hidden');
-    els.cartFooter.classList.remove('hidden');
+    if (els.cartEmpty) els.cartEmpty.classList.add('hidden');
+    if (els.cartFooter) els.cartFooter.classList.remove('hidden');
 
     // Render In-Cart Promo Suggestions / Unlocked Banners
     renderCartPromoBanners();
 
-    els.cartSubtotal.textContent = `₹${totals.subtotal}`;
+    if (els.cartSubtotal) els.cartSubtotal.textContent = `₹${totals.subtotal}`;
     if (state.appliedPromo) {
       if (els.cartCouponRow) {
         els.cartCouponRow.classList.remove('hidden');
-        els.cartCouponLabel.textContent = `Coupon (${state.appliedPromo.code})`;
-        els.cartCouponDiscount.textContent = `-₹${state.appliedPromo.discountAmount}`;
+        if (els.cartCouponLabel) els.cartCouponLabel.textContent = `Coupon (${state.appliedPromo.code})`;
+        if (els.cartCouponDiscount) els.cartCouponDiscount.textContent = `-₹${state.appliedPromo.discountAmount}`;
       }
     } else {
       if (els.cartCouponRow) els.cartCouponRow.classList.add('hidden');
     }
-    els.cartSavings.textContent = `₹${totalSavings}`;
-    els.cartTotal.textContent = `₹${finalTotal}`;
+    if (els.cartSavings) els.cartSavings.textContent = `₹${totalSavings}`;
+    if (els.cartTotal) els.cartTotal.textContent = `₹${finalTotal}`;
+
+    if (!els.cartItemsList) return;
 
     const activePromos = (state.promos || []).filter(p => p.active);
 
@@ -2328,25 +2334,27 @@
     }
 
     const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
-    if (!window.IS_DINE_IN && !user) {
+    if (!user) {
       closeCart();
       state.pendingCheckout = true;
       openCustomerLoginModal({
         title: 'Sign In to Complete Order 🔒',
-        subtitle: 'Please sign in or verify your mobile number to confirm delivery address, review totals, and place your order.'
+        subtitle: window.IS_DINE_IN
+          ? 'Please sign in or verify your mobile number with OTP to place your table order.'
+          : 'Please sign in or verify your mobile number to confirm delivery address, review totals, and place your order.'
       });
       return;
     }
 
     closeCart();
     setTimeout(() => {
-      els.checkoutModal.classList.add('open');
+      if (els.checkoutModal) els.checkoutModal.classList.add('open');
       document.body.style.overflow = 'hidden';
 
       const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
       if (user) {
-        if (!els.custName.value) els.custName.value = user.name || '';
-        if (!els.custPhone.value) els.custPhone.value = user.phone || '';
+        if (els.custName && !els.custName.value) els.custName.value = user.name || '';
+        if (els.custPhone && !els.custPhone.value) els.custPhone.value = user.phone || '';
       }
 
       applyOrderTypeView(state.orderType);
@@ -3108,98 +3116,114 @@
 
   // ========== EVENT BINDINGS ==========
   function bindEvents() {
-    els.themeToggle.addEventListener('click', toggleTheme);
-    els.btnHeaderProfile.addEventListener('click', () => openProfileModal('details'));
+    if (els.themeToggle) els.themeToggle.addEventListener('click', toggleTheme);
+    if (els.btnHeaderProfile) els.btnHeaderProfile.addEventListener('click', () => openProfileModal('details'));
 
     // Cart Drawer triggers
-    els.cartBtnHeader.addEventListener('click', openCart);
-    els.cartOverlay.addEventListener('click', closeCart);
-    els.cartCloseBtn.addEventListener('click', closeCart);
-    els.btnCheckout.addEventListener('click', openCheckout);
+    if (els.cartBtnHeader) els.cartBtnHeader.addEventListener('click', openCart);
+    if (els.cartOverlay) els.cartOverlay.addEventListener('click', closeCart);
+    if (els.cartCloseBtn) els.cartCloseBtn.addEventListener('click', closeCart);
+    if (els.btnCheckout) els.btnCheckout.addEventListener('click', openCheckout);
 
     // Floating Bar triggers
-    els.btnFloatingCheckout.addEventListener('click', openCheckout);
-    els.floatingBarInfo.addEventListener('click', openCart);
+    if (els.btnFloatingCheckout) els.btnFloatingCheckout.addEventListener('click', openCheckout);
+    if (els.floatingBarInfo) els.floatingBarInfo.addEventListener('click', openCart);
 
     // Checkout Modal triggers
-    els.checkoutCloseBtn.addEventListener('click', closeCheckout);
-    els.checkoutForm.addEventListener('submit', placeOrder);
+    if (els.checkoutCloseBtn) els.checkoutCloseBtn.addEventListener('click', closeCheckout);
+    if (els.checkoutForm) els.checkoutForm.addEventListener('submit', placeOrder);
 
     // Coupon triggers
-    els.btnApplyCheckoutPromo.addEventListener('click', () => applyCheckoutCoupon());
-    els.btnRemoveCoupon.addEventListener('click', removeCheckoutCoupon);
+    if (els.btnApplyCheckoutPromo) els.btnApplyCheckoutPromo.addEventListener('click', () => applyCheckoutCoupon());
+    if (els.btnRemoveCoupon) els.btnRemoveCoupon.addEventListener('click', removeCheckoutCoupon);
 
     // Checkout Add Address toggle & save
-    els.btnToggleAddAddress.addEventListener('click', () => {
-      els.newAddressPanel.classList.toggle('hidden');
-    });
+    if (els.btnToggleAddAddress) {
+      els.btnToggleAddAddress.addEventListener('click', () => {
+        if (els.newAddressPanel) els.newAddressPanel.classList.toggle('hidden');
+      });
+    }
 
-    els.btnSaveNewAddress.addEventListener('click', () => {
-      const user = MJAuth.getCurrentUser();
-      const title = els.newAddrTitle.value.trim() || 'Home';
-      const full = els.newAddrFull.value.trim();
-      if (!full) {
-        showToast('Please type a complete address', 'error');
-        return;
-      }
-      const newAddr = MJAuth.addUserAddress(user.id, { title, fullAddress: full, isDefault: true });
-      if (newAddr) {
-        state.selectedDeliveryAddressId = newAddr.id;
-        els.newAddrTitle.value = '';
-        els.newAddrFull.value = '';
-        els.newAddressPanel.classList.add('hidden');
-        renderCheckoutAddresses();
-        showToast(`Saved '${title}' address to your account!`, 'success');
-      }
-    });
+    if (els.btnSaveNewAddress) {
+      els.btnSaveNewAddress.addEventListener('click', () => {
+        const user = MJAuth.getCurrentUser();
+        const title = (els.newAddrTitle && els.newAddrTitle.value.trim()) || 'Home';
+        const full = (els.newAddrFull && els.newAddrFull.value.trim()) || '';
+        if (!full) {
+          showToast('Please type a complete address', 'error');
+          return;
+        }
+        const newAddr = MJAuth.addUserAddress(user.id, { title, fullAddress: full, isDefault: true });
+        if (newAddr) {
+          state.selectedDeliveryAddressId = newAddr.id;
+          if (els.newAddrTitle) els.newAddrTitle.value = '';
+          if (els.newAddrFull) els.newAddrFull.value = '';
+          if (els.newAddressPanel) els.newAddressPanel.classList.add('hidden');
+          renderCheckoutAddresses();
+          showToast(`Saved '${title}' address to your account!`, 'success');
+        }
+      });
+    }
 
     // Profile Modal tabs & triggers
-    els.profileCloseBtn.addEventListener('click', closeProfileModal);
-    els.tabProfileDetails.addEventListener('click', () => switchProfileTab('details'));
-    els.tabProfileAddresses.addEventListener('click', () => switchProfileTab('addresses'));
-    els.tabProfileOrders.addEventListener('click', () => switchProfileTab('orders'));
+    if (els.profileCloseBtn) els.profileCloseBtn.addEventListener('click', closeProfileModal);
+    if (els.tabProfileDetails) els.tabProfileDetails.addEventListener('click', () => switchProfileTab('details'));
+    if (els.tabProfileAddresses) els.tabProfileAddresses.addEventListener('click', () => switchProfileTab('addresses'));
+    if (els.tabProfileOrders) els.tabProfileOrders.addEventListener('click', () => switchProfileTab('orders'));
 
     // Profile Details Form
-    els.profileDetailsForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const user = MJAuth.getCurrentUser();
-      if (user) {
-        MJAuth.updateUserProfile(user.id, {
-          name: els.profName.value,
-          phone: els.profPhone.value,
-          email: els.profEmail ? els.profEmail.value : (user.email || '')
-        });
-        initHeaderProfile();
-        showToast('Profile updated successfully!', 'success');
-      }
-    });
+    if (els.profileDetailsForm) {
+      els.profileDetailsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const user = MJAuth.getCurrentUser();
+        if (user) {
+          MJAuth.updateUserProfile(user.id, {
+            name: els.profName ? els.profName.value : (user.name || ''),
+            phone: els.profPhone ? els.profPhone.value : (user.phone || ''),
+            email: els.profEmail ? els.profEmail.value : (user.email || '')
+          });
+          initHeaderProfile();
+          showToast('Profile updated successfully!', 'success');
+        }
+      });
+    }
 
     // Profile Sign Out
-    els.btnProfileSignOut.addEventListener('click', () => {
-      MJAuth.logout();
-      showToast('Signed out. See you soon!', 'info');
-      setTimeout(() => {
-        window.location.replace('login.html');
-      }, 500);
-    });
+    if (els.btnProfileSignOut) {
+      els.btnProfileSignOut.addEventListener('click', () => {
+        MJAuth.logout();
+        showToast('Signed out. See you soon!', 'info');
+        setTimeout(() => {
+          window.location.replace(window.IS_DINE_IN ? 'login.html?redirect=dinein.html' : 'login.html');
+        }, 500);
+      });
+    }
 
     // Profile Add Address panel toggle & save
-    els.btnProfileAddAddress.addEventListener('click', () => {
-      els.profileAddAddressPanel.classList.toggle('hidden');
-    });
+    if (els.btnProfileAddAddress) {
+      els.btnProfileAddAddress.addEventListener('click', () => {
+        if (els.profileAddAddressPanel) els.profileAddAddressPanel.classList.toggle('hidden');
+      });
+    }
 
-    els.btnProfileSaveNewAddress.addEventListener('click', () => {
-      const user = MJAuth.getCurrentUser();
-      const title = els.profileNewAddrTitle.value.trim() || 'Home';
-      const full = els.profileNewAddrFull.value.trim();
-      if (!full) {
-        showToast('Please enter full address', 'error');
-        return;
-      }
-      MJAuth.addUserAddress(user.id, { title, fullAddress: full, isDefault: false });
-      els.profileNewAddrTitle.value = '';
-      els.profileNewAddrFull.value = '';
-      els.profileAddAddressPanel.classList.add('hidden');
+    if (els.btnProfileSaveNewAddress) {
+      els.btnProfileSaveNewAddress.addEventListener('click', () => {
+        const user = MJAuth.getCurrentUser();
+        const title = (els.profileNewAddrTitle && els.profileNewAddrTitle.value.trim()) || 'Home';
+        const full = (els.profileNewAddrFull && els.profileNewAddrFull.value.trim()) || '';
+        if (!full) {
+          showToast('Please enter full address', 'error');
+          return;
+        }
+        MJAuth.addUserAddress(user.id, { title, fullAddress: full, isDefault: false });
+        if (els.profileNewAddrTitle) els.profileNewAddrTitle.value = '';
+        if (els.profileNewAddrFull) els.profileNewAddrFull.value = '';
+        if (els.profileAddAddressPanel) els.profileAddAddressPanel.classList.add('hidden');
+        renderProfileAddresses();
+        renderCheckoutAddresses();
+        showToast('Address saved to your account!', 'success');
+      });
+    }
       renderProfileAddresses();
       renderCheckoutAddresses();
       showToast('Address saved to your account!', 'success');
@@ -3225,10 +3249,12 @@
     }
 
     // Success Modal
-    els.btnNewOrder.addEventListener('click', () => {
-      closeSuccess();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    if (els.btnNewOrder) {
+      els.btnNewOrder.addEventListener('click', () => {
+        closeSuccess();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
 
     if (els.btnPrintCustomerSuccessInvoice) {
       els.btnPrintCustomerSuccessInvoice.addEventListener('click', () => {
@@ -3289,11 +3315,13 @@
     }
 
     // Promo Popup
-    els.promoPopupClose.addEventListener('click', closePromoPopup);
-    els.promoDismiss.addEventListener('click', closePromoPopup);
-    els.promoPopupOverlay.addEventListener('click', (e) => {
-      if (e.target === els.promoPopupOverlay) closePromoPopup();
-    });
+    if (els.promoPopupClose) els.promoPopupClose.addEventListener('click', closePromoPopup);
+    if (els.promoDismiss) els.promoDismiss.addEventListener('click', closePromoPopup);
+    if (els.promoPopupOverlay) {
+      els.promoPopupOverlay.addEventListener('click', (e) => {
+        if (e.target === els.promoPopupOverlay) closePromoPopup();
+      });
+    }
 
     // Item Customization Modal triggers
     if (els.customizationCloseBtn) {

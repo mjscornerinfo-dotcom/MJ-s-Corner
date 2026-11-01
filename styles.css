@@ -202,6 +202,9 @@ input, select, textarea {
   font-size: 1.4rem;
   color: var(--accent);
   letter-spacing: -0.02em;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 .header-brand-img {
@@ -238,6 +241,11 @@ input, select, textarea {
   flex: 1;
   padding: 0 10px;
   text-align: center;
+  pointer-events: none;
+}
+
+.header-center-dinein .dinein-header-badge {
+  pointer-events: auto;
 }
 
 .dinein-header-badge {
@@ -326,6 +334,9 @@ input, select, textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 /* ---------- Theme Toggle ---------- */
