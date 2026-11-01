@@ -2644,20 +2644,6 @@
       handleOrderSuccess(order, false);
       return;
     }
-        });
-        if (saveRes.ok) {
-          const saveDoc = await saveRes.json();
-          if (saveDoc.order && saveDoc.order.id) {
-            order.id = saveDoc.order.id;
-          }
-        }
-      } catch (err) {
-        console.warn('Could not save order to MongoDB Atlas:', err);
-      }
-
-      handleOrderSuccess(order, true);
-      return;
-    }
 
     // Standard Online Payment with Razorpay
     if (typeof window.Razorpay === 'undefined') {
@@ -3224,10 +3210,6 @@
         showToast('Address saved to your account!', 'success');
       });
     }
-      renderProfileAddresses();
-      renderCheckoutAddresses();
-      showToast('Address saved to your account!', 'success');
-    });
 
     // My Orders modal triggers
     if (els.btnHeaderOrders) {

@@ -1003,7 +1003,8 @@ app.get('/api/categories', async (req, res) => {
     const db = getDb();
     const settings = await db.collection('settings').findOne({ key: 'app_settings' });
     const savedCats = settings && Array.isArray(settings.categories) ? settings.categories : [];
-    const menuCats = await db.collection('menu').distinct('category');
+    const menuDocs = await db.collection('menu').find({}, { projection: { category: 1 } }).toArray();
+    const menuCats = menuDocs.map(i => i.category).filter(Boolean);
     const defaultCats = ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
 
     const merged = Array.from(new Set([...savedCats, ...menuCats, ...defaultCats])).filter(Boolean);
