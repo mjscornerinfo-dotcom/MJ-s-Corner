@@ -406,13 +406,13 @@
           <div style="font-weight:600;">${escapeHtml(order.customer.name)}</div>
           <div style="font-size:0.75rem;color:var(--text-tertiary);">${escapeHtml(order.customer.phone || '')}</div>
         </td>
-        <td>${typeIcons[order.type] || ''} ${order.type}</td>
+        <td>${order.type === 'dine-in' && order.tableNo ? `🍽️ Dine-In <strong>(${escapeHtml(order.tableNo)})</strong>` : `${typeIcons[order.type] || ''} ${order.type}`}</td>
         <td>${itemsDropdownHtml}</td>
         <td>
           <strong>₹${order.total}</strong>
           <div style="margin-top:4px;">
             <span class="order-payment-badge ${order.paymentStatus === 'paid' ? 'paid' : 'pending'}">
-              ${order.paymentMethod === 'promo_free' ? '🎟️ Free Order' : (order.paymentStatus === 'paid' ? '💳 Paid (Razorpay)' : '💳 Payment Pending')}
+              ${order.paymentMethod === 'Cash on Counter' || order.paymentMethod === 'cash' ? '💵 Cash on Counter' : (order.paymentMethod === 'promo_free' ? '🎟️ Free Order' : (order.paymentStatus === 'paid' ? '💳 Paid (Razorpay)' : '💳 Payment Pending'))}
             </span>
           </div>
         </td>
@@ -695,7 +695,7 @@
     const subtotal = order.subtotal || Math.max(0, (order.total || 0) + discount - delivery);
 
     let paymentBadge = `<span class="order-payment-badge paid">💳 Razorpay</span>`;
-    if (order.paymentMethod === 'cash') paymentBadge = `<span class="order-payment-badge ${order.paymentStatus === 'paid' ? 'paid' : 'pending'}">💵 Cash</span>`;
+    if (order.paymentMethod === 'Cash on Counter' || order.paymentMethod === 'cash') paymentBadge = `<span class="order-payment-badge ${order.paymentStatus === 'paid' ? 'paid' : 'pending'}">💵 Cash Counter</span>`;
     else if (order.paymentMethod === 'upi_pos') paymentBadge = `<span class="order-payment-badge paid">⚡ UPI Counter</span>`;
     else if (order.paymentMethod === 'card_pos') paymentBadge = `<span class="order-payment-badge paid">💳 Card POS</span>`;
     else if (order.paymentMethod === 'promo_free') paymentBadge = `<span class="order-payment-badge paid">🎟️ Free</span>`;
@@ -713,7 +713,7 @@
           <div style="font-weight:600;">${escapeHtml(order.customer && order.customer.name || 'Walk-in')}</div>
           <div style="font-size:0.75rem;color:var(--text-tertiary);">${escapeHtml(order.customer && order.customer.phone || '')}</div>
         </td>
-        <td>${typeIcons[order.type] || ''} ${order.type}</td>
+        <td>${order.type === 'dine-in' && order.tableNo ? `🍽️ Dine-In (${escapeHtml(order.tableNo)})` : `${typeIcons[order.type] || ''} ${order.type}`}</td>
         <td>
           <span title="${escapeHtml(itemsSummary)}" style="cursor:help;border-bottom:1px dotted var(--text-tertiary);">
             ${totalQty} items
@@ -935,7 +935,7 @@
     const grandTotal = order.total || Math.max(0, subtotal - discount + deliveryFee);
 
     let paymentMethodLabel = 'Paid Online via Razorpay';
-    if (order.paymentMethod === 'cash') paymentMethodLabel = 'Cash at Counter';
+    if (order.paymentMethod === 'Cash on Counter' || order.paymentMethod === 'cash') paymentMethodLabel = 'Cash on Counter';
     else if (order.paymentMethod === 'upi_pos') paymentMethodLabel = 'UPI / QR at Counter';
     else if (order.paymentMethod === 'card_pos') paymentMethodLabel = 'Card Machine / POS';
     else if (order.paymentMethod === 'complimentary') paymentMethodLabel = 'Complimentary / Staff';
@@ -953,12 +953,13 @@
           <div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:10px;margin-bottom:12px;">
             <h2 style="margin:0;font-size:1.5rem;font-weight:900;">KITCHEN ORDER TICKET (KOT)</h2>
             <div style="font-size:1.3rem;font-weight:900;margin:6px 0;">ORDER ${order.id}</div>
-            <div style="font-size:1rem;font-weight:700;">TYPE: ${order.type ? order.type.toUpperCase() : 'TAKEOUT'}</div>
+            <div style="font-size:1rem;font-weight:700;">TYPE: ${order.type ? order.type.toUpperCase() : 'TAKEOUT'}${order.tableNo ? ` &bull; TABLE: ${escapeHtml(order.tableNo)}` : ''}</div>
             <div style="font-size:0.85rem;margin-top:4px;">Time: ${formattedDate} | ${formattedTime}</div>
           </div>
           <div style="margin-bottom:12px;">
             <div><strong>Customer:</strong> ${escapeHtml(customer.name || 'Walk-in')}</div>
             ${customer.phone ? `<div><strong>Phone:</strong> ${escapeHtml(customer.phone)}</div>` : ''}
+            ${order.tableNo ? `<div><strong>Table Number:</strong> ${escapeHtml(order.tableNo)}</div>` : ''}
             ${customer.notes ? `<div style="margin-top:4px;padding:6px;background:#f0f0f0;border-radius:4px;"><strong>Special Instructions:</strong> “${escapeHtml(customer.notes)}”</div>` : ''}
           </div>
           <table class="kot-table" style="width:100%;border-collapse:collapse;margin-bottom:14px;">
@@ -1005,11 +1006,12 @@
             <div style="border-bottom:1px dashed #000;margin:8px 0;"></div>
             <div style="font-size:14px;font-weight:900;">ORDER ${order.id}</div>
             <div style="font-size:10px;">${formattedDate} ${formattedTime}</div>
-            <div style="font-size:11px;font-weight:700;">[${order.type ? order.type.toUpperCase() : 'TAKEOUT'}]</div>
+            <div style="font-size:11px;font-weight:700;">[${order.type ? order.type.toUpperCase() : 'TAKEOUT'}]${order.tableNo ? ` (Table: ${escapeHtml(order.tableNo)})` : ''}</div>
           </div>
           <div style="border-bottom:1px dashed #000;margin-bottom:6px;padding-bottom:4px;">
             <div>Cust: ${escapeHtml(customer.name || 'Guest')}</div>
             ${customer.phone ? `<div>Ph: ${escapeHtml(customer.phone)}</div>` : ''}
+            ${order.tableNo ? `<div>Table: ${escapeHtml(order.tableNo)}</div>` : ''}
             ${customer.address ? `<div>Addr: ${escapeHtml(customer.address)}</div>` : ''}
           </div>
           <table style="width:100%;margin-bottom:6px;">
@@ -1079,7 +1081,8 @@
             <div style="margin-bottom:6px;"><strong>Customer Name:</strong> ${escapeHtml(customer.name || 'Walk-in Customer')}</div>
             <div style="margin-bottom:6px;"><strong>Phone Number:</strong> ${escapeHtml(customer.phone || 'N/A')}</div>
             ${isDelivery ? `<div style="margin-bottom:6px;"><strong>Delivery Address:</strong> ${escapeHtml(customer.address || 'Address provided at order')}</div>` : ''}
-            <div><strong>Delivery Instructions:</strong> “${escapeHtml(customer.notes || 'Please prepare freshly and ring the doorbell.')}”</div>
+            ${isDineIn && order.tableNo ? `<div style="margin-bottom:6px;"><strong>Table / Seat:</strong> <span style="font-weight:700;color:#e63946;">${escapeHtml(order.tableNo)}</span></div>` : ''}
+            <div><strong>${isDineIn ? 'Kitchen / Table Notes:' : 'Delivery Instructions:'}</strong> “${escapeHtml(customer.notes || (isDineIn ? 'Serve freshly to table.' : 'Please prepare freshly and ring the doorbell.'))}”</div>
           </div>
         </div>
 

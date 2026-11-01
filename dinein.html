@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MJ's Corner — Dine IN Table Ordering</title>
+  <!-- Non-public: strictly hidden from search engines and crawlers -->
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="theme-color" content="#e63946">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+  <script src="auth.js"></script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+</head>
+<body>
+  <!-- ========== HEADER ========== -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <div class="logo header-logo-wrap" id="logo" style="cursor:pointer;" title="MJ's Corner">
+        <img src="header-brand-logo.jpg" alt="MJ's Corner" class="header-brand-img">
+      </div>
+
+      <!-- Center of Header: Dine IN Title & Badge -->
+      <div class="header-center-dinein">
+        <div class="dinein-header-badge">
+          <span class="dinein-badge-icon">🍽️</span>
+          <span class="dinein-badge-text">Dine IN</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- My Orders Section Button -->
+        <button class="my-orders-btn-header" id="btnHeaderOrders" aria-label="Open My Orders" title="My Orders">
+          <span>📦</span>
+          <span class="orders-badge-count hidden" id="headerOrdersCount">0</span>
+        </button>
+
+        <!-- Customer Profile Section Button -->
+        <button class="user-profile-btn" id="btnHeaderProfile" aria-label="Open profile" title="My Profile & Account">
+          <span class="user-avatar-circle" id="headerUserAvatar">👤</span>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+
+        <!-- Cart Button -->
+        <button class="cart-btn-header" id="cartBtnHeader" aria-label="Open cart">
+          🛒
+          <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dine-In Notice Strip -->
+  <div class="dinein-welcome-bar">
+    <div class="dinein-welcome-content">
+      <span class="dinein-welcome-icon">🍽️</span>
+      <span><strong>MJ's Corner Dine-In:</strong> Order fresh meals right from your table & pay via <strong>Cash on Counter</strong> or UPI!</span>
+    </div>
+  </div>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="main" id="mainContent">
+    <section id="menuSection">
+      <!-- Category & Dietary Navigation -->
+      <nav class="category-nav" id="categoryNav">
+        <div class="category-nav-container">
+          <!-- Dietary Filters (All / Pure Veg / Non-Veg) -->
+          <div class="dietary-filter-bar" id="dietaryFilterBar">
+            <button class="dietary-filter-btn active" data-dietary="all" aria-label="Show all items">
+              <span>🍽️ All</span>
+            </button>
+            <button class="dietary-filter-btn veg" data-dietary="veg" aria-label="Show Pure Veg items only">
+              <span class="dietary-mini-badge veg"><span class="dietary-dot"></span></span>
+              <span>Pure Veg</span>
+            </button>
+            <button class="dietary-filter-btn non-veg" data-dietary="non-veg" aria-label="Show Non-Veg items only">
+              <span class="dietary-mini-badge non-veg"><span class="dietary-dot"></span></span>
+              <span>Non-Veg</span>
+            </button>
+          </div>
+
+          <!-- Category Navigation Bar -->
+          <div class="category-nav-inner" id="categoryNavInner">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </nav>
+
+      <!-- Menu Items Container -->
+      <div id="menuContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ========== CART DRAWER ========== -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h2>🍽️ Your Table Order</h2>
+      <button class="cart-close-btn" id="cartCloseBtn">✕</button>
+    </div>
+
+    <!-- Smart Combo & Promo Triggers Strip -->
+    <div class="cart-promo-triggers" id="cartPromoBanners">
+      <!-- Rendered by JS -->
+    </div>
+
+    <div class="cart-items" id="cartItems">
+      <!-- Rendered by JS -->
+    </div>
+    <div class="cart-footer" id="cartFooter">
+      <div class="cart-summary-row">
+        <span>Subtotal</span>
+        <span id="cartSubtotal">₹0</span>
+      </div>
+      <div class="cart-summary-row discount-row hidden" id="cartDiscountRow">
+        <span id="cartDiscountLabel">Combo Deal</span>
+        <span id="cartDiscountVal">-₹0</span>
+      </div>
+      <div class="cart-summary-row total">
+        <span>Total (Table Service)</span>
+        <span id="cartTotal">₹0</span>
+      </div>
+      <button class="btn-checkout" id="btnCheckout">Proceed to Table Checkout →</button>
+    </div>
+  </aside>
+
+  <!-- ========== DINE-IN CHECKOUT MODAL ========== -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>🍽️ Dine IN Table Checkout</h2>
+        <button class="cart-close-btn" id="checkoutCloseBtn">✕</button>
+      </div>
+      <div class="modal-body" id="checkoutBody">
+        <form id="checkoutForm">
+
+          <!-- Dine-In Table Notice Box -->
+          <div class="dinein-table-notice-box">
+            <span class="dinein-notice-icon">🍽️</span>
+            <div>
+              <strong>Dine-In Table Order:</strong> Your meal will be cooked fresh and served to your table.
+              <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:2px;">Zero delivery charge. Pay via Cash on Counter or Online.</div>
+            </div>
+          </div>
+
+          <!-- 1. Table Number (Essential for Dine-In) -->
+          <div class="form-group">
+            <label for="custTableNo" style="font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:6px;">
+              <span>🍽️ Table / Seat Number *</span>
+            </label>
+            <input type="text" id="custTableNo" placeholder="Enter Table Number (e.g. Table 4, Booth 2)" required style="border: 2px solid var(--accent); font-weight:700;">
+          </div>
+
+          <!-- 2. Customer Contact Info -->
+          <div class="form-group">
+            <label for="custName">Your Name *</label>
+            <input type="text" id="custName" placeholder="Enter your name" required>
+          </div>
+          <div class="form-group">
+            <label for="custPhone">Phone Number *</label>
+            <input type="tel" id="custPhone" placeholder="Enter 10-digit mobile number" required>
+          </div>
+          <div class="form-group">
+            <label for="custNotes">Kitchen & Special Cooking Instructions (Optional)</label>
+            <textarea id="custNotes" rows="2" placeholder="e.g. Extra napkins, less spicy, serve cold drinks first"></textarea>
+          </div>
+
+          <!-- 3. Apply Coupon / Promo Code -->
+          <div class="checkout-promo-box">
+            <label class="form-section-label" style="font-size:0.85rem;margin-bottom:4px;">🎟️ Apply Coupon / Promo Code</label>
+            <div class="promo-input-group">
+              <input type="text" id="checkoutPromoInput" placeholder="Enter coupon code (e.g. MJOPEN)">
+              <button type="button" id="btnApplyCheckoutPromo">Apply</button>
+            </div>
+            <!-- Clickable chips of active promos -->
+            <div class="promo-chips-list" id="checkoutPromoChips">
+              <!-- Rendered by JS -->
+            </div>
+            <!-- Applied tag -->
+            <div class="applied-coupon-tag hidden" id="appliedCouponTag">
+              <span id="appliedCouponText">🎉 Coupon applied</span>
+              <button type="button" class="btn-remove-coupon" id="btnRemoveCoupon" title="Remove coupon">✕</button>
+            </div>
+          </div>
+
+          <!-- 4. Payment Method: Cash on Counter (Default) or Online -->
+          <div class="checkout-payment-box">
+            <label class="form-section-label" style="font-size:0.85rem;margin-bottom:8px;">💵 Payment Option</label>
+            <div class="dinein-payment-options-grid">
+              <label class="dinein-pay-card selected" id="payOptionCounter">
+                <input type="radio" name="dineinPaymentMethod" value="Cash on Counter" checked style="display:none;">
+                <div class="pay-card-radio-circle"></div>
+                <div class="pay-card-icon">💵</div>
+                <div class="pay-card-details">
+                  <div class="pay-card-title">
+                    <span>Pay via Cash on Counter</span>
+                    <span class="recommended-tag">Recommended</span>
+                  </div>
+                  <div class="pay-card-desc">Pay cash or scan QR directly at the billing counter after placing order or finishing your meal.</div>
+                </div>
+              </label>
+              <label class="dinein-pay-card" id="payOptionOnline">
+                <input type="radio" name="dineinPaymentMethod" value="Online UPI / Cards" style="display:none;">
+                <div class="pay-card-radio-circle"></div>
+                <div class="pay-card-icon">⚡</div>
+                <div class="pay-card-details">
+                  <div class="pay-card-title">Pay Online Now (Razorpay)</div>
+                  <div class="pay-card-desc">Instant online payment via UPI (GPay, PhonePe, Paytm), Cards, or NetBanking.</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- 5. Order Totals Breakdown -->
+          <div class="cart-summary-row" style="margin-top:16px;">
+            <span>Subtotal</span>
+            <span id="checkoutSubtotal">₹0</span>
+          </div>
+          <div class="cart-summary-row hidden" id="checkoutDeliveryRow" style="color:var(--text-secondary);">
+            <span>Delivery Fee</span>
+            <span id="checkoutDeliveryFee">₹0</span>
+          </div>
+          <div class="cart-summary-row hidden" id="checkoutCouponRow" style="color:var(--success);">
+            <span id="checkoutCouponLabel">Coupon Discount</span>
+            <span id="checkoutCouponDiscount">-₹0</span>
+          </div>
+          <div class="cart-summary-row total" style="margin-bottom: 18px">
+            <span>Total Payable</span>
+            <span id="checkoutTotal">₹0</span>
+          </div>
+
+          <button type="submit" class="btn-submit-order" id="btnPlaceOrder">✓ Place Dine-In Order (Pay on Counter)</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ITEM CUSTOMIZATION MODAL ========== -->
+  <div class="modal-overlay" id="customizationModal">
+    <div class="modal customization-modal">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img id="customItemImg" src="images/burger.jpg" alt="" class="custom-modal-img">
+          <div>
+            <h2 id="customItemTitle" style="font-size:1.15rem;margin:0;font-family:var(--font-display);">Customize Item</h2>
+            <div id="customItemCategory" style="font-size:0.75rem;color:var(--text-tertiary);margin-top:2px;">Category</div>
+          </div>
+        </div>
+        <button class="cart-close-btn" id="customizationCloseBtn">✕</button>
+      </div>
+      <div class="modal-body" id="customizationModalBody" style="max-height:65vh;overflow-y:auto;padding:20px;">
+        <p id="customItemDesc" style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.45;"></p>
+
+        <!-- Sizes Selection -->
+        <div id="customSizesGroup" class="custom-section hidden">
+          <div class="custom-section-header">
+            <span class="custom-section-title">📏 Select Size</span>
+            <span class="custom-badge required">Required</span>
+          </div>
+          <div class="custom-options-list" id="customSizesList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Add-ons Selection -->
+        <div id="customAddonsGroup" class="custom-section hidden">
+          <div class="custom-section-header">
+            <span class="custom-section-title">🧀 Extra Add-ons</span>
+            <span class="custom-badge optional">Optional</span>
+          </div>
+          <div class="custom-options-list" id="customAddonsList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+      <div class="customization-modal-footer">
+        <div class="custom-qty-selector">
+          <button type="button" class="btn-qty" id="btnCustomQtyDec" aria-label="Decrease quantity">−</button>
+          <span class="custom-qty-val" id="customQtyVal">1</span>
+          <button type="button" class="btn-qty" id="btnCustomQtyInc" aria-label="Increase quantity">+</button>
+        </div>
+        <button type="button" class="btn-submit-order" id="btnConfirmAddToCart" style="flex:1;max-width:280px;padding:12px 18px;font-size:0.95rem;">
+          Add to Cart • <span id="customTotalDisplay">₹0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== CUSTOMER PROFILE MODAL ========== -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal profile-modal">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.4rem;">👤</span>
+          <h2 style="margin:0;">My Account & Profile</h2>
+        </div>
+        <button class="cart-close-btn" id="profileCloseBtn">✕</button>
+      </div>
+      <!-- Profile Tabs -->
+      <div class="profile-nav-tabs">
+        <button class="profile-tab active" data-tab="details" id="tabProfileDetails">
+          <span>📝</span> Personal Details
+        </button>
+        <button class="profile-tab" data-tab="orders" id="tabProfileOrders">
+          <span>📦</span> My Orders
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding:0;">
+        <!-- Tab 1: Personal Details -->
+        <div class="profile-tab-content active" id="profileDetailsContent">
+          <form id="profileDetailsForm" style="padding:20px;">
+            <div class="form-group">
+              <label for="profName">Full Name</label>
+              <input type="text" id="profName" required>
+            </div>
+            <div class="form-group">
+              <label for="profPhone">Phone Number</label>
+              <input type="tel" id="profPhone" required>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:20px;">
+              <button type="submit" class="btn-admin primary">💾 Update Profile</button>
+              <button type="button" class="btn-admin danger" id="btnProfileSignOut">🚪 Sign Out</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab 2: Order History -->
+        <div class="profile-tab-content" id="profileOrdersContent">
+          <div id="profileOrdersList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MY ORDERS MODAL ========== -->
+  <div class="modal-overlay" id="ordersModal">
+    <div class="modal my-orders-modal">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:1.5rem;">📦</span>
+          <div>
+            <h2 style="font-size:1.2rem;margin:0;">My Orders</h2>
+            <p style="font-size:0.75rem;color:var(--text-tertiary);margin:0;">Live status tracking & order history</p>
+          </div>
+        </div>
+        <button class="cart-close-btn" id="ordersCloseBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="customerOrdersList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ORDER SUCCESS MODAL ========== -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal">
+      <div class="order-success" id="orderSuccessContent">
+        <div class="checkmark">✓</div>
+        <h2>🍽️ Dine-In Order Placed!</h2>
+        <p>Your order has been sent directly to the kitchen.</p>
+        <p style="font-weight:700;color:var(--accent);font-size:1.2rem;" id="orderIdDisplay">#MJ-0001</p>
+        <div id="orderSuccessTypeDisplay" style="margin: 8px 0; font-size: 0.95rem; font-weight:600; color: var(--text-primary);"></div>
+        <div id="orderSuccessPromoDisplay" style="margin-bottom: 12px; font-size: 0.88rem; color: var(--accent); font-weight: 600;"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">
+          <button type="button" class="btn-admin secondary" id="btnPrintCustomerSuccessInvoice" style="width:100%;padding:12px;font-size:0.9rem;justify-content:center;display:flex;align-items:center;gap:8px;">
+            <span>🖨️ View & Print Official Order Bill</span>
+          </button>
+          <button type="button" class="btn-admin primary" id="btnTrackOrderInSuccess" style="width:100%;padding:14px;font-size:0.95rem;justify-content:center;">
+            📦 View My Orders →
+          </button>
+          <button type="button" class="btn-admin secondary" id="btnNewOrder" style="width:100%;padding:12px;font-size:0.9rem;justify-content:center;">
+            🍽️ Order More Food
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Customer Printable Invoice Modal ===== -->
+  <div class="modal-overlay" id="invoiceModal">
+    <div class="modal invoice-modal" style="max-width:760px;max-height:92vh;display:flex;flex-direction:column;">
+      <div class="modal-header no-print">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <h2 style="margin:0;font-size:1.25rem;">🧾 Official Order Bill</h2>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn-admin primary" id="btnPrintInvoiceModal">🖨️ Print / Save PDF</button>
+          <button type="button" class="cart-close-btn" id="closeInvoiceModalBtn">✕</button>
+        </div>
+      </div>
+      <div class="modal-body invoice-modal-body" id="invoiceModalContent" style="overflow-y:auto;padding:24px;">
+        <!-- Dynamically rendered printable invoice -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PROMO POPUP ========== -->
+  <div class="promo-popup-overlay" id="promoPopupOverlay">
+    <div class="promo-popup" style="position:relative;">
+      <button class="promo-popup-close" id="promoPopupClose">✕</button>
+      <div class="promo-popup-banner">
+        <h3 id="promoTitle">🎉 Dine-In Special Offer!</h3>
+        <p id="promoSubtitle">Exclusive table deal</p>
+      </div>
+      <div class="promo-popup-body">
+        <div class="code" id="promoCode">MJOPEN</div>
+        <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;" id="promoDesc">Get 25% off on your dine-in order</p>
+        <button class="dismiss" id="promoDismiss">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TOAST CONTAINER ========== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script>
+    window.IS_DINE_IN = true;
+  </script>
+  <script src="auth.js"></script>
+  <script src="data.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

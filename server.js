@@ -1473,6 +1473,11 @@ app.get('/menu', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Private Dine-In Table Ordering Route (link-only)
+app.get(['/dinein', '/dine-in', '/dinein.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'dinein.html'));
+});
+
 // ========== SITEMAP & ROBOTS.TXT FOR SEARCH ENGINES ==========
 app.get(['/sitemap', '/sitemap.xml'], (req, res) => {
   res.header('Content-Type', 'application/xml');

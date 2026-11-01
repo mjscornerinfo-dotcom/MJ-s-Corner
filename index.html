@@ -155,32 +155,17 @@
       <div class="modal-body" id="checkoutBody">
         <form id="checkoutForm">
 
-          <!-- 1. Dining Options: Dine-in, Pickup, Delivery -->
+          <!-- 1. Order Options: Delivery & Pickup / Takeout -->
           <div class="checkout-type-container">
-            <label class="form-section-label">Dining Option</label>
-            <div class="order-type-grid" id="checkoutOrderTypeGrid">
-              <div class="order-type-card selected" data-type="dine-in" id="typeDineIn">
-                <span class="icon">🍽️</span>
-                <span class="label">Dine-In</span>
-              </div>
-              <div class="order-type-card" data-type="pickup" id="typePickup">
-                <span class="icon">🥡</span>
-                <span class="label">Pickup</span>
-              </div>
-              <div class="order-type-card" data-type="delivery" id="typeDelivery">
+            <label class="form-section-label">Order Type</label>
+            <div class="order-type-grid" id="checkoutOrderTypeGrid" style="grid-template-columns: 1fr 1fr;">
+              <div class="order-type-card selected" data-type="delivery" id="typeDelivery">
                 <span class="icon">🚗</span>
                 <span class="label">Delivery</span>
               </div>
-            </div>
-          </div>
-
-          <!-- 2. Dynamic Option Information -->
-          <!-- Dine-In Note (Table No option removed) -->
-          <div class="form-group" id="dineInNoticeGroup">
-            <div class="dine-in-info-banner">
-              <span style="font-size:1.4rem;">🍽️</span>
-              <div>
-                <strong>Dine-In Order:</strong> Sit back and relax! Our culinary team will prepare your meal fresh and serve directly at your table.
+              <div class="order-type-card" data-type="pickup" id="typePickup">
+                <span class="icon">🥡</span>
+                <span class="label">Pickup / Takeout</span>
               </div>
             </div>
           </div>
@@ -196,7 +181,7 @@
           </div>
 
           <!-- Delivery: Saved Addresses according to account -->
-          <div class="form-group hidden" id="deliveryAddressGroup">
+          <div class="form-group" id="deliveryAddressGroup">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
               <label class="form-section-label" style="margin-bottom:0;">Select Delivery Address</label>
               <button type="button" class="btn-add-address-toggle" id="btnToggleAddAddress">

@@ -271,7 +271,7 @@
   let state = {
     menu: [],
     cart: [],
-    orderType: 'dine-in', // 'dine-in' | 'pickup' | 'delivery'
+    orderType: (typeof window !== 'undefined' && window.IS_DINE_IN) ? 'dine-in' : 'delivery',
     activeCategory: 'All',
     dietaryFilter: 'all', // 'all' | 'veg' | 'non-veg'
     orderCounter: parseInt(localStorage.getItem('mj_orderCounter') || '0'),
@@ -446,6 +446,7 @@
     newAddrTitle: $('#newAddrTitle'),
     newAddrFull: $('#newAddrFull'),
     btnSaveNewAddress: $('#btnSaveNewAddress'),
+    custTableNo: $('#custTableNo'),
     custName: $('#custName'),
     custPhone: $('#custPhone'),
     custNotes: $('#custNotes'),
@@ -1753,7 +1754,7 @@
     });
 
     const savings = Math.max(0, originalTotal - subtotal);
-    const deliveryFee = state.orderType === 'delivery' ? (state.deliveryCharge !== undefined ? state.deliveryCharge : 50) : 0;
+    const deliveryFee = (!window.IS_DINE_IN && state.orderType === 'delivery') ? (state.deliveryCharge !== undefined ? state.deliveryCharge : 50) : 0;
     const total = subtotal + deliveryFee;
     return { subtotal, savings, deliveryFee, total, itemCount };
   }
@@ -2223,6 +2224,24 @@
 
   // ========== CHECKOUT LOGIC ==========
   function initCheckoutOrderType() {
+    if (window.IS_DINE_IN) {
+      state.orderType = 'dine-in';
+      state.dineinPaymentMethod = 'Cash on Counter';
+      const payCards = document.querySelectorAll('.dinein-pay-card');
+      payCards.forEach(card => {
+        card.addEventListener('click', () => {
+          payCards.forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          const radio = card.querySelector('input[type="radio"]');
+          if (radio) {
+            radio.checked = true;
+            state.dineinPaymentMethod = radio.value;
+          }
+          updateCheckoutBtnText();
+        });
+      });
+      return;
+    }
     if (!els.checkoutOrderTypeGrid) return;
     const cards = els.checkoutOrderTypeGrid.querySelectorAll('.order-type-card');
     cards.forEach(card => {
@@ -2237,18 +2256,20 @@
 
   function applyOrderTypeView(type) {
     if (type === 'dine-in') {
-      els.dineInNoticeGroup.classList.remove('hidden');
-      els.pickupInfoGroup.classList.add('hidden');
-      els.deliveryAddressGroup.classList.add('hidden');
+      if (els.dineInNoticeGroup) els.dineInNoticeGroup.classList.remove('hidden');
+      if (els.pickupInfoGroup) els.pickupInfoGroup.classList.add('hidden');
+      if (els.deliveryAddressGroup) els.deliveryAddressGroup.classList.add('hidden');
     } else if (type === 'pickup') {
-      els.dineInNoticeGroup.classList.add('hidden');
-      els.pickupInfoGroup.classList.remove('hidden');
-      els.deliveryAddressGroup.classList.add('hidden');
+      if (els.dineInNoticeGroup) els.dineInNoticeGroup.classList.add('hidden');
+      if (els.pickupInfoGroup) els.pickupInfoGroup.classList.remove('hidden');
+      if (els.deliveryAddressGroup) els.deliveryAddressGroup.classList.add('hidden');
     } else if (type === 'delivery') {
-      els.dineInNoticeGroup.classList.add('hidden');
-      els.pickupInfoGroup.classList.add('hidden');
-      els.deliveryAddressGroup.classList.remove('hidden');
-      renderCheckoutAddresses();
+      if (els.dineInNoticeGroup) els.dineInNoticeGroup.classList.add('hidden');
+      if (els.pickupInfoGroup) els.pickupInfoGroup.classList.add('hidden');
+      if (els.deliveryAddressGroup) {
+        els.deliveryAddressGroup.classList.remove('hidden');
+        renderCheckoutAddresses();
+      }
     }
     updateCheckoutBreakdown();
   }
@@ -2307,7 +2328,7 @@
     }
 
     const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
-    if (!user) {
+    if (!window.IS_DINE_IN && !user) {
       closeCart();
       state.pendingCheckout = true;
       openCustomerLoginModal({
@@ -2322,7 +2343,7 @@
       els.checkoutModal.classList.add('open');
       document.body.style.overflow = 'hidden';
 
-      const user = MJAuth.getCurrentUser();
+      const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
       if (user) {
         if (!els.custName.value) els.custName.value = user.name || '';
         if (!els.custPhone.value) els.custPhone.value = user.phone || '';
@@ -2427,6 +2448,19 @@
     const totals = getCartTotals();
     const discount = state.appliedPromo ? state.appliedPromo.discountAmount : 0;
     const finalPayable = Math.max(0, totals.subtotal - discount + totals.deliveryFee);
+
+    if (window.IS_DINE_IN) {
+      const isCounter = !state.dineinPaymentMethod || state.dineinPaymentMethod === 'Cash on Counter';
+      if (finalPayable === 0) {
+        els.btnPlaceOrder.innerHTML = `✓ Place Dine-In Order (Free with Coupon)`;
+      } else if (isCounter) {
+        els.btnPlaceOrder.innerHTML = `✓ Place Dine-In Order · Pay ₹${finalPayable} at Counter`;
+      } else {
+        els.btnPlaceOrder.innerHTML = `⚡ Pay ₹${finalPayable} Online with Razorpay`;
+      }
+      return;
+    }
+
     if (finalPayable === 0) {
       els.btnPlaceOrder.innerHTML = `Confirm Order (Free with Coupon)`;
     } else {
@@ -2462,7 +2496,7 @@
     updateCheckoutBtnText();
   }
 
-  // ========== PLACE ORDER (ONLINE PAYMENT VIA RAZORPAY) ==========
+  // ========== PLACE ORDER (ONLINE PAYMENT VIA RAZORPAY & DINE-IN CASH ON COUNTER) ==========
   async function placeOrder(e) {
     e.preventDefault();
 
@@ -2476,10 +2510,18 @@
       return;
     }
 
-    const user = MJAuth.getCurrentUser();
+    const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
     let deliveryAddress = '';
+    const tableNo = els.custTableNo ? els.custTableNo.value.trim() : '';
 
-    if (state.orderType === 'delivery') {
+    if (window.IS_DINE_IN) {
+      if (!tableNo) {
+        showToast('Please enter your Table / Seat Number so staff can serve you!', 'error');
+        if (els.custTableNo) els.custTableNo.focus();
+        return;
+      }
+      deliveryAddress = `Table: ${tableNo}`;
+    } else if (state.orderType === 'delivery') {
       const addresses = user ? MJAuth.getUserAddresses(user.id) : [];
       const selected = addresses.find(a => a.id === state.selectedDeliveryAddressId);
       if (!selected) {
@@ -2490,6 +2532,11 @@
     }
 
     const customerPhone = els.custPhone.value.trim() || (user ? user.phone : '');
+    if (!customerPhone) {
+      showToast('Please enter a phone number', 'error');
+      if (els.custPhone) els.custPhone.focus();
+      return;
+    }
     const rawDigits = customerPhone.replace(/\D/g, '');
     const last10 = rawDigits.slice(-10);
 
@@ -2515,7 +2562,8 @@
 
     const order = {
       id: orderId,
-      type: state.orderType,
+      type: window.IS_DINE_IN ? 'dine-in' : state.orderType,
+      tableNo: window.IS_DINE_IN ? tableNo : undefined,
       items: [...state.cart],
       subtotal: totals.subtotal,
       deliveryFee: totals.deliveryFee,
@@ -2523,7 +2571,7 @@
       coupon: state.appliedPromo ? { ...state.appliedPromo } : null,
       customer: {
         userId: user ? user.id : 'guest',
-        name: els.custName.value.trim() || (user ? user.name : 'Customer'),
+        name: els.custName.value.trim() || (user ? user.name : (window.IS_DINE_IN ? 'Dine-In Customer' : 'Customer')),
         phone: customerPhone,
         rawPhone: last10,
         email: user ? (user.email || '') : '',
@@ -2547,6 +2595,47 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(order)
+        });
+        if (saveRes.ok) {
+          const saveDoc = await saveRes.json();
+          if (saveDoc.order && saveDoc.order.id) {
+            order.id = saveDoc.order.id;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not save order to MongoDB Atlas:', err);
+      }
+
+      handleOrderSuccess(order, true);
+      return;
+    }
+
+    // Dine-In: Pay via Cash on Counter
+    if (window.IS_DINE_IN && (!state.dineinPaymentMethod || state.dineinPaymentMethod === 'Cash on Counter')) {
+      els.btnPlaceOrder.disabled = true;
+      els.btnPlaceOrder.innerHTML = '<span>⏳ Placing Dine-In Order...</span>';
+      order.paymentMethod = 'Cash on Counter';
+      order.paymentStatus = 'pending';
+
+      try {
+        const saveRes = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(order)
+        });
+        if (saveRes.ok) {
+          const saveDoc = await saveRes.json();
+          if (saveDoc.order && saveDoc.order.id) {
+            order.id = saveDoc.order.id;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not save order to MongoDB Atlas:', err);
+      }
+
+      handleOrderSuccess(order, false);
+      return;
+    }
         });
         if (saveRes.ok) {
           const saveDoc = await saveRes.json();
@@ -2709,15 +2798,20 @@
       els.orderIdDisplay.textContent = order.id;
 
       const typeLabels = {
-        'dine-in': '🍽️ Dine-In Order (Staff will serve at your table)',
+        'dine-in': order.tableNo ? `🍽️ Dine-In Order (Serving at ${order.tableNo})` : '🍽️ Dine-In Order (Staff will serve at your table)',
         'pickup': '🥡 Express Counter Pickup (~15-20 mins)',
         'delivery': `🚗 Delivery to: ${order.customer && order.customer.address ? order.customer.address : 'Saved Address'}`
       };
       els.orderSuccessTypeDisplay.textContent = typeLabels[order.type] || order.type;
 
-      const paymentBadge = isPaid
-        ? '💳 Paid Online via Razorpay · '
-        : '🎟️ Promo Applied · ';
+      let paymentBadge = '';
+      if (order.paymentMethod === 'Cash on Counter') {
+        paymentBadge = `💵 Pay ₹${order.total} Cash on Counter · `;
+      } else if (isPaid) {
+        paymentBadge = '💳 Paid Online via Razorpay · ';
+      } else {
+        paymentBadge = '🎟️ Promo Applied · ';
+      }
 
       if (order.coupon) {
         els.orderSuccessPromoDisplay.textContent = `${paymentBadge}🎟️ Promo applied: ${order.coupon.code} (Saved ₹${order.coupon.discountAmount}) · ⏱️ 2-min cancel window active`;
@@ -2795,7 +2889,7 @@
     const grandTotal = order.total || Math.max(0, subtotal - discount + deliveryFee);
 
     let paymentMethodLabel = 'Paid Online via Razorpay';
-    if (order.paymentMethod === 'cash') paymentMethodLabel = 'Cash at Counter';
+    if (order.paymentMethod === 'Cash on Counter' || order.paymentMethod === 'cash') paymentMethodLabel = 'Cash on Counter';
     else if (order.paymentMethod === 'upi_pos') paymentMethodLabel = 'UPI / QR at Counter';
     else if (order.paymentMethod === 'card_pos') paymentMethodLabel = 'Card Machine / POS';
     else if (order.paymentMethod === 'complimentary') paymentMethodLabel = 'Complimentary / Staff';
@@ -2844,7 +2938,8 @@
             <div style="margin-bottom:6px;"><strong>Customer Name:</strong> ${escapeHtml(customer.name || 'Valued Customer')}</div>
             <div style="margin-bottom:6px;"><strong>Phone Number:</strong> ${escapeHtml(customer.phone || 'N/A')}</div>
             ${isDelivery ? `<div style="margin-bottom:6px;"><strong>Delivery Address:</strong> ${escapeHtml(customer.address || 'Address provided at order')}</div>` : ''}
-            <div><strong>Delivery Instructions:</strong> “${escapeHtml(customer.notes || 'Please prepare freshly and ring the doorbell.')}”</div>
+            ${isDineIn && order.tableNo ? `<div style="margin-bottom:6px;"><strong>Table / Seat:</strong> <span style="font-weight:700;color:#e63946;">${escapeHtml(order.tableNo)}</span></div>` : ''}
+            <div><strong>${isDineIn ? 'Kitchen / Table Notes:' : 'Delivery Instructions:'}</strong> “${escapeHtml(customer.notes || (isDineIn ? 'Serve freshly to table.' : 'Please prepare freshly and ring the doorbell.'))}”</div>
           </div>
         </div>
 
@@ -3371,7 +3466,7 @@
 
     // Show Login Popup on landing page if visitor is not logged in and hasn't dismissed it this session
     const currentUser = window.MJAuth ? MJAuth.getCurrentUser() : null;
-    if (!currentUser && !sessionStorage.getItem('mj_login_modal_seen')) {
+    if (!window.IS_DINE_IN && !currentUser && !sessionStorage.getItem('mj_login_modal_seen')) {
       setTimeout(() => {
         openCustomerLoginModal({
           title: 'Welcome to MJ\'s Corner! 👋',

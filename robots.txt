@@ -3,6 +3,9 @@ Allow: /
 Disallow: /admin
 Disallow: /admin.html
 Disallow: /api/
+Disallow: /dinein
+Disallow: /dine-in
+Disallow: /dinein.html
 
 Sitemap: https://mjscorner.in/sitemap.xml
 Sitemap: https://mjscorner.in/sitemap
