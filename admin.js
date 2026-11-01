@@ -417,7 +417,10 @@
           </div>
         </td>
         ${time}
-        <td>${statusSelectHtml}</td>
+        <td>
+          ${statusSelectHtml}
+          ${order.reviewed ? `<div style="margin-top:4px;font-size:0.75rem;font-weight:700;color:#d97706;">⭐ Rated ${order.rating}/5${order.reviewComment ? ` <span style="font-weight:normal;color:var(--text-secondary);" title="${escapeHtml(order.reviewComment)}">("${escapeHtml(order.reviewComment.slice(0, 25))}${order.reviewComment.length > 25 ? '...' : ''}")</span>` : ''}</div>` : ''}
+        </td>
         <td>${actionsHtml}</td>
       </tr>
     `;

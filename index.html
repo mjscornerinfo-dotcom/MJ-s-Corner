@@ -537,6 +537,36 @@
     </div>
   </div>
 
+  <!-- ========== ORDER REVIEW BOTTOM POPUP ========== -->
+  <div class="order-review-popup hidden" id="orderReviewPopup" role="dialog" aria-modal="true" aria-labelledby="reviewPopupTitle">
+    <div class="review-popup-card">
+      <button type="button" class="review-popup-close" id="closeReviewPopupBtn" aria-label="Dismiss review">✕</button>
+      <div class="review-popup-header">
+        <div class="review-popup-icon">⭐</div>
+        <div>
+          <h4 id="reviewPopupTitle" class="review-popup-title">How was your meal?</h4>
+          <p class="review-popup-subtitle">Rate your delivered order <strong id="reviewPopupOrderId"></strong></p>
+        </div>
+      </div>
+      <div class="review-popup-items" id="reviewPopupItemsList">
+        <!-- Dish names rendered by JS -->
+      </div>
+      <div class="star-rating-widget" id="starRatingWidget" role="radiogroup" aria-label="Rate out of 5 stars">
+        <button type="button" class="star-btn" data-star="1" aria-label="1 star">★</button>
+        <button type="button" class="star-btn" data-star="2" aria-label="2 stars">★</button>
+        <button type="button" class="star-btn" data-star="3" aria-label="3 stars">★</button>
+        <button type="button" class="star-btn" data-star="4" aria-label="4 stars">★</button>
+        <button type="button" class="star-btn" data-star="5" aria-label="5 stars">★</button>
+      </div>
+      <div class="review-rating-label" id="reviewRatingLabel">Tap a star to rate</div>
+      <textarea id="reviewCommentInput" class="review-comment-input" rows="2" placeholder="Write a short review (optional)..."></textarea>
+      <div class="review-popup-actions">
+        <button type="button" class="btn-review-dismiss" id="btnDismissReview">Maybe Later</button>
+        <button type="button" class="btn-review-submit" id="btnSubmitReview" disabled>Submit Review</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========== TOAST CONTAINER ========== -->
   <div class="toast-container" id="toastContainer"></div>
 

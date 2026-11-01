@@ -1439,6 +1439,82 @@ app.patch('/api/orders/:orderId', async (req, res) => {
   }
 });
 
+// Submit review for a delivered order (single combined rating distributed to all items)
+app.post('/api/orders/:orderId/review', async (req, res) => {
+  try {
+    const db = getDb();
+    const { orderId } = req.params;
+    const { rating, comment } = req.body;
+
+    const numRating = parseInt(rating, 10);
+    if (!numRating || numRating < 1 || numRating > 5) {
+      return res.status(400).json({ success: false, message: 'Rating must be an integer between 1 and 5' });
+    }
+
+    const { ObjectId } = require('mongodb');
+    let orderFilter = { id: orderId };
+    if (ObjectId.isValid(orderId)) {
+      orderFilter = { $or: [{ id: orderId }, { _id: new ObjectId(orderId) }] };
+    }
+
+    const order = await db.collection('orders').findOne(orderFilter);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (order.reviewed) {
+      return res.status(400).json({ success: false, message: 'Order has already been reviewed' });
+    }
+
+    // Mark order as reviewed
+    const reviewData = {
+      reviewed: true,
+      rating: numRating,
+      reviewComment: typeof comment === 'string' ? comment.trim() : '',
+      reviewedAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await db.collection('orders').updateOne(orderFilter, { $set: reviewData });
+
+    // Distribute rating to each distinct item in this order
+    const itemIds = [...new Set((order.items || []).map(i => parseInt(i.id, 10)).filter(id => !isNaN(id)))];
+    for (const itemId of itemIds) {
+      const menuItem = await db.collection('menu').findOne({ id: itemId });
+      if (menuItem) {
+        const curSum = typeof menuItem.ratingSum === 'number' ? menuItem.ratingSum : 0;
+        const curCount = typeof menuItem.ratingCount === 'number' ? menuItem.ratingCount : 0;
+        const newSum = curSum + numRating;
+        const newCount = curCount + 1;
+        const newAvg = Math.round((newSum / newCount) * 10) / 10;
+
+        await db.collection('menu').updateOne(
+          { id: itemId },
+          {
+            $set: {
+              ratingSum: newSum,
+              ratingCount: newCount,
+              averageRating: newAvg
+            }
+          }
+        );
+      }
+    }
+
+    // Return updated menu so client can refresh ratings in real-time
+    const updatedMenu = await db.collection('menu').find({}).sort({ id: 1 }).toArray();
+    res.json({
+      success: true,
+      message: 'Review submitted successfully',
+      rating: numRating,
+      orderId: order.id,
+      menu: updatedMenu
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Delete an order permanently from MongoDB Atlas
 app.delete('/api/orders/:orderId', async (req, res) => {
   try {

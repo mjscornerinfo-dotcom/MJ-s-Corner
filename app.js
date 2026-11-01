@@ -283,7 +283,9 @@
     promos: [],
     promoPopupEnabled: true,
     appliedPromo: null,
-    selectedDeliveryAddressId: null
+    selectedDeliveryAddressId: null,
+    activeReviewOrder: null,
+    activeReviewRating: 0
   };
 
   // Load from localStorage & MongoDB Atlas
@@ -534,6 +536,17 @@
     promoSubtitle: $('#promoSubtitle'),
     promoCode: $('#promoCode'),
     promoDesc: $('#promoDesc'),
+    // Order Review Bottom Popup
+    orderReviewPopup: $('#orderReviewPopup'),
+    closeReviewPopupBtn: $('#closeReviewPopupBtn'),
+    reviewPopupTitle: $('#reviewPopupTitle'),
+    reviewPopupOrderId: $('#reviewPopupOrderId'),
+    reviewPopupItemsList: $('#reviewPopupItemsList'),
+    starRatingWidget: $('#starRatingWidget'),
+    reviewRatingLabel: $('#reviewRatingLabel'),
+    reviewCommentInput: $('#reviewCommentInput'),
+    btnDismissReview: $('#btnDismissReview'),
+    btnSubmitReview: $('#btnSubmitReview'),
     toastContainer: $('#toastContainer')
   };
 
@@ -1078,6 +1091,17 @@
               <button type="button" class="btn-admin secondary btn-view-cust-invoice" data-invoice-order="${order.id}" style="padding:6px 12px;font-size:0.8rem;border-radius:var(--radius-full);display:inline-flex;align-items:center;gap:4px;">
                 🖨️ Invoice
               </button>
+              ${order.status === 'delivered' ? `
+                ${order.reviewed ? `
+                  <span class="order-reviewed-badge" title="You rated this order ${order.rating || 5} out of 5 stars">
+                    ⭐ Rated ${order.rating || 5}/5
+                  </span>
+                ` : `
+                  <button type="button" class="btn-rate-order" data-rate-order="${order.id}">
+                    ⭐ Rate Order
+                  </button>
+                `}
+              ` : ''}
               ${cancelSectionHtml}
             </div>
           </div>
@@ -1092,6 +1116,17 @@
         const found = myOrders.find(o => o.id === id);
         if (found) {
           openCustomerInvoiceModal(found);
+        }
+      });
+    });
+
+    // Bind rate order buttons
+    container.querySelectorAll('[data-rate-order]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.rateOrder;
+        const found = myOrders.find(o => o.id === id);
+        if (found) {
+          openReviewPopup(found);
         }
       });
     });
@@ -1602,6 +1637,19 @@
     const dietaryClass = isVeg ? 'veg' : 'non-veg';
     const dietaryTitle = isVeg ? 'Pure Veg' : 'Non-Veg';
 
+    // Review Rating badge (only display if reviewed: ratingCount > 0 and averageRating > 0)
+    let ratingHtml = '';
+    if (item.ratingCount && item.ratingCount > 0 && item.averageRating) {
+      const avgFormatted = Number(item.averageRating).toFixed(1);
+      ratingHtml = `
+        <div class="menu-item-rating-badge" title="${avgFormatted} out of 5 stars from ${item.ratingCount} review${item.ratingCount > 1 ? 's' : ''}">
+          <span class="rating-star-icon">★</span>
+          <span class="rating-avg-num">${avgFormatted}</span>
+          <span class="rating-count-num">(${item.ratingCount})</span>
+        </div>
+      `;
+    }
+
     return `
       <div class="menu-card ${customizable ? 'is-customizable' : ''}" data-id="${item.id}">
         <div class="menu-card-img-wrap">
@@ -1613,7 +1661,10 @@
           ${discount > 0 ? `<span class="discount-pill">${discount}% OFF</span>` : ''}
         </div>
         <div class="menu-card-content">
-          <h3 class="menu-card-title">${item.name}</h3>
+          <div class="menu-card-header-row">
+            <h3 class="menu-card-title">${item.name}</h3>
+            ${ratingHtml}
+          </div>
           <p class="menu-card-desc">${item.description}</p>
           ${pricingHtml}
           ${promoBadgesHtml}
@@ -3100,6 +3151,262 @@
     processInlinePhoneEmailVerification(userObj);
   };
 
+  // ========== ORDER REVIEW SYSTEM (BOTTOM POPUP & STARS) ==========
+  const STAR_RATING_LABELS = {
+    1: '1 Star - Poor 😞',
+    2: '2 Stars - Fair 😐',
+    3: '3 Stars - Good 🙂',
+    4: '4 Stars - Very Good! 😊',
+    5: '5 Stars - Excellent! Loved it! 🤩'
+  };
+
+  function checkDeliveredOrdersForReview(orders) {
+    if (!Array.isArray(orders) || orders.length === 0) return;
+    const targetOrder = orders.find(o =>
+      o &&
+      o.status === 'delivered' &&
+      !o.reviewed &&
+      !sessionStorage.getItem(`mj_review_dismissed_${o.id}`)
+    );
+
+    if (targetOrder) {
+      if (els.checkoutModal && els.checkoutModal.classList.contains('open')) return;
+      if (els.customizationModal && els.customizationModal.classList.contains('open')) return;
+      if (els.customerLoginModal && els.customerLoginModal.classList.contains('open')) return;
+
+      if (state.activeReviewOrder && state.activeReviewOrder.id === targetOrder.id && els.orderReviewPopup && !els.orderReviewPopup.classList.contains('hidden')) {
+        return;
+      }
+      openReviewPopup(targetOrder);
+    }
+  }
+
+  function openReviewPopup(order) {
+    if (!order || !els.orderReviewPopup) return;
+    state.activeReviewOrder = order;
+    state.activeReviewRating = 0;
+
+    if (els.reviewPopupOrderId) {
+      els.reviewPopupOrderId.textContent = order.id || '';
+    }
+
+    if (els.reviewPopupItemsList) {
+      const items = order.items || [];
+      if (items.length > 0) {
+        const itemNames = items.map(i => `${escapeHtml(i.name || 'Dish')} × ${i.qty || 1}`).join(', ');
+        els.reviewPopupItemsList.innerHTML = `<strong>Dishes in this order:</strong> ${itemNames}`;
+        els.reviewPopupItemsList.style.display = 'block';
+      } else {
+        els.reviewPopupItemsList.style.display = 'none';
+      }
+    }
+
+    // Reset stars
+    if (els.starRatingWidget) {
+      els.starRatingWidget.querySelectorAll('.star-btn').forEach(btn => {
+        btn.classList.remove('selected', 'hovered');
+      });
+    }
+
+    if (els.reviewRatingLabel) {
+      els.reviewRatingLabel.textContent = 'Tap a star to rate';
+    }
+
+    if (els.reviewCommentInput) {
+      els.reviewCommentInput.value = '';
+    }
+
+    if (els.btnSubmitReview) {
+      els.btnSubmitReview.disabled = true;
+      els.btnSubmitReview.textContent = 'Submit Review';
+    }
+
+    els.orderReviewPopup.classList.remove('hidden');
+  }
+
+  function closeReviewPopup(dismiss = false) {
+    if (!els.orderReviewPopup) return;
+    if (dismiss && state.activeReviewOrder && state.activeReviewOrder.id) {
+      sessionStorage.setItem(`mj_review_dismissed_${state.activeReviewOrder.id}`, 'true');
+    }
+    els.orderReviewPopup.classList.add('hidden');
+    state.activeReviewOrder = null;
+    state.activeReviewRating = 0;
+  }
+
+  function updateStarWidgetUI(rating) {
+    if (!els.starRatingWidget) return;
+    const starBtns = els.starRatingWidget.querySelectorAll('.star-btn');
+    starBtns.forEach(btn => {
+      const s = parseInt(btn.dataset.star, 10);
+      btn.classList.toggle('selected', s <= rating);
+      btn.classList.remove('hovered');
+    });
+
+    if (els.reviewRatingLabel) {
+      els.reviewRatingLabel.textContent = STAR_RATING_LABELS[rating] || 'Tap a star to rate';
+    }
+  }
+
+  async function submitOrderReview() {
+    if (!state.activeReviewOrder || !state.activeReviewRating) {
+      showToast('Please select a star rating between 1 and 5', 'warning');
+      return;
+    }
+
+    const orderId = state.activeReviewOrder.id;
+    const rating = state.activeReviewRating;
+    const comment = els.reviewCommentInput ? els.reviewCommentInput.value.trim() : '';
+
+    if (els.btnSubmitReview) {
+      els.btnSubmitReview.disabled = true;
+      els.btnSubmitReview.textContent = 'Submitting...';
+    }
+
+    try {
+      const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, comment })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        if (Array.isArray(data.menu) && data.menu.length > 0) {
+          state.menu = data.menu;
+          localStorage.setItem('mj_menu', JSON.stringify(data.menu));
+        } else {
+          applyLocalReviewToMenu(state.activeReviewOrder, rating);
+        }
+      } else {
+        applyLocalReviewToMenu(state.activeReviewOrder, rating);
+      }
+    } catch (err) {
+      console.warn('Review API fallback to local:', err);
+      applyLocalReviewToMenu(state.activeReviewOrder, rating);
+    }
+
+    // Mark order reviewed in user's localStorage
+    const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+    const storageKey = getOrdersStorageKey(user);
+    const userOrders = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    const target = userOrders.find(o => o.id === orderId);
+    if (target) {
+      target.reviewed = true;
+      target.rating = rating;
+      target.reviewComment = comment;
+      target.reviewedAt = new Date().toISOString();
+      localStorage.setItem(storageKey, JSON.stringify(userOrders));
+    }
+
+    if (state.activeReviewOrder) {
+      state.activeReviewOrder.reviewed = true;
+      state.activeReviewOrder.rating = rating;
+      state.activeReviewOrder.reviewComment = comment;
+    }
+
+    // Notify data changed across tabs and pages
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    // Re-render UI
+    renderCategories();
+    renderMenu();
+    updateHeaderOrdersBadge();
+    if (els.ordersModal && els.ordersModal.classList.contains('open')) {
+      renderCustomerOrders(els.customerOrdersList);
+    }
+    if (els.profileModal && els.profileModal.classList.contains('open') && els.tabProfileOrders && els.tabProfileOrders.classList.contains('active')) {
+      renderProfileOrders();
+    }
+
+    if (els.reviewRatingLabel) {
+      els.reviewRatingLabel.textContent = '🎉 Thank you for your review!';
+    }
+    if (els.btnSubmitReview) {
+      els.btnSubmitReview.textContent = '✓ Submitted!';
+    }
+
+    showToast(`Thank you for your ${rating}-star review! ⭐`, 'success');
+
+    setTimeout(() => {
+      closeReviewPopup(false);
+    }, 1200);
+  }
+
+  function applyLocalReviewToMenu(order, rating) {
+    if (!order || !Array.isArray(order.items)) return;
+    const itemIds = [...new Set(order.items.map(i => parseInt(i.id, 10)).filter(id => !isNaN(id)))];
+    let modified = false;
+
+    itemIds.forEach(id => {
+      const item = state.menu.find(m => m.id === id);
+      if (item) {
+        const curSum = typeof item.ratingSum === 'number' ? item.ratingSum : 0;
+        const curCount = typeof item.ratingCount === 'number' ? item.ratingCount : 0;
+        item.ratingSum = curSum + rating;
+        item.ratingCount = curCount + 1;
+        item.averageRating = Math.round((item.ratingSum / item.ratingCount) * 10) / 10;
+        modified = true;
+      }
+    });
+
+    if (modified) {
+      localStorage.setItem('mj_menu', JSON.stringify(state.menu));
+      fetch('/api/menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ menu: state.menu })
+      }).catch(() => {});
+    }
+  }
+
+  function initReviewEventListeners() {
+    if (els.closeReviewPopupBtn) {
+      els.closeReviewPopupBtn.addEventListener('click', () => closeReviewPopup(true));
+    }
+    if (els.btnDismissReview) {
+      els.btnDismissReview.addEventListener('click', () => closeReviewPopup(true));
+    }
+    if (els.btnSubmitReview) {
+      els.btnSubmitReview.addEventListener('click', submitOrderReview);
+    }
+
+    // Star widget interactive hover & click
+    if (els.starRatingWidget) {
+      const starBtns = els.starRatingWidget.querySelectorAll('.star-btn');
+      starBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const starVal = parseInt(btn.dataset.star, 10);
+          state.activeReviewRating = starVal;
+          updateStarWidgetUI(starVal);
+          if (els.btnSubmitReview) els.btnSubmitReview.disabled = false;
+        });
+
+        btn.addEventListener('mouseenter', () => {
+          const hoverVal = parseInt(btn.dataset.star, 10);
+          starBtns.forEach(b => {
+            const val = parseInt(b.dataset.star, 10);
+            b.classList.toggle('hovered', val <= hoverVal);
+          });
+          if (els.reviewRatingLabel) {
+            els.reviewRatingLabel.textContent = STAR_RATING_LABELS[hoverVal] || 'Tap a star to rate';
+          }
+        });
+      });
+
+      els.starRatingWidget.addEventListener('mouseleave', () => {
+        starBtns.forEach(b => b.classList.remove('hovered'));
+        if (state.activeReviewRating > 0) {
+          updateStarWidgetUI(state.activeReviewRating);
+        } else {
+          if (els.reviewRatingLabel) {
+            els.reviewRatingLabel.textContent = 'Tap a star to rate';
+          }
+        }
+      });
+    }
+  }
+
   // ========== EVENT BINDINGS ==========
   function bindEvents() {
     if (els.themeToggle) els.themeToggle.addEventListener('click', toggleTheme);
@@ -3346,8 +3653,11 @@
         closePromoPopup();
         closeCustomerInvoiceModal();
         closeCustomerLoginModal();
+        closeReviewPopup(true);
       }
     });
+
+    initReviewEventListeners();
 
     function handleDataUpdate() {
       state.menu = window.MJData ? MJData.getMenu() : (JSON.parse(localStorage.getItem('mj_menu')) || []);
@@ -3448,8 +3758,9 @@
     setInterval(() => {
       const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
       if (user && (user.phone || user.email || user.id)) {
-        fetchCustomerOrders().then(() => {
+        fetchCustomerOrders().then((orders) => {
           updateHeaderOrdersBadge();
+          checkDeliveredOrdersForReview(orders);
           if (els.ordersModal && els.ordersModal.classList.contains('open')) {
             renderCustomerOrders(els.customerOrdersList);
           }
@@ -3459,6 +3770,13 @@
         });
       }
     }, 5000);
+
+    // Initial check for delivered unreviewed orders on load
+    if (currentUser && (currentUser.phone || currentUser.email || currentUser.id)) {
+      fetchCustomerOrders().then((orders) => {
+        checkDeliveredOrdersForReview(orders);
+      });
+    }
 
     // Live 1-second ticking countdown timer for 2-minute order cancellation window
     setInterval(updateCancelTimers, 1000);
