@@ -415,8 +415,6 @@
     promoCarouselSection: $('#promoCarouselSection'),
     promoCarouselViewport: $('#promoCarouselViewport'),
     promoCarouselTrack: $('#promoCarouselTrack'),
-    carouselPrevBtn: $('#carouselPrevBtn'),
-    carouselNextBtn: $('#carouselNextBtn'),
     carouselDots: $('#carouselDots'),
     menuSection: $('#menuSection'),
     categoryNavInner: $('#categoryNavInner'),
@@ -1207,44 +1205,46 @@
            </button>`
         : '';
 
+      const hasText = Boolean(banner.badge || banner.title || banner.subtitle);
+      const textHtml = hasText ? `
+        <div class="promo-slide-text">
+          ${badgeHtml}
+          ${titleHtml}
+          ${subtitleHtml}
+        </div>
+      ` : '';
+
       const isSingle = count === 1 ? 'is-static' : '';
 
       return `
         <div class="promo-slide ${isSingle}" data-index="${index}" data-banner-id="${banner.id}" data-action="${escapeHtml(banner.actionType || 'none')}" data-target="${escapeHtml(banner.actionValue || '')}">
           <div class="promo-slide-bg" style="background-image: url('${escapeHtml(banner.image)}');"></div>
-          <div class="promo-slide-overlay"></div>
           <div class="promo-slide-content">
-            <div class="promo-slide-text">
-              ${badgeHtml}
-              ${titleHtml}
-              ${subtitleHtml}
-            </div>
+            ${textHtml}
             ${ctaBtnHtml ? `<div class="promo-slide-action">${ctaBtnHtml}</div>` : ''}
           </div>
         </div>
       `;
     }).join('');
 
-    // Single active ad: default to static display (no sliding, no arrows, no dots)
+    // Single active ad: default to static display (no sliding, no dots)
     if (count === 1) {
       els.promoCarouselSection.classList.add('is-single-ad');
       els.promoCarouselSection.classList.remove('is-multi-ad');
-      if (els.carouselPrevBtn) els.carouselPrevBtn.classList.add('hidden');
-      if (els.carouselNextBtn) els.carouselNextBtn.classList.add('hidden');
       if (els.carouselDots) {
         els.carouselDots.classList.add('hidden');
         els.carouselDots.innerHTML = '';
       }
-      els.promoCarouselTrack.style.transform = 'none';
+      if (els.promoCarouselViewport) {
+        els.promoCarouselViewport.scrollLeft = 0;
+      }
       bindBannerActions();
       return;
     }
 
-    // Multiple active ads: auto-sliding enabled, show arrows and dots
+    // Multiple active ads: auto-sliding enabled, scrollable with dots
     els.promoCarouselSection.classList.remove('is-single-ad');
     els.promoCarouselSection.classList.add('is-multi-ad');
-    if (els.carouselPrevBtn) els.carouselPrevBtn.classList.remove('hidden');
-    if (els.carouselNextBtn) els.carouselNextBtn.classList.remove('hidden');
 
     if (els.carouselDots) {
       els.carouselDots.classList.remove('hidden');
@@ -1256,52 +1256,49 @@
         dot.addEventListener('click', (e) => {
           e.stopPropagation();
           const targetIndex = parseInt(dot.dataset.slide, 10);
-          goToBannerSlide(targetIndex);
+          goToBannerSlide(targetIndex, true);
           resetCarouselTimer();
         });
       });
     }
 
-    updateBannerSlidePosition(false);
+    goToBannerSlide(state.currentBannerSlide, false);
     startCarouselTimer();
     bindBannerActions();
   }
 
-  function goToBannerSlide(index) {
+  function goToBannerSlide(index, animated = true) {
     const activeBanners = getActiveBanners();
     const count = activeBanners.length;
-    if (count <= 1) return;
+    if (count <= 1 || !els.promoCarouselViewport) return;
 
     state.currentBannerSlide = (index + count) % count;
-    updateBannerSlidePosition(true);
+    const slideWidth = els.promoCarouselViewport.offsetWidth || 0;
+    if (typeof els.promoCarouselViewport.scrollTo === 'function') {
+      els.promoCarouselViewport.scrollTo({
+        left: state.currentBannerSlide * slideWidth,
+        behavior: animated ? 'smooth' : 'auto'
+      });
+    } else {
+      els.promoCarouselViewport.scrollLeft = state.currentBannerSlide * slideWidth;
+    }
+    updateBannerDots();
   }
 
   function nextBannerSlide() {
-    goToBannerSlide(state.currentBannerSlide + 1);
+    goToBannerSlide(state.currentBannerSlide + 1, true);
   }
 
   function prevBannerSlide() {
-    goToBannerSlide(state.currentBannerSlide - 1);
+    goToBannerSlide(state.currentBannerSlide - 1, true);
   }
 
-  function updateBannerSlidePosition(animated = true) {
-    if (!els.promoCarouselTrack) return;
-    const activeBanners = getActiveBanners();
-    if (activeBanners.length <= 1) {
-      els.promoCarouselTrack.style.transform = 'none';
-      return;
-    }
-
-    els.promoCarouselTrack.style.transition = animated ? 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
-    const offset = -(state.currentBannerSlide * 100);
-    els.promoCarouselTrack.style.transform = `translateX(${offset}%)`;
-
-    if (els.carouselDots) {
-      const dots = els.carouselDots.querySelectorAll('.carousel-dot');
-      dots.forEach((dot, i) => {
-        dot.classList.toggle('active', i === state.currentBannerSlide);
-      });
-    }
+  function updateBannerDots() {
+    if (!els.carouselDots) return;
+    const dots = els.carouselDots.querySelectorAll('.carousel-dot');
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === state.currentBannerSlide);
+    });
   }
 
   function startCarouselTimer() {
@@ -1383,48 +1380,40 @@
   }
 
   function initCarouselEventListeners() {
-    if (els.carouselPrevBtn) {
-      els.carouselPrevBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        prevBannerSlide();
-        resetCarouselTimer();
-      });
-    }
+    if (!els.promoCarouselViewport) return;
 
-    if (els.carouselNextBtn) {
-      els.carouselNextBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        nextBannerSlide();
-        resetCarouselTimer();
-      });
-    }
+    // Pause auto-sliding on hover, resume on mouse leave
+    els.promoCarouselViewport.addEventListener('mouseenter', stopCarouselTimer);
+    els.promoCarouselViewport.addEventListener('mouseleave', startCarouselTimer);
 
-    if (els.promoCarouselViewport) {
-      els.promoCarouselViewport.addEventListener('mouseenter', stopCarouselTimer);
-      els.promoCarouselViewport.addEventListener('mouseleave', startCarouselTimer);
-
-      els.promoCarouselViewport.addEventListener('touchstart', (e) => {
-        stopCarouselTimer();
-        if (e.changedTouches && e.changedTouches[0]) {
-          carouselTouchStartX = e.changedTouches[0].screenX;
-        }
-      }, { passive: true });
-
-      els.promoCarouselViewport.addEventListener('touchend', (e) => {
-        if (e.changedTouches && e.changedTouches[0]) {
-          carouselTouchEndX = e.changedTouches[0].screenX;
-          const diff = carouselTouchEndX - carouselTouchStartX;
-          if (Math.abs(diff) > 40) {
-            if (diff < 0) {
-              nextBannerSlide();
-            } else {
-              prevBannerSlide();
-            }
+    // Sync active slide index and indicator dots on user scroll / swipe
+    let scrollDebounceTimer = null;
+    els.promoCarouselViewport.addEventListener('scroll', () => {
+      stopCarouselTimer();
+      clearTimeout(scrollDebounceTimer);
+      scrollDebounceTimer = setTimeout(() => {
+        if (!els.promoCarouselViewport) return;
+        const width = els.promoCarouselViewport.offsetWidth;
+        if (width > 0) {
+          const count = getActiveBanners().length;
+          const newIndex = Math.round(els.promoCarouselViewport.scrollLeft / width);
+          if (newIndex >= 0 && newIndex < count && newIndex !== state.currentBannerSlide) {
+            state.currentBannerSlide = newIndex;
+            updateBannerDots();
           }
         }
         startCarouselTimer();
-      }, { passive: true });
-    }
+      }, 120);
+    }, { passive: true });
+
+    // Touch events: pause auto-sliding while touching
+    els.promoCarouselViewport.addEventListener('touchstart', () => {
+      stopCarouselTimer();
+    }, { passive: true });
+
+    els.promoCarouselViewport.addEventListener('touchend', () => {
+      startCarouselTimer();
+    }, { passive: true });
   }
 
   // ========== CATEGORIES & MENU ==========
@@ -4057,6 +4046,7 @@
     }, 5000);
 
     // Initial check for delivered unreviewed orders on load
+    const currentUser = window.MJAuth ? MJAuth.getCurrentUser() : null;
     if (currentUser && (currentUser.phone || currentUser.email || currentUser.id)) {
       fetchCustomerOrders().then((orders) => {
         checkDeliveredOrdersForReview(orders);
@@ -4078,7 +4068,6 @@
     }
 
     // Show Login Popup on landing page if visitor is not logged in and hasn't dismissed it this session
-    const currentUser = window.MJAuth ? MJAuth.getCurrentUser() : null;
     if (!window.IS_DINE_IN && !currentUser && !sessionStorage.getItem('mj_login_modal_seen')) {
       setTimeout(() => {
         openCustomerLoginModal({
