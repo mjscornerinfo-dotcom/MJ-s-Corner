@@ -78,6 +78,9 @@
       <div class="admin-nav-item" data-page="promotions" id="navPromotions">
         <span class="icon">🎁</span> Promotions
       </div>
+      <div class="admin-nav-item" data-page="banners" id="navBanners">
+        <span class="icon">🖼️</span> Banner Carousel
+      </div>
     </nav>
 
     <!-- Main Content -->
@@ -526,6 +529,38 @@
         </div>
       </div>
 
+      <!-- ===== Banner Carousel Page ===== -->
+      <div class="admin-page hidden" id="pageBanners">
+        <h1 class="admin-page-title">🖼️ Promotional Carousel Banners</h1>
+
+        <!-- Overview & Status Banner -->
+        <div class="promo-card" style="margin-bottom:24px;">
+          <div class="promo-card-header">
+            <div>
+              <div class="promo-card-title">Above-Menu Promotional Carousel</div>
+              <p style="font-size:0.84rem;color:var(--text-tertiary);margin-top:3px;">
+                Displayed directly above the menu. Supports auto-sliding when 2+ ads are active, defaults to static display when 1 ad is active, and automatically hides when 0 ads are active.
+              </p>
+            </div>
+            <div id="bannerCarouselStatusPill" class="banner-status-pill">
+              <!-- Rendered by JS e.g. 🔄 Auto-Sliding (3 Active) -->
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <h3 style="font-weight:700;margin:0;">Active & Scheduled Ads</h3>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-admin secondary" id="btnRestoreSampleBanners">🔄 Restore Sample Banners</button>
+            <button class="btn-admin primary" id="btnAddBanner">+ Add New Banner</button>
+          </div>
+        </div>
+
+        <div id="bannerList" class="admin-banner-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -626,6 +661,90 @@
       </div>
       <div class="modal-body invoice-modal-body" id="invoiceModalContent" style="overflow-y:auto;padding:24px;">
         <!-- Dynamically rendered printable invoice -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Add / Edit Promotional Banner Modal ===== -->
+  <div class="modal-overlay" id="bannerModal">
+    <div class="modal" style="max-width:560px;">
+      <div class="modal-header">
+        <h2 id="bannerModalTitle">🖼️ Add Promotional Banner</h2>
+        <button class="cart-close-btn" id="closeBannerModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="bannerForm">
+          <input type="hidden" id="bannerEditId" value="">
+
+          <div class="form-group">
+            <label for="bannerTitleInput">Headline / Title *</label>
+            <input type="text" id="bannerTitleInput" placeholder="e.g. Crispy Fried Chicken Feast 🍗" required>
+          </div>
+
+          <div class="form-group">
+            <label for="bannerSubtitleInput">Tagline / Subtitle</label>
+            <textarea id="bannerSubtitleInput" rows="2" placeholder="e.g. Fresh, hot & crunchy delivered right to your doorstep" style="width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);resize:none;font-family:inherit;"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="bannerBadgeInput">Badge / Tag (Optional)</label>
+            <input type="text" id="bannerBadgeInput" placeholder="e.g. Chef's Special, 25% OFF, Hot Deal">
+          </div>
+
+          <div class="form-group">
+            <label>Banner Image *</label>
+            <input type="url" id="bannerImageUrlInput" placeholder="https://res.cloudinary.com/... or paste image URL" style="margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <img id="bannerImgPreview" src="https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/chicken.jpg" alt="Preview" style="width:110px;height:55px;border-radius:var(--radius-md);object-fit:cover;border:1px solid var(--border);">
+              <label class="btn-file-upload">
+                <span>📁 Upload Image</span>
+                <input type="file" id="bannerFileInput" accept="image/*" class="file-input-hidden">
+              </label>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+              <label for="bannerActionTypeSelect">Click Action</label>
+              <select id="bannerActionTypeSelect" style="width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-weight:600;">
+                <option value="category">🍽️ Scroll to Category</option>
+                <option value="coupon">🎟️ Apply / Copy Coupon</option>
+                <option value="link">🌐 External Link</option>
+                <option value="none">ℹ️ None (Display Only)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="bannerActionValueInput" id="bannerActionValueLabel">Target Category / Code</label>
+              <input type="text" id="bannerActionValueInput" placeholder="e.g. Crispy Fried Chicken">
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+              <label for="bannerButtonTextInput">Button CTA Text</label>
+              <input type="text" id="bannerButtonTextInput" placeholder="e.g. Order Now, Explore Menu">
+            </div>
+
+            <div class="form-group">
+              <label for="bannerOrderInput">Display Order</label>
+              <input type="number" id="bannerOrderInput" min="1" max="99" value="1" placeholder="1">
+            </div>
+          </div>
+
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+            <label class="toggle-switch">
+              <input type="checkbox" id="bannerActiveCheckbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span style="font-weight:700;font-size:0.9rem;">Enable this banner in carousel</span>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+            <button type="button" class="btn-admin secondary" id="btnCancelBannerModal">Cancel</button>
+            <button type="submit" class="btn-admin primary" id="btnSaveBannerSubmit">Save Banner</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

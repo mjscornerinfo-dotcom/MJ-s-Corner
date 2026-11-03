@@ -285,7 +285,9 @@
     appliedPromo: null,
     selectedDeliveryAddressId: null,
     activeReviewOrder: null,
-    activeReviewRating: 0
+    activeReviewRating: 0,
+    banners: [],
+    currentBannerSlide: 0
   };
 
   // Load from localStorage & MongoDB Atlas
@@ -294,9 +296,11 @@
       state.menu = window.MJData ? MJData.getMenu() : (JSON.parse(localStorage.getItem('mj_menu')) || [...DEFAULT_MENU]);
       state.promos = window.MJData ? MJData.getPromos() : (JSON.parse(localStorage.getItem('mj_promos')) || []);
       state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
+      state.banners = window.MJData ? MJData.getBanners() : (JSON.parse(localStorage.getItem('mj_banners')) || []);
       loadCartForUser();
     } catch (e) {
       state.menu = window.MJData ? MJData.getMenu() : [];
+      state.banners = [];
       state.cart = [];
     }
   }
@@ -407,6 +411,13 @@
     headerUserName: $('#headerUserName'),
     cartBtnHeader: $('#cartBtnHeader'),
     cartBadge: $('#cartBadge'),
+    // Promotional Banner Carousel
+    promoCarouselSection: $('#promoCarouselSection'),
+    promoCarouselViewport: $('#promoCarouselViewport'),
+    promoCarouselTrack: $('#promoCarouselTrack'),
+    carouselPrevBtn: $('#carouselPrevBtn'),
+    carouselNextBtn: $('#carouselNextBtn'),
+    carouselDots: $('#carouselDots'),
     menuSection: $('#menuSection'),
     categoryNavInner: $('#categoryNavInner'),
     menuContainer: $('#menuContainer'),
@@ -1144,6 +1155,276 @@
 
   function renderProfileOrders() {
     renderCustomerOrders(els.profileOrdersList);
+  }
+
+  // ========== PROMOTIONAL BANNER CAROUSEL ==========
+  let carouselAutoTimer = null;
+  let carouselTouchStartX = 0;
+  let carouselTouchEndX = 0;
+
+  function getActiveBanners() {
+    const banners = Array.isArray(state.banners) ? state.banners : [];
+    return banners
+      .filter(b => b && b.active !== false)
+      .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+  }
+
+  function renderPromotionalCarousel() {
+    if (!els.promoCarouselSection || !els.promoCarouselTrack) return;
+
+    if (!state.banners || state.banners.length === 0) {
+      state.banners = window.MJData ? MJData.getBanners() : (JSON.parse(localStorage.getItem('mj_banners')) || []);
+    }
+
+    const activeBanners = getActiveBanners();
+    const count = activeBanners.length;
+
+    stopCarouselTimer();
+
+    // 0 active banners: hide section cleanly
+    if (count === 0) {
+      els.promoCarouselSection.classList.add('hidden');
+      els.promoCarouselTrack.innerHTML = '';
+      if (els.carouselDots) els.carouselDots.innerHTML = '';
+      return;
+    }
+
+    els.promoCarouselSection.classList.remove('hidden');
+
+    if (state.currentBannerSlide >= count) {
+      state.currentBannerSlide = 0;
+    }
+
+    // Render slides
+    els.promoCarouselTrack.innerHTML = activeBanners.map((banner, index) => {
+      const badgeHtml = banner.badge ? `<span class="banner-badge">${escapeHtml(banner.badge)}</span>` : '';
+      const titleHtml = banner.title ? `<h2 class="banner-title">${escapeHtml(banner.title)}</h2>` : '';
+      const subtitleHtml = banner.subtitle ? `<p class="banner-subtitle">${escapeHtml(banner.subtitle)}</p>` : '';
+      const btnText = banner.buttonText || (banner.actionType === 'coupon' ? 'Apply Code' : 'Order Now');
+      const ctaBtnHtml = banner.actionType && banner.actionType !== 'none'
+        ? `<button type="button" class="btn-banner-cta" data-action="${escapeHtml(banner.actionType || 'none')}" data-target="${escapeHtml(banner.actionValue || '')}">
+            ${escapeHtml(btnText)} →
+           </button>`
+        : '';
+
+      const isSingle = count === 1 ? 'is-static' : '';
+
+      return `
+        <div class="promo-slide ${isSingle}" data-index="${index}" data-banner-id="${banner.id}" data-action="${escapeHtml(banner.actionType || 'none')}" data-target="${escapeHtml(banner.actionValue || '')}">
+          <div class="promo-slide-bg" style="background-image: url('${escapeHtml(banner.image)}');"></div>
+          <div class="promo-slide-overlay"></div>
+          <div class="promo-slide-content">
+            <div class="promo-slide-text">
+              ${badgeHtml}
+              ${titleHtml}
+              ${subtitleHtml}
+            </div>
+            ${ctaBtnHtml ? `<div class="promo-slide-action">${ctaBtnHtml}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Single active ad: default to static display (no sliding, no arrows, no dots)
+    if (count === 1) {
+      els.promoCarouselSection.classList.add('is-single-ad');
+      els.promoCarouselSection.classList.remove('is-multi-ad');
+      if (els.carouselPrevBtn) els.carouselPrevBtn.classList.add('hidden');
+      if (els.carouselNextBtn) els.carouselNextBtn.classList.add('hidden');
+      if (els.carouselDots) {
+        els.carouselDots.classList.add('hidden');
+        els.carouselDots.innerHTML = '';
+      }
+      els.promoCarouselTrack.style.transform = 'none';
+      bindBannerActions();
+      return;
+    }
+
+    // Multiple active ads: auto-sliding enabled, show arrows and dots
+    els.promoCarouselSection.classList.remove('is-single-ad');
+    els.promoCarouselSection.classList.add('is-multi-ad');
+    if (els.carouselPrevBtn) els.carouselPrevBtn.classList.remove('hidden');
+    if (els.carouselNextBtn) els.carouselNextBtn.classList.remove('hidden');
+
+    if (els.carouselDots) {
+      els.carouselDots.classList.remove('hidden');
+      els.carouselDots.innerHTML = activeBanners.map((_, i) => `
+        <button type="button" class="carousel-dot ${i === state.currentBannerSlide ? 'active' : ''}" data-slide="${i}" aria-label="Go to offer ${i + 1}"></button>
+      `).join('');
+
+      els.carouselDots.querySelectorAll('.carousel-dot').forEach(dot => {
+        dot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const targetIndex = parseInt(dot.dataset.slide, 10);
+          goToBannerSlide(targetIndex);
+          resetCarouselTimer();
+        });
+      });
+    }
+
+    updateBannerSlidePosition(false);
+    startCarouselTimer();
+    bindBannerActions();
+  }
+
+  function goToBannerSlide(index) {
+    const activeBanners = getActiveBanners();
+    const count = activeBanners.length;
+    if (count <= 1) return;
+
+    state.currentBannerSlide = (index + count) % count;
+    updateBannerSlidePosition(true);
+  }
+
+  function nextBannerSlide() {
+    goToBannerSlide(state.currentBannerSlide + 1);
+  }
+
+  function prevBannerSlide() {
+    goToBannerSlide(state.currentBannerSlide - 1);
+  }
+
+  function updateBannerSlidePosition(animated = true) {
+    if (!els.promoCarouselTrack) return;
+    const activeBanners = getActiveBanners();
+    if (activeBanners.length <= 1) {
+      els.promoCarouselTrack.style.transform = 'none';
+      return;
+    }
+
+    els.promoCarouselTrack.style.transition = animated ? 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
+    const offset = -(state.currentBannerSlide * 100);
+    els.promoCarouselTrack.style.transform = `translateX(${offset}%)`;
+
+    if (els.carouselDots) {
+      const dots = els.carouselDots.querySelectorAll('.carousel-dot');
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === state.currentBannerSlide);
+      });
+    }
+  }
+
+  function startCarouselTimer() {
+    stopCarouselTimer();
+    const activeBanners = getActiveBanners();
+    if (activeBanners.length <= 1) return;
+
+    // Auto-advance every 4.5s
+    carouselAutoTimer = setInterval(() => {
+      nextBannerSlide();
+    }, 4500);
+  }
+
+  function stopCarouselTimer() {
+    if (carouselAutoTimer) {
+      clearInterval(carouselAutoTimer);
+      carouselAutoTimer = null;
+    }
+  }
+
+  function resetCarouselTimer() {
+    startCarouselTimer();
+  }
+
+  function bindBannerActions() {
+    if (!els.promoCarouselTrack) return;
+
+    els.promoCarouselTrack.querySelectorAll('.promo-slide').forEach(slide => {
+      slide.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-banner-cta')) return;
+        const actionType = slide.dataset.action;
+        const actionTarget = slide.dataset.target;
+        handleBannerClick(actionType, actionTarget);
+      });
+    });
+
+    els.promoCarouselTrack.querySelectorAll('.btn-banner-cta').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const actionType = btn.dataset.action;
+        const actionTarget = btn.dataset.target;
+        handleBannerClick(actionType, actionTarget);
+      });
+    });
+  }
+
+  function handleBannerClick(actionType, actionTarget) {
+    if (!actionType || actionType === 'none' || !actionTarget) return;
+
+    if (actionType === 'category') {
+      state.activeCategory = actionTarget;
+      renderCategories();
+      renderMenu();
+      const catEl = document.getElementById(`category-${actionTarget}`);
+      if (catEl) {
+        catEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        const menuNav = document.getElementById('categoryNav');
+        if (menuNav) menuNav.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else if (actionType === 'coupon') {
+      try {
+        navigator.clipboard?.writeText(actionTarget);
+      } catch (e) {}
+      if (els.checkoutPromoInput) {
+        els.checkoutPromoInput.value = actionTarget;
+      }
+      showToast(`Coupon '${actionTarget}' selected! 🎟️ Apply at checkout`, 'success');
+      if (state.cart.length > 0) {
+        openCart();
+      }
+    } else if (actionType === 'link') {
+      if (actionTarget.startsWith('http://') || actionTarget.startsWith('https://')) {
+        window.open(actionTarget, '_blank');
+      } else {
+        window.location.href = actionTarget;
+      }
+    }
+  }
+
+  function initCarouselEventListeners() {
+    if (els.carouselPrevBtn) {
+      els.carouselPrevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        prevBannerSlide();
+        resetCarouselTimer();
+      });
+    }
+
+    if (els.carouselNextBtn) {
+      els.carouselNextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        nextBannerSlide();
+        resetCarouselTimer();
+      });
+    }
+
+    if (els.promoCarouselViewport) {
+      els.promoCarouselViewport.addEventListener('mouseenter', stopCarouselTimer);
+      els.promoCarouselViewport.addEventListener('mouseleave', startCarouselTimer);
+
+      els.promoCarouselViewport.addEventListener('touchstart', (e) => {
+        stopCarouselTimer();
+        if (e.changedTouches && e.changedTouches[0]) {
+          carouselTouchStartX = e.changedTouches[0].screenX;
+        }
+      }, { passive: true });
+
+      els.promoCarouselViewport.addEventListener('touchend', (e) => {
+        if (e.changedTouches && e.changedTouches[0]) {
+          carouselTouchEndX = e.changedTouches[0].screenX;
+          const diff = carouselTouchEndX - carouselTouchStartX;
+          if (Math.abs(diff) > 40) {
+            if (diff < 0) {
+              nextBannerSlide();
+            } else {
+              prevBannerSlide();
+            }
+          }
+        }
+        startCarouselTimer();
+      }, { passive: true });
+    }
   }
 
   // ========== CATEGORIES & MENU ==========
@@ -3658,11 +3939,14 @@
     });
 
     initReviewEventListeners();
+    initCarouselEventListeners();
 
     function handleDataUpdate() {
       state.menu = window.MJData ? MJData.getMenu() : (JSON.parse(localStorage.getItem('mj_menu')) || []);
       state.promos = window.MJData ? MJData.getPromos() : (JSON.parse(localStorage.getItem('mj_promos')) || []);
       state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
+      state.banners = window.MJData ? MJData.getBanners() : (JSON.parse(localStorage.getItem('mj_banners')) || []);
+      renderPromotionalCarousel();
       renderCategories();
       renderMenu();
       renderCheckoutPromoChips();
@@ -3683,7 +3967,7 @@
 
     // Listen for storage changes from other tabs
     window.addEventListener('storage', (e) => {
-      if (e.key === 'mj_menu' || e.key === 'mj_promos' || e.key === 'mj_promoPopup') {
+      if (e.key === 'mj_menu' || e.key === 'mj_promos' || e.key === 'mj_promoPopup' || e.key === 'mj_banners') {
         handleDataUpdate();
       }
       if (e.key === 'mj_orders') {
@@ -3749,6 +4033,7 @@
     updateHeaderOrdersBadge();
     initCheckoutOrderType();
     initDietaryFilters();
+    renderPromotionalCarousel();
     renderCategories();
     renderMenu();
     updateCartUI();

@@ -10,6 +10,7 @@ var MJData = (function () {
   const STORAGE_KEY_PROMOS = 'mj_promos';
   const STORAGE_KEY_POPUP = 'mj_promoPopup';
   const STORAGE_KEY_CATEGORIES = 'mj_categories';
+  const STORAGE_KEY_BANNERS = 'mj_banners';
 
   const DEFAULT_CATEGORIES = [
     'Crispy Fried Chicken',
@@ -280,6 +281,45 @@ var MJData = (function () {
     }
   ];
 
+  const DEFAULT_BANNERS = [
+    {
+      id: 1,
+      title: 'Crispy Fried Chicken Feast 🍗',
+      subtitle: 'Golden, crunchy & juicy chicken buckets made fresh to order',
+      badge: "Chef's Special",
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/chicken.jpg',
+      actionType: 'category',
+      actionValue: 'Crispy Fried Chicken',
+      buttonText: 'Order Chicken',
+      active: true,
+      order: 1
+    },
+    {
+      id: 2,
+      title: 'Flat 25% OFF On Your Order! 🎉',
+      subtitle: 'Use code MJOPEN at checkout to save big on your favorite meals',
+      badge: 'Limited Time Deal',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg',
+      actionType: 'coupon',
+      actionValue: 'MJOPEN',
+      buttonText: 'Apply Code MJOPEN',
+      active: true,
+      order: 2
+    },
+    {
+      id: 3,
+      title: 'Cheesy Gourmet Pizzas & Combos 🍕🥤',
+      subtitle: 'Loaded with premium mozzarella and sizzling toppings',
+      badge: 'Popular Choice',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/pizza.jpg',
+      actionType: 'category',
+      actionValue: 'Pizza',
+      buttonText: 'Explore Pizzas',
+      active: true,
+      order: 3
+    }
+  ];
+
   // Seed storage if never initialized and migrate images to Cloudinary
   function initStorage() {
     if (typeof localStorage === 'undefined') return;
@@ -386,6 +426,9 @@ var MJData = (function () {
     if (localStorage.getItem(STORAGE_KEY_CATEGORIES) === null) {
       localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
     }
+    if (localStorage.getItem(STORAGE_KEY_BANNERS) === null) {
+      localStorage.setItem(STORAGE_KEY_BANNERS, JSON.stringify(DEFAULT_BANNERS));
+    }
   }
 
   function getMenu() {
@@ -452,6 +495,46 @@ var MJData = (function () {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ promoPopupEnabled: val })
     }).catch(err => console.warn('Could not save settings to MongoDB:', err));
+  }
+
+  function getBanners() {
+    initStorage();
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_BANNERS);
+      return data !== null ? JSON.parse(data) : [...DEFAULT_BANNERS];
+    } catch (e) {
+      return [...DEFAULT_BANNERS];
+    }
+  }
+
+  function saveBanners(banners) {
+    localStorage.setItem(STORAGE_KEY_BANNERS, JSON.stringify(banners));
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    // Persist to MongoDB Atlas
+    fetch('/api/banners', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ banners })
+    }).catch(err => console.warn('Could not save banners to MongoDB:', err));
+  }
+
+  function deleteBanner(id) {
+    let banners = getBanners();
+    banners = banners.filter(b => b.id !== id && String(b.id) !== String(id));
+    saveBanners(banners);
+
+    fetch(`/api/banners/${encodeURIComponent(id)}`, { method: 'DELETE' })
+      .catch(err => console.warn('Could not delete banner from MongoDB:', err));
+  }
+
+  function resetBanners() {
+    localStorage.setItem(STORAGE_KEY_BANNERS, JSON.stringify(DEFAULT_BANNERS));
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    return fetch('/api/banners/reset', { method: 'POST' })
+      .then(r => r.json())
+      .catch(err => console.warn('Could not reset banners in MongoDB:', err));
   }
 
   function deleteMenuItem(id) {
@@ -675,6 +758,15 @@ var MJData = (function () {
         }
       }
 
+      // 5. Promotional Carousel Banners
+      const bannerResp = await fetch('/api/banners');
+      if (bannerResp.ok) {
+        const bannerData = await bannerResp.json();
+        if (bannerData.success && Array.isArray(bannerData.banners)) {
+          localStorage.setItem(STORAGE_KEY_BANNERS, JSON.stringify(bannerData.banners));
+        }
+      }
+
       window.dispatchEvent(new Event('mj_data_changed'));
     } catch (e) {
       console.warn('MongoDB sync note (working offline / cache):', e.message);
@@ -703,11 +795,16 @@ var MJData = (function () {
     deleteCategory,
     isPromoPopupEnabled,
     setPromoPopupEnabled,
+    getBanners,
+    saveBanners,
+    deleteBanner,
+    resetBanners,
     resetToDefaults,
     syncFromDb,
     DEFAULT_MENU,
     DEFAULT_PROMOS,
-    DEFAULT_CATEGORIES
+    DEFAULT_CATEGORIES,
+    DEFAULT_BANNERS
   };
 })();
 

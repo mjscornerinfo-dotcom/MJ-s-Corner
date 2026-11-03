@@ -27,7 +27,8 @@
     currentInvoiceOrder: null,
     invoiceFormat: 'tax-invoice',
     categories: [],
-    menuFilterCategory: 'All'
+    menuFilterCategory: 'All',
+    banners: []
   };
 
   // ========== DOM REFERENCES ==========
@@ -119,6 +120,29 @@
     promoPopupToggle: $('#promoPopupToggle'),
     btnAddPromo: $('#btnAddPromo'),
     btnRestoreSamplePromos: $('#btnRestoreSamplePromos'),
+    // Promotional Carousel Banners
+    bannerList: $('#bannerList'),
+    bannerCarouselStatusPill: $('#bannerCarouselStatusPill'),
+    btnAddBanner: $('#btnAddBanner'),
+    btnRestoreSampleBanners: $('#btnRestoreSampleBanners'),
+    bannerModal: $('#bannerModal'),
+    bannerModalTitle: $('#bannerModalTitle'),
+    closeBannerModalBtn: $('#closeBannerModalBtn'),
+    btnCancelBannerModal: $('#btnCancelBannerModal'),
+    bannerForm: $('#bannerForm'),
+    bannerEditId: $('#bannerEditId'),
+    bannerTitleInput: $('#bannerTitleInput'),
+    bannerSubtitleInput: $('#bannerSubtitleInput'),
+    bannerBadgeInput: $('#bannerBadgeInput'),
+    bannerImageUrlInput: $('#bannerImageUrlInput'),
+    bannerImgPreview: $('#bannerImgPreview'),
+    bannerFileInput: $('#bannerFileInput'),
+    bannerActionTypeSelect: $('#bannerActionTypeSelect'),
+    bannerActionValueInput: $('#bannerActionValueInput'),
+    bannerActionValueLabel: $('#bannerActionValueLabel'),
+    bannerButtonTextInput: $('#bannerButtonTextInput'),
+    bannerOrderInput: $('#bannerOrderInput'),
+    bannerActiveCheckbox: $('#bannerActiveCheckbox'),
     // Toast
     toastContainer: $('#toastContainer'),
     // Auth
@@ -194,6 +218,7 @@
     state.orders = JSON.parse(localStorage.getItem('mj_orders') || '[]');
     state.menu = window.MJData ? MJData.getMenu() : JSON.parse(localStorage.getItem('mj_menu') || '[]');
     state.promos = window.MJData ? MJData.getPromos() : JSON.parse(localStorage.getItem('mj_promos') || '[]');
+    state.banners = window.MJData ? MJData.getBanners() : JSON.parse(localStorage.getItem('mj_banners') || '[]');
     state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
     state.categories = (window.MJData && MJData.getCategories)
       ? MJData.getCategories()
@@ -206,6 +231,7 @@
       case 'billing': renderBilling(); break;
       case 'menu-editor': renderMenuEditor(); break;
       case 'promotions': renderPromotions(); break;
+      case 'banners': renderBanners(); break;
     }
 
     // Refresh live orders and settings from MongoDB Atlas
@@ -2309,6 +2335,228 @@
     showToast(`Promo popup ${state.promoPopupEnabled ? 'enabled' : 'disabled'}`);
   }
 
+  // ========== PROMOTIONAL BANNER CAROUSEL MANAGEMENT ==========
+  function renderBanners() {
+    state.banners = window.MJData ? MJData.getBanners() : JSON.parse(localStorage.getItem('mj_banners') || '[]');
+    const banners = state.banners || [];
+    const activeCount = banners.filter(b => b.active).length;
+
+    // Update status pill
+    if (els.bannerCarouselStatusPill) {
+      if (activeCount >= 2) {
+        els.bannerCarouselStatusPill.className = 'banner-status-pill auto-slide';
+        els.bannerCarouselStatusPill.innerHTML = `🔄 Auto-Sliding (${activeCount} Active)`;
+      } else if (activeCount === 1) {
+        els.bannerCarouselStatusPill.className = 'banner-status-pill static-display';
+        els.bannerCarouselStatusPill.innerHTML = `📌 Static Display (1 Active)`;
+      } else {
+        els.bannerCarouselStatusPill.className = 'banner-status-pill inactive-display';
+        els.bannerCarouselStatusPill.innerHTML = `⚪ Hidden (0 Active)`;
+      }
+    }
+
+    if (!els.bannerList) return;
+
+    if (banners.length === 0) {
+      els.bannerList.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: var(--text-tertiary); background: var(--bg-card); border: 1px dashed var(--border); border-radius: var(--radius-lg);">
+          <div style="font-size: 2.8rem; margin-bottom: 10px;">🖼️</div>
+          <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 6px;">No Promotional Banners Yet</h3>
+          <p style="font-size: 0.88rem; max-width: 400px; margin: 0 auto 16px;">Add promotional ads to showcase special discounts, dishes, or combos above the menu.</p>
+          <button type="button" class="btn-admin primary" id="btnEmptyAddBanner">+ Add First Banner</button>
+        </div>
+      `;
+      const btn = $('#btnEmptyAddBanner');
+      if (btn) btn.addEventListener('click', () => openBannerModal());
+      return;
+    }
+
+    const sorted = [...banners].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+
+    els.bannerList.innerHTML = sorted.map(banner => {
+      const isSingle = activeCount === 1 && banner.active;
+      let actionLabel = 'None';
+      if (banner.actionType === 'category') actionLabel = `Category: ${escapeHtml(banner.actionValue || 'All')}`;
+      else if (banner.actionType === 'coupon') actionLabel = `Coupon: ${escapeHtml(banner.actionValue || '')}`;
+      else if (banner.actionType === 'link') actionLabel = `Link: ${escapeHtml(banner.actionValue || '')}`;
+
+      return `
+        <div class="admin-banner-card ${banner.active ? 'active' : 'inactive'}" id="banner-card-${banner.id}">
+          <div class="banner-card-img-wrap">
+            <img src="${escapeHtml(banner.image)}" alt="${escapeHtml(banner.title)}" onerror="this.src='https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/chicken.jpg'">
+            ${banner.badge ? `<span class="banner-badge-preview">${escapeHtml(banner.badge)}</span>` : ''}
+            <span class="banner-order-tag">#${banner.order || 1}</span>
+            ${isSingle ? `<span class="banner-single-active-tag">📌 Static Ad</span>` : ''}
+          </div>
+          <div class="banner-card-info">
+            <div class="banner-card-header">
+              <h4 class="banner-card-title">${escapeHtml(banner.title)}</h4>
+              <label class="toggle-switch" title="Toggle Active Status">
+                <input type="checkbox" ${banner.active ? 'checked' : ''} data-banner-toggle="${banner.id}">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <p class="banner-card-desc">${escapeHtml(banner.subtitle || 'No subtitle')}</p>
+            <div class="banner-card-meta">
+              <span class="banner-action-tag ${banner.actionType || 'none'}">${actionLabel}</span>
+              <span class="banner-cta-tag">${escapeHtml(banner.buttonText || 'Order Now')}</span>
+            </div>
+            <div class="banner-card-actions">
+              <button type="button" class="btn-admin secondary" data-banner-edit="${banner.id}" style="padding: 6px 12px; font-size: 0.8rem;">
+                ✏️ Edit
+              </button>
+              <button type="button" class="btn-admin danger" data-banner-delete="${banner.id}" style="padding: 6px 10px; font-size: 0.8rem;" title="Delete banner">
+                🗑️
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Bind event listeners
+    els.bannerList.querySelectorAll('[data-banner-toggle]').forEach(chk => {
+      chk.addEventListener('change', () => {
+        const id = chk.dataset.bannerToggle;
+        toggleBannerActive(id, chk.checked);
+      });
+    });
+
+    els.bannerList.querySelectorAll('[data-banner-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.bannerEdit;
+        const banner = state.banners.find(b => String(b.id) === String(id));
+        if (banner) openBannerModal(banner);
+      });
+    });
+
+    els.bannerList.querySelectorAll('[data-banner-delete]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.bannerDelete;
+        if (confirm('Are you sure you want to delete this promotional banner?')) {
+          deleteBanner(id);
+        }
+      });
+    });
+  }
+
+  function toggleBannerActive(id, active) {
+    const banner = state.banners.find(b => String(b.id) === String(id));
+    if (banner) {
+      banner.active = active;
+      saveBanners();
+      renderBanners();
+      showToast(`Banner "${banner.title}" ${active ? 'activated' : 'deactivated'}.`);
+    }
+  }
+
+  function deleteBanner(id) {
+    if (window.MJData && MJData.deleteBanner) {
+      MJData.deleteBanner(id);
+    }
+    state.banners = state.banners.filter(b => String(b.id) !== String(id));
+    saveBanners();
+    renderBanners();
+    showToast('Promotional banner deleted successfully.', 'info');
+  }
+
+  function saveBanners() {
+    if (window.MJData) {
+      MJData.saveBanners(state.banners);
+    } else {
+      localStorage.setItem('mj_banners', JSON.stringify(state.banners));
+    }
+  }
+
+  function openBannerModal(banner = null) {
+    if (!els.bannerModal) return;
+    const isEdit = !!banner;
+    els.bannerModalTitle.textContent = isEdit ? '✏️ Edit Promotional Banner' : '🖼️ Add Promotional Banner';
+    els.bannerEditId.value = isEdit ? banner.id : '';
+    els.bannerTitleInput.value = isEdit ? (banner.title || '') : '';
+    els.bannerSubtitleInput.value = isEdit ? (banner.subtitle || '') : '';
+    els.bannerBadgeInput.value = isEdit ? (banner.badge || '') : '';
+    const img = isEdit ? (banner.image || '') : 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/chicken.jpg';
+    els.bannerImageUrlInput.value = img;
+    els.bannerImgPreview.src = img;
+    els.bannerActionTypeSelect.value = isEdit ? (banner.actionType || 'category') : 'category';
+    els.bannerActionValueInput.value = isEdit ? (banner.actionValue || 'Crispy Fried Chicken') : 'Crispy Fried Chicken';
+    els.bannerButtonTextInput.value = isEdit ? (banner.buttonText || 'Order Now') : 'Order Now';
+    els.bannerOrderInput.value = isEdit ? (banner.order || 1) : (state.banners.length + 1);
+    els.bannerActiveCheckbox.checked = isEdit ? (banner.active !== false) : true;
+
+    updateBannerActionInputLabel();
+    els.bannerModal.classList.add('open');
+  }
+
+  function closeBannerModal() {
+    if (els.bannerModal) {
+      els.bannerModal.classList.remove('open');
+    }
+  }
+
+  function updateBannerActionInputLabel() {
+    const type = els.bannerActionTypeSelect ? els.bannerActionTypeSelect.value : 'category';
+    if (!els.bannerActionValueLabel || !els.bannerActionValueInput) return;
+    if (type === 'category') {
+      els.bannerActionValueLabel.textContent = 'Category Name *';
+      els.bannerActionValueInput.placeholder = 'e.g. Crispy Fried Chicken, Pizza';
+      els.bannerActionValueInput.disabled = false;
+    } else if (type === 'coupon') {
+      els.bannerActionValueLabel.textContent = 'Coupon Code *';
+      els.bannerActionValueInput.placeholder = 'e.g. MJOPEN, PIZZA50';
+      els.bannerActionValueInput.disabled = false;
+    } else if (type === 'link') {
+      els.bannerActionValueLabel.textContent = 'Target Link URL *';
+      els.bannerActionValueInput.placeholder = 'https://...';
+      els.bannerActionValueInput.disabled = false;
+    } else {
+      els.bannerActionValueLabel.textContent = 'Action (None)';
+      els.bannerActionValueInput.placeholder = 'No action required';
+      els.bannerActionValueInput.disabled = true;
+    }
+  }
+
+  async function handleBannerFormSubmit(e) {
+    e.preventDefault();
+    const title = els.bannerTitleInput.value.trim();
+    if (!title) {
+      showToast('Please enter a headline for the banner', 'error');
+      return;
+    }
+
+    const editId = els.bannerEditId.value;
+    const bannerData = {
+      id: editId ? (isNaN(editId) ? editId : parseInt(editId, 10)) : Date.now(),
+      title,
+      subtitle: els.bannerSubtitleInput.value.trim(),
+      badge: els.bannerBadgeInput.value.trim(),
+      image: els.bannerImageUrlInput.value.trim() || 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/chicken.jpg',
+      actionType: els.bannerActionTypeSelect.value,
+      actionValue: els.bannerActionValueInput.disabled ? '' : els.bannerActionValueInput.value.trim(),
+      buttonText: els.bannerButtonTextInput.value.trim() || 'Order Now',
+      order: parseInt(els.bannerOrderInput.value, 10) || 1,
+      active: els.bannerActiveCheckbox.checked
+    };
+
+    if (editId) {
+      const idx = state.banners.findIndex(b => String(b.id) === String(editId));
+      if (idx !== -1) {
+        state.banners[idx] = bannerData;
+      } else {
+        state.banners.push(bannerData);
+      }
+      showToast('Banner updated successfully!', 'success');
+    } else {
+      state.banners.push(bannerData);
+      showToast('New promotional banner created!', 'success');
+    }
+
+    saveBanners();
+    renderBanners();
+    closeBannerModal();
+  }
+
   // ========== EVENT BINDINGS ==========
   function bindEvents() {
     // Theme
@@ -2592,6 +2840,81 @@
           }
           loadData();
           showToast('Sample promotions restored successfully!', 'success');
+        }
+      });
+    }
+
+    // Promotional Carousel Banners
+    if (els.btnAddBanner) {
+      els.btnAddBanner.addEventListener('click', () => openBannerModal());
+    }
+
+    if (els.closeBannerModalBtn) {
+      els.closeBannerModalBtn.addEventListener('click', closeBannerModal);
+    }
+
+    if (els.btnCancelBannerModal) {
+      els.btnCancelBannerModal.addEventListener('click', closeBannerModal);
+    }
+
+    if (els.bannerForm) {
+      els.bannerForm.addEventListener('submit', handleBannerFormSubmit);
+    }
+
+    if (els.bannerActionTypeSelect) {
+      els.bannerActionTypeSelect.addEventListener('change', updateBannerActionInputLabel);
+    }
+
+    if (els.bannerImageUrlInput) {
+      els.bannerImageUrlInput.addEventListener('input', () => {
+        const val = els.bannerImageUrlInput.value.trim();
+        if (els.bannerImgPreview) {
+          els.bannerImgPreview.src = val || 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/chicken.jpg';
+        }
+      });
+    }
+
+    if (els.bannerFileInput) {
+      els.bannerFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          const base64 = evt.target.result;
+          if (els.bannerImgPreview) els.bannerImgPreview.src = base64;
+          showToast('Uploading banner to Cloudinary CDN...', 'info');
+          try {
+            const res = await fetch('/api/upload-food-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: base64 })
+            });
+            const data = await res.json();
+            if (data.success && data.url) {
+              if (els.bannerImageUrlInput) els.bannerImageUrlInput.value = data.url;
+              if (els.bannerImgPreview) els.bannerImgPreview.src = data.url;
+              showToast('Banner image uploaded successfully! ☁️', 'success');
+            } else {
+              if (els.bannerImageUrlInput) els.bannerImageUrlInput.value = base64;
+            }
+          } catch (err) {
+            if (els.bannerImageUrlInput) els.bannerImageUrlInput.value = base64;
+            showToast('Uploaded locally (offline mode)', 'info');
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (els.btnRestoreSampleBanners) {
+      els.btnRestoreSampleBanners.addEventListener('click', async () => {
+        if (confirm('Restore sample promotional banners? Any custom banners will be replaced.')) {
+          if (window.MJData && MJData.resetBanners) {
+            await MJData.resetBanners();
+          }
+          state.banners = window.MJData ? MJData.getBanners() : JSON.parse(localStorage.getItem('mj_banners') || '[]');
+          renderBanners();
+          showToast('Sample promotional banners restored successfully!', 'success');
         }
       });
     }

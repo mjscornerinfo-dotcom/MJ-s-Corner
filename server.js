@@ -284,8 +284,54 @@ const DEFAULT_PROMOS = [
   }
 ];
 
+const DEFAULT_BANNERS = [
+  {
+    id: 1,
+    title: 'Crispy Fried Chicken Feast 🍗',
+    subtitle: 'Golden, crunchy & juicy chicken buckets made fresh to order',
+    badge: "Chef's Special",
+    image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/chicken.jpg',
+    actionType: 'category',
+    actionValue: 'Crispy Fried Chicken',
+    buttonText: 'Order Chicken',
+    active: true,
+    order: 1
+  },
+  {
+    id: 2,
+    title: 'Flat 25% OFF On Your Order! 🎉',
+    subtitle: 'Use code MJOPEN at checkout to save big on your favorite meals',
+    badge: 'Limited Time Deal',
+    image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg',
+    actionType: 'coupon',
+    actionValue: 'MJOPEN',
+    buttonText: 'Apply Code MJOPEN',
+    active: true,
+    order: 2
+  },
+  {
+    id: 3,
+    title: 'Cheesy Gourmet Pizzas & Combos 🍕🥤',
+    subtitle: 'Loaded with premium mozzarella and sizzling toppings',
+    badge: 'Popular Choice',
+    image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/pizza.jpg',
+    actionType: 'category',
+    actionValue: 'Pizza',
+    buttonText: 'Explore Pizzas',
+    active: true,
+    order: 3
+  }
+];
+
 async function seedDefaultDataIfEmpty() {
   const db = getDb();
+
+  // Seed banners if empty
+  const bannerCount = await db.collection('banners').countDocuments();
+  if (bannerCount === 0) {
+    console.log('Seeding initial promotional carousel banners into MongoDB Atlas...');
+    await db.collection('banners').insertMany(DEFAULT_BANNERS);
+  }
 
   // Check if system has already been initialized (prevents resurrection of deleted menu/promos)
   const initDoc = await db.collection('settings').findOne({ key: 'system_initialized' });
@@ -1166,6 +1212,59 @@ app.post('/api/promotions/reset', async (req, res) => {
     await db.collection('promotions').deleteMany({});
     await db.collection('promotions').insertMany(DEFAULT_PROMOS);
     res.json({ success: true, promotions: DEFAULT_PROMOS, message: 'Promotions reset to defaults in MongoDB' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ========== BANNERS ENDPOINTS (MONGODB ATLAS) ==========
+app.get('/api/banners', async (req, res) => {
+  try {
+    const db = getDb();
+    const banners = await db.collection('banners').find({}).sort({ order: 1, id: 1 }).toArray();
+    res.json({ success: true, banners: banners });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message, banners: [] });
+  }
+});
+
+app.post('/api/banners', async (req, res) => {
+  try {
+    const db = getDb();
+    const { banners } = req.body;
+    if (!Array.isArray(banners)) {
+      return res.status(400).json({ success: false, message: 'Banners array required' });
+    }
+    await db.collection('banners').deleteMany({});
+    if (banners.length > 0) {
+      const cleanBanners = banners.map(({ _id, ...item }) => item);
+      await db.collection('banners').insertMany(cleanBanners);
+    }
+    res.json({ success: true, message: 'Banners updated in MongoDB Atlas' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/banners/:id', async (req, res) => {
+  try {
+    const db = getDb();
+    const rawId = req.params.id;
+    const numId = parseInt(rawId, 10);
+    const filter = isNaN(numId) ? { id: rawId } : { $or: [{ id: numId }, { id: rawId }] };
+    await db.collection('banners').deleteOne(filter);
+    res.json({ success: true, message: 'Banner deleted from MongoDB Atlas' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/banners/reset', async (req, res) => {
+  try {
+    const db = getDb();
+    await db.collection('banners').deleteMany({});
+    await db.collection('banners').insertMany(DEFAULT_BANNERS);
+    res.json({ success: true, banners: DEFAULT_BANNERS, message: 'Banners reset to defaults in MongoDB' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
