@@ -1193,7 +1193,7 @@
       state.currentBannerSlide = 0;
     }
 
-    // Render slides
+    // Render slides with restored classic subtle shade overlay
     els.promoCarouselTrack.innerHTML = activeBanners.map((banner, index) => {
       const badgeHtml = banner.badge ? `<span class="banner-badge">${escapeHtml(banner.badge)}</span>` : '';
       const titleHtml = banner.title ? `<h2 class="banner-title">${escapeHtml(banner.title)}</h2>` : '';
@@ -1205,22 +1205,18 @@
            </button>`
         : '';
 
-      const hasText = Boolean(banner.badge || banner.title || banner.subtitle);
-      const textHtml = hasText ? `
-        <div class="promo-slide-text">
-          ${badgeHtml}
-          ${titleHtml}
-          ${subtitleHtml}
-        </div>
-      ` : '';
-
       const isSingle = count === 1 ? 'is-static' : '';
 
       return `
         <div class="promo-slide ${isSingle}" data-index="${index}" data-banner-id="${banner.id}" data-action="${escapeHtml(banner.actionType || 'none')}" data-target="${escapeHtml(banner.actionValue || '')}">
           <div class="promo-slide-bg" style="background-image: url('${escapeHtml(banner.image)}');"></div>
+          <div class="promo-slide-overlay"></div>
           <div class="promo-slide-content">
-            ${textHtml}
+            <div class="promo-slide-text">
+              ${badgeHtml}
+              ${titleHtml}
+              ${subtitleHtml}
+            </div>
             ${ctaBtnHtml ? `<div class="promo-slide-action">${ctaBtnHtml}</div>` : ''}
           </div>
         </div>
@@ -1235,14 +1231,12 @@
         els.carouselDots.classList.add('hidden');
         els.carouselDots.innerHTML = '';
       }
-      if (els.promoCarouselViewport) {
-        els.promoCarouselViewport.scrollLeft = 0;
-      }
+      els.promoCarouselTrack.style.transform = 'none';
       bindBannerActions();
       return;
     }
 
-    // Multiple active ads: auto-sliding enabled, scrollable with dots
+    // Multiple active ads: auto-sliding enabled, swipe/scroll with permanent dots
     els.promoCarouselSection.classList.remove('is-single-ad');
     els.promoCarouselSection.classList.add('is-multi-ad');
 
@@ -1262,7 +1256,7 @@
       });
     }
 
-    goToBannerSlide(state.currentBannerSlide, false);
+    updateBannerSlidePosition(false);
     startCarouselTimer();
     bindBannerActions();
   }
@@ -1270,19 +1264,10 @@
   function goToBannerSlide(index, animated = true) {
     const activeBanners = getActiveBanners();
     const count = activeBanners.length;
-    if (count <= 1 || !els.promoCarouselViewport) return;
+    if (count <= 1 || !els.promoCarouselTrack) return;
 
     state.currentBannerSlide = (index + count) % count;
-    const slideWidth = els.promoCarouselViewport.offsetWidth || 0;
-    if (typeof els.promoCarouselViewport.scrollTo === 'function') {
-      els.promoCarouselViewport.scrollTo({
-        left: state.currentBannerSlide * slideWidth,
-        behavior: animated ? 'smooth' : 'auto'
-      });
-    } else {
-      els.promoCarouselViewport.scrollLeft = state.currentBannerSlide * slideWidth;
-    }
-    updateBannerDots();
+    updateBannerSlidePosition(animated);
   }
 
   function nextBannerSlide() {
@@ -1293,12 +1278,26 @@
     goToBannerSlide(state.currentBannerSlide - 1, true);
   }
 
-  function updateBannerDots() {
-    if (!els.carouselDots) return;
-    const dots = els.carouselDots.querySelectorAll('.carousel-dot');
-    dots.forEach((dot, i) => {
-      dot.classList.toggle('active', i === state.currentBannerSlide);
-    });
+  function updateBannerSlidePosition(animated = true) {
+    if (!els.promoCarouselTrack) return;
+    const activeBanners = getActiveBanners();
+    if (activeBanners.length <= 1) {
+      els.promoCarouselTrack.style.transform = 'none';
+      return;
+    }
+
+    els.promoCarouselTrack.style.transition = animated
+      ? 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1)'
+      : 'none';
+    const offset = -(state.currentBannerSlide * 100);
+    els.promoCarouselTrack.style.transform = `translateX(${offset}%)`;
+
+    if (els.carouselDots) {
+      const dots = els.carouselDots.querySelectorAll('.carousel-dot');
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === state.currentBannerSlide);
+      });
+    }
   }
 
   function startCarouselTimer() {
@@ -1380,39 +1379,108 @@
   }
 
   function initCarouselEventListeners() {
-    if (!els.promoCarouselViewport) return;
+    const viewport = els.promoCarouselViewport;
+    if (!viewport) return;
 
-    // Pause auto-sliding on hover, resume on mouse leave
-    els.promoCarouselViewport.addEventListener('mouseenter', stopCarouselTimer);
-    els.promoCarouselViewport.addEventListener('mouseleave', startCarouselTimer);
+    // Hover pauses auto-sliding
+    viewport.addEventListener('mouseenter', stopCarouselTimer);
+    viewport.addEventListener('mouseleave', startCarouselTimer);
 
-    // Sync active slide index and indicator dots on user scroll / swipe
-    let scrollDebounceTimer = null;
-    els.promoCarouselViewport.addEventListener('scroll', () => {
+    // 1. Touch swipe support (Mobile)
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isTouching = false;
+
+    viewport.addEventListener('touchstart', (e) => {
       stopCarouselTimer();
-      clearTimeout(scrollDebounceTimer);
-      scrollDebounceTimer = setTimeout(() => {
-        if (!els.promoCarouselViewport) return;
-        const width = els.promoCarouselViewport.offsetWidth;
-        if (width > 0) {
-          const count = getActiveBanners().length;
-          const newIndex = Math.round(els.promoCarouselViewport.scrollLeft / width);
-          if (newIndex >= 0 && newIndex < count && newIndex !== state.currentBannerSlide) {
-            state.currentBannerSlide = newIndex;
-            updateBannerDots();
+      if (e.touches && e.touches[0]) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        isTouching = true;
+      }
+    }, { passive: true });
+
+    viewport.addEventListener('touchend', (e) => {
+      if (!isTouching) return;
+      isTouching = false;
+      if (e.changedTouches && e.changedTouches[0]) {
+        const diffX = e.changedTouches[0].clientX - touchStartX;
+        const diffY = e.changedTouches[0].clientY - touchStartY;
+        // Dominant horizontal swipe check
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 35) {
+          if (diffX < 0) {
+            nextBannerSlide();
+          } else {
+            prevBannerSlide();
           }
         }
-        startCarouselTimer();
-      }, 120);
-    }, { passive: true });
-
-    // Touch events: pause auto-sliding while touching
-    els.promoCarouselViewport.addEventListener('touchstart', () => {
-      stopCarouselTimer();
-    }, { passive: true });
-
-    els.promoCarouselViewport.addEventListener('touchend', () => {
+      }
       startCarouselTimer();
+    }, { passive: true });
+
+    // 2. Mouse drag support (Desktop)
+    let isMouseDown = false;
+    let mouseStartX = 0;
+    let isDragThreshold = false;
+
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.btn-banner-cta') || e.target.closest('.carousel-dot')) return;
+      isMouseDown = true;
+      isDragThreshold = false;
+      mouseStartX = e.clientX;
+      stopCarouselTimer();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isMouseDown) return;
+      const diffX = e.clientX - mouseStartX;
+      if (Math.abs(diffX) > 10) {
+        isDragThreshold = true;
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!isMouseDown) return;
+      isMouseDown = false;
+      if (isDragThreshold) {
+        const diffX = e.clientX - mouseStartX;
+        if (Math.abs(diffX) > 35) {
+          if (diffX < 0) {
+            nextBannerSlide();
+          } else {
+            prevBannerSlide();
+          }
+        }
+      }
+      setTimeout(() => {
+        isDragThreshold = false;
+      }, 50);
+      startCarouselTimer();
+    });
+
+    // Prevent clicking CTA or link if user was dragging
+    viewport.addEventListener('click', (e) => {
+      if (isDragThreshold) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+
+    // 3. Trackpad & Wheel horizontal scroll support
+    let wheelDebounce = null;
+    viewport.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaX) > 25) {
+        stopCarouselTimer();
+        clearTimeout(wheelDebounce);
+        wheelDebounce = setTimeout(() => {
+          if (e.deltaX > 0) {
+            nextBannerSlide();
+          } else {
+            prevBannerSlide();
+          }
+          startCarouselTimer();
+        }, 50);
+      }
     }, { passive: true });
   }
 

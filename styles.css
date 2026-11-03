@@ -4444,20 +4444,15 @@ input, select, textarea {
   position: relative;
   width: 100%;
   border-radius: var(--radius-xl);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  overflow: hidden;
   background: #18181b;
   box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.08);
   touch-action: pan-y;
+  cursor: grab;
 }
 
-.promo-carousel-viewport::-webkit-scrollbar {
-  display: none;
+.promo-carousel-viewport:active {
+  cursor: grabbing;
 }
 
 [data-theme="dark"] .promo-carousel-viewport {
@@ -4467,11 +4462,8 @@ input, select, textarea {
 .promo-carousel-track {
   display: flex;
   width: 100%;
-}
-
-.promo-carousel-section.is-single-ad .promo-carousel-viewport {
-  overflow-x: hidden;
-  scroll-snap-type: none;
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
 }
 
 .promo-carousel-section.is-single-ad .promo-carousel-track {
@@ -4489,10 +4481,7 @@ input, select, textarea {
   display: flex;
   align-items: center;
   overflow: hidden;
-  cursor: pointer;
   user-select: none;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 .promo-slide-bg {
@@ -4510,34 +4499,31 @@ input, select, textarea {
   transform: scale(1.025);
 }
 
-/* Background image is 100% bright and clearly visible without dark tint */
+/* Restored subtle shade gradient for crisp background images with clear text */
 .promo-slide-overlay {
-  display: none !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.18) 45%, rgba(0, 0, 0, 0) 75%);
+  pointer-events: none;
 }
 
 .promo-slide-content {
   position: relative;
   z-index: 2;
-  padding: 20px 28px;
+  padding: 24px 34px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  max-width: 860px;
-  gap: 20px;
+  max-width: 820px;
+  gap: 22px;
 }
 
-/* Glassmorphism badge protecting text readability over bright image */
 .promo-slide-text {
   flex: 1;
-  background: rgba(15, 15, 18, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 14px 18px;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-  max-width: 520px;
 }
 
 .banner-badge {
@@ -4600,22 +4586,23 @@ input, select, textarea {
   background: #b91c1c;
 }
 
-/* Carousel Indicator Dots */
+/* Carousel Indicator Dots (Fixed on container bottom so visible on ALL slides) */
 .carousel-dots {
   position: absolute;
-  bottom: 10px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 7px;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: 5px 12px;
   border-radius: var(--radius-full);
   border: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: auto;
 }
 
 .carousel-dots.hidden {
@@ -4678,6 +4665,9 @@ input, select, textarea {
   .promo-slide {
     min-height: 155px;
     max-height: 185px;
+  }
+  .promo-slide-overlay {
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.22) 65%, rgba(0, 0, 0, 0.05) 100%);
   }
   .promo-slide-content {
     padding: 14px 16px;
