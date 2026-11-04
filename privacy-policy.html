@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy | MJ's Corner</title>
+  <meta name="description" content="Official Privacy Policy for MJ's Corner mobile application and web ordering platform (https://mjscorner.in). Details on data collection, PhonePe payment processing, and user data rights.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mjscorner.in/privacy-policy">
+
+  <!-- Favicon & Icons -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="192x192" href="android-chrome-192x192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#d42c2c">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    .policy-page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+    }
+
+    .policy-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 12px 20px;
+    }
+
+    .policy-header-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .policy-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .policy-logo {
+      height: 42px;
+      width: auto;
+      border-radius: var(--radius-sm);
+      object-fit: contain;
+    }
+
+    .policy-brand-text {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.01em;
+      color: var(--accent);
+    }
+
+    .policy-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-policy-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all var(--transition-fast);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .btn-policy-nav:hover {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .btn-policy-nav.primary {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .btn-policy-nav.primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .policy-container {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 36px 20px 60px;
+      flex: 1;
+    }
+
+    .policy-hero {
+      text-align: center;
+      margin-bottom: 36px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .policy-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: var(--radius-full);
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 14px;
+    }
+
+    .policy-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 10px;
+      color: var(--text-primary);
+      line-height: 1.25;
+    }
+
+    .policy-meta {
+      font-size: 0.92rem;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .policy-meta strong {
+      color: var(--text-secondary);
+    }
+
+    /* Key Guarantee Highlights */
+    .policy-highlights {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .highlight-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .highlight-icon {
+      font-size: 1.8rem;
+    }
+
+    .highlight-title {
+      font-weight: 700;
+      font-size: 0.98rem;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .highlight-desc {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.45;
+    }
+
+    /* Policy Content Typography */
+    .policy-content {
+      line-height: 1.7;
+      font-size: 0.98rem;
+      color: var(--text-secondary);
+    }
+
+    .policy-section {
+      margin-bottom: 38px;
+    }
+
+    .policy-section h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 0 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .policy-section h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 20px 0 8px;
+    }
+
+    .policy-section p {
+      margin: 0 0 14px;
+    }
+
+    .policy-section ul {
+      margin: 0 0 16px 20px;
+      padding: 0;
+    }
+
+    .policy-section li {
+      margin-bottom: 8px;
+    }
+
+    .policy-callout {
+      background: var(--bg-tertiary);
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      margin: 20px 0;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .policy-callout.secure {
+      border-left-color: var(--success);
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    .contact-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .contact-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .contact-item span.label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      letter-spacing: 0.05em;
+    }
+
+    .contact-item span.value, .contact-item a {
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .contact-item a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    /* Policy Footer */
+    .policy-footer {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      padding: 28px 20px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-tertiary);
+    }
+
+    .policy-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .policy-footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      .policy-title {
+        font-size: 1.7rem;
+      }
+      .policy-section h2 {
+        font-size: 1.2rem;
+      }
+      .policy-container {
+        padding: 24px 16px 48px;
+      }
+      .policy-header-inner {
+        flex-wrap: wrap;
+      }
+      .contact-card {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      .policy-header, .policy-footer, .btn-policy-nav {
+        display: none !important;
+      }
+      .policy-container {
+        padding: 0;
+        max-width: 100%;
+      }
+      body {
+        color: #000 !important;
+        background: #fff !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="policy-page-wrapper">
+
+    <!-- ========== HEADER ========== -->
+    <header class="policy-header">
+      <div class="policy-header-inner">
+        <a href="/" class="policy-brand" aria-label="MJ's Corner Home">
+          <img src="header-brand-logo.jpg" alt="MJ's Corner" class="policy-logo">
+          <span class="policy-brand-text">MJ's Corner</span>
+        </a>
+        <div class="policy-header-actions">
+          <button type="button" class="btn-policy-nav" id="btnThemeToggle" aria-label="Toggle theme">
+            <span>🌙</span>
+          </button>
+          <button type="button" class="btn-policy-nav" onclick="window.print()" title="Print or save as PDF">
+            <span>🖨️ Print</span>
+          </button>
+          <a href="/menu" class="btn-policy-nav primary">
+            <span>🍽️ Open Menu</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="policy-container">
+
+      <!-- Hero Header -->
+      <div class="policy-hero">
+        <div class="policy-pill">Official Legal Document</div>
+        <h1 class="policy-title">Privacy Policy for MJ's Corner</h1>
+        <div class="policy-meta">
+          <span><strong>Entity:</strong> MJ's Corner</span>
+          <span>•</span>
+          <span><strong>Applicable Platforms:</strong> Android Application (Indus Appstore / PhonePe Appstore) & Website</span>
+          <span>•</span>
+          <span><strong>Last Updated:</strong> November 5, 2026</span>
+        </div>
+      </div>
+
+      <!-- Quick Trust Badges -->
+      <div class="policy-highlights">
+        <div class="highlight-card">
+          <span class="highlight-icon">🔒</span>
+          <h3 class="highlight-title">256-Bit SSL Protection</h3>
+          <p class="highlight-desc">All user requests, credentials, and order interactions are encrypted end-to-end via HTTPS.</p>
+        </div>
+        <div class="highlight-card">
+          <span class="highlight-icon">💳</span>
+          <h3 class="highlight-title">Secure PhonePe / UPI</h3>
+          <p class="highlight-desc">Payments are processed directly by RBI-regulated gateways. We never store credit cards, CVVs, or UPI PINs.</p>
+        </div>
+        <div class="highlight-card">
+          <span class="highlight-icon">🚫</span>
+          <h3 class="highlight-title">Zero Data Selling</h3>
+          <p class="highlight-desc">We never sell, rent, monetize, or trade your personal or contact details with advertising brokers.</p>
+        </div>
+        <div class="highlight-card">
+          <span class="highlight-icon">🗑️</span>
+          <h3 class="highlight-title">Data Deletion Rights</h3>
+          <p class="highlight-desc">You have full control to request the viewing, correction, or permanent deletion of your account and orders.</p>
+        </div>
+      </div>
+
+      <!-- Legal Body Sections -->
+      <article class="policy-content">
+
+        <!-- 1. Introduction -->
+        <section class="policy-section" id="introduction">
+          <h2>1. Introduction & Overview</h2>
+          <p>
+            Welcome to <strong>MJ's Corner</strong> ("we", "our", or "us"). We operate the restaurant food ordering service available via our website (<strong>https://mjscorner.in</strong>), our Dine-In digital menu ordering platform, and our mobile applications distributed via the <strong>PhonePe Appstore (Indus Appstore)</strong>, Google Play, and direct web installation.
+          </p>
+          <p>
+            We are committed to respecting and protecting the privacy of our customers, dining guests, and application users. This Privacy Policy outlines our transparent policies and practices regarding the collection, use, processing, and protection of your personal information when you use our services.
+          </p>
+          <div class="policy-callout">
+            By downloading, accessing, or using the MJ's Corner mobile application or website, you consent to the data collection and usage practices described in this Privacy Policy. If you do not agree with this policy, please do not use our services.
+          </div>
+        </section>
+
+        <!-- 2. Scope & Applicability -->
+        <section class="policy-section" id="scope">
+          <h2>2. Scope of Application</h2>
+          <p>This Privacy Policy applies to all users of:</p>
+          <ul>
+            <li><strong>MJ's Corner Mobile Application:</strong> Downloaded or accessed via the PhonePe Appstore (Indus Appstore) or Android APK distribution.</li>
+            <li><strong>Web Ordering Platform:</strong> Accessed at <strong>https://mjscorner.in</strong> and related sub-routes (/menu, /dinein, /login).</li>
+            <li><strong>In-Store Dine-In Table Ordering:</strong> Accessed directly via in-store QR codes for contactless dining order placement.</li>
+          </ul>
+        </section>
+
+        <!-- 3. Information We Collect -->
+        <section class="policy-section" id="information-collected">
+          <h2>3. Information We Collect</h2>
+          <p>We collect only the minimum necessary information required to process and deliver your food orders efficiently:</p>
+
+          <h3>A. Information You Provide to Us Directly</h3>
+          <ul>
+            <li><strong>Contact & Identification Details:</strong> Your name, mobile telephone number, and email address (optional) provided during login or checkout.</li>
+            <li><strong>Delivery Addresses:</strong> Street address, flat/house number, apartment/colony name, landmark, city, and postal PIN code saved in your account for doorstep food delivery.</li>
+            <li><strong>Dine-In Information:</strong> Table number and dining notes when placing orders inside our restaurant.</li>
+            <li><strong>Customer Feedback & Reviews:</strong> Dish ratings, 1-to-5 star reviews, and comments submitted for delivered orders to evaluate kitchen quality.</li>
+            <li><strong>Customer Support Inquiries:</strong> Communications and notes exchanged when you contact our helpline or support email regarding order status or refunds.</li>
+          </ul>
+
+          <h3>B. Automatically Collected Technical Information</h3>
+          <ul>
+            <li><strong>Device & Connection Information:</strong> Device model, operating system version, browser type, IP address, and network connection status used to maintain application session stability.</li>
+            <li><strong>Local Storage & Session State:</strong> We utilize modern browser LocalStorage and SessionStorage to preserve your active shopping cart items, selected dietary preferences (Pure Veg / Non-Veg filter), and visual display preferences (Light / Dark mode).</li>
+          </ul>
+        </section>
+
+        <!-- 4. Mobile App Permissions -->
+        <section class="policy-section" id="permissions">
+          <h2>4. Mobile Application Permissions (Indus / PhonePe Appstore)</h2>
+          <p>When running our Android application, we strictly request only standard permissions essential to core restaurant ordering functionalities:</p>
+          <ul>
+            <li><strong>INTERNET & ACCESS_NETWORK_STATE:</strong> Required to fetch live menu items, prices, promotional offers, check store opening hours, and submit orders to our kitchen server.</li>
+            <li><strong>POST_NOTIFICATIONS (Optional):</strong> Used to notify you of real-time updates regarding order status (Order Received, Preparing in Kitchen, Out for Delivery, or Ready for Table Pickup).</li>
+            <li><strong>VIBRATE (Optional):</strong> Provides haptic feedback when adding items to your cart or confirming an order.</li>
+          </ul>
+          <div class="policy-callout secure">
+            <strong>Important:</strong> Our application does <em>NOT</em> request access to your contacts, camera, microphone, SMS inbox, biometric data, or external file storage.
+          </div>
+        </section>
+
+        <!-- 5. How We Use Your Information -->
+        <section class="policy-section" id="how-we-use">
+          <h2>5. How We Use Collected Information</h2>
+          <p>We process your data exclusively for legitimate operational purposes:</p>
+          <ul>
+            <li><strong>Order Fulfillment:</strong> To prepare your selected food items, dispatch delivery personnel, and verify order handoff.</li>
+            <li><strong>Authentication & Account Security:</strong> To verify your mobile number through instant One-Time Password (OTP) verification without requiring complex passwords.</li>
+            <li><strong>Real-Time Tracking & Digital Invoices:</strong> To generate printable, sequential order receipts, calculate applicable taxes and delivery charges, and display order countdowns.</li>
+            <li><strong>Quality Improvement:</strong> To calculate aggregate rating scores for menu items so guests can see genuine popular community choices.</li>
+            <li><strong>Customer Care & Grievance Resolution:</strong> To address queries, facilitate order cancellations within the authorized 2-minute grace window, and resolve delivery delays.</li>
+            <li><strong>Legal & Financial Compliance:</strong> To maintain standard business records, billing books, and tax compliance as mandated under Indian law.</li>
+          </ul>
+        </section>
+
+        <!-- 6. Payment Processing & Financial Security -->
+        <section class="policy-section" id="payments">
+          <h2>6. Payment Processing & Financial Security</h2>
+          <p>
+            We take financial security with extreme seriousness. MJ's Corner supports multiple secure payment methods including <strong>PhonePe</strong>, <strong>UPI (Google Pay, Paytm, BHIM)</strong>, <strong>Razorpay</strong>, and <strong>Cash on Counter / Cash on Delivery</strong>.
+          </p>
+          <div class="policy-callout secure">
+            <strong>PCI-DSS & RBI Regulatory Compliance:</strong>
+            <br>
+            All electronic payment transactions are encrypted and processed through RBI-authorized, PCI-DSS compliant payment gateways (such as PhonePe and Razorpay). 
+            <strong>MJ's Corner NEVER collects, sees, or stores your credit card numbers, debit card numbers, CVV codes, bank passwords, or UPI MPINs.</strong>
+          </div>
+        </section>
+
+        <!-- 7. Third-Party Service Providers -->
+        <section class="policy-section" id="third-parties">
+          <h2>7. Data Sharing & Third-Party Service Providers</h2>
+          <p>
+            We strictly limit data sharing to reputable, vetted technology partners who assist us in operating our business under strict confidentiality agreements:
+          </p>
+          <ul>
+            <li><strong>Payment Gateways (PhonePe, Razorpay, UPI):</strong> Receives order amount and transaction tokens to process payment authorization securely.</li>
+            <li><strong>OTP Authentication (Phone.Email):</strong> Facilitates instant mobile number verification via secure SMS or WhatsApp OTP protocols.</li>
+            <li><strong>Cloud Infrastructure (MongoDB Atlas):</strong> Secure cloud database storage hosted with enterprise-grade firewalls and access controls.</li>
+            <li><strong>Food Media CDN (Cloudinary):</strong> Delivers optimized, fast-loading images of our food items.</li>
+            <li><strong>Delivery Riders:</strong> Assigned restaurant delivery staff receive your name, contact phone number, and delivery address solely for the purpose of completing your food delivery.</li>
+          </ul>
+          <p>
+            We do <strong>not</strong> share your personal information with third parties for their independent marketing or advertising campaigns. We may disclose personal data only when required by applicable law, warrant, court order, or governmental authority.
+          </p>
+        </section>
+
+        <!-- 8. Data Retention & Account Deletion -->
+        <section class="policy-section" id="data-retention-deletion">
+          <h2>8. Data Retention & User Deletion Rights</h2>
+          <p>
+            We retain your customer profile and order history only for as long as necessary to provide ongoing service and fulfill statutory accounting and tax obligations.
+          </p>
+          <h3>Your Rights Under Indian Digital Personal Data Protection Act (DPDPA):</h3>
+          <ul>
+            <li><strong>Right to Access & Review:</strong> You can view your saved profile, delivery addresses, and past order history anytime by signing into your account.</li>
+            <li><strong>Right to Rectification:</strong> You can update or edit your name, contact email, and saved addresses directly within your account settings.</li>
+            <li><strong>Right to Erasure (Account & Data Deletion):</strong> You have the unconditional right to request the permanent deletion of your personal account, saved delivery addresses, and customer profile from our databases.</li>
+          </ul>
+          <div class="policy-callout">
+            <strong>How to Request Data Deletion:</strong>
+            <br>
+            To request the complete deletion of your data, send an email to <strong>mjscornerinfo@gmail.com</strong> or <strong>support@mjscorner.in</strong> with the subject <em>"Data Deletion Request"</em> along with your registered 10-digit mobile number. Your account and associated customer records will be purged within 7 business days, and confirmation will be sent to you.
+          </div>
+        </section>
+
+        <!-- 9. Security Safeguards -->
+        <section class="policy-section" id="security">
+          <h2>9. Data Security Safeguards</h2>
+          <p>
+            We implement comprehensive technical, physical, and administrative safeguards to protect your personal information against unauthorized access, loss, misuse, or alteration:
+          </p>
+          <ul>
+            <li>Enforced HTTPS/TLS protocol across all web and application traffic.</li>
+            <li>Encrypted MongoDB Atlas database with role-based access restrictions.</li>
+            <li>Strict rate-limiting and anti-abuse safeguards on OTP and checkout APIs.</li>
+            <li>Continuous security monitoring and software dependency audits.</li>
+          </ul>
+        </section>
+
+        <!-- 10. Children's Privacy -->
+        <section class="policy-section" id="children">
+          <h2>10. Children's Privacy</h2>
+          <p>
+            Our services are intended for general audiences and are not directed to children under 13 years of age. We do not knowingly collect personal data from minors. If a parent or guardian discovers that a child has provided us with personal information without consent, please notify us immediately, and we will promptly delete the data from our servers.
+          </p>
+        </section>
+
+        <!-- 11. Policy Modifications -->
+        <section class="policy-section" id="modifications">
+          <h2>11. Modifications to this Privacy Policy</h2>
+          <p>
+            We may occasionally update this Privacy Policy to reflect enhancements in our restaurant operations, technology infrastructure, or legal requirements. When changes are made, the "Last Updated" date at the top of this page will be revised. Significant changes will be announced through an in-app notice or website banner.
+          </p>
+        </section>
+
+        <!-- 12. Contact & Grievance Redressal -->
+        <section class="policy-section" id="contact">
+          <h2>12. Contact Information & Grievance Redressal</h2>
+          <p>
+            In accordance with the Information Technology Act, 2000, and rules made thereunder, as well as the Consumer Protection (E-Commerce) Rules, 2020, the contact details of our Grievance Officer and restaurant headquarters are provided below:
+          </p>
+
+          <div class="contact-card">
+            <div class="contact-item">
+              <span class="label">Legal Entity Name</span>
+              <span class="value">MJ's Corner</span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Grievance / Privacy Officer</span>
+              <span class="value">Customer Care Support Desk</span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Official Support Email</span>
+              <a href="mailto:support@mjscorner.in">support@mjscorner.in</a>
+            </div>
+            <div class="contact-item">
+              <span class="label">Secondary Inquiries</span>
+              <a href="mailto:mjscornerinfo@gmail.com">mjscornerinfo@gmail.com</a>
+            </div>
+            <div class="contact-item">
+              <span class="label">Phone / WhatsApp Support</span>
+              <a href="tel:+918811929283">+91 88119 29283</a>
+            </div>
+            <div class="contact-item">
+              <span class="label">Physical Address</span>
+              <span class="value">Banbahar Road, Kayakuchi, Barpeta District, Assam - 781352, India</span>
+            </div>
+            <div class="contact-item">
+              <span class="label">Official Website</span>
+              <a href="https://mjscorner.in" target="_blank" rel="noopener">https://mjscorner.in</a>
+            </div>
+            <div class="contact-item">
+              <span class="label">Operating Hours</span>
+              <span class="value">10:00 AM – 10:30 PM IST (Daily)</span>
+            </div>
+          </div>
+        </section>
+
+      </article>
+
+    </main>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="policy-footer">
+      <p style="margin-bottom:8px;">
+        © 2026 <strong>MJ's Corner</strong>. All rights reserved. | <a href="/menu">Menu & Order</a> | <a href="/dinein">Dine-In Portal</a> | <a href="/privacy-policy">Privacy Policy</a>
+      </p>
+      <p style="font-size:0.8rem;margin:0;">
+        Fast, fresh, and delicious meals delivered straight to your table and doorstep.
+      </p>
+    </footer>
+
+  </div>
+
+  <script>
+    // Theme toggle sync with MJ's Corner site
+    (function () {
+      const toggleBtn = document.getElementById('btnThemeToggle');
+      const root = document.documentElement;
+
+      function applyTheme(theme) {
+        root.setAttribute('data-theme', theme);
+        if (toggleBtn) {
+          toggleBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+      }
+
+      const savedTheme = localStorage.getItem('mj_theme') || 'light';
+      applyTheme(savedTheme);
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          const current = root.getAttribute('data-theme') || 'light';
+          const next = current === 'dark' ? 'light' : 'dark';
+          localStorage.setItem('mj_theme', next);
+          applyTheme(next);
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

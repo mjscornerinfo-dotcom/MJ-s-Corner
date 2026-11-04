@@ -4882,3 +4882,57 @@ input, select, textarea {
   border: 1px solid rgba(100, 116, 139, 0.35);
 }
 
+/* ---------- App Bottom Footer (Compliance & Privacy Policy) ---------- */
+.site-footer {
+  width: 100%;
+  margin-top: 48px;
+  padding: 36px 20px 84px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.site-footer-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.site-footer-brand {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.site-footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.88rem;
+  color: var(--text-tertiary);
+}
+
+.site-footer-links a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity var(--transition-fast);
+}
+
+.site-footer-links a:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.site-footer-copy {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+

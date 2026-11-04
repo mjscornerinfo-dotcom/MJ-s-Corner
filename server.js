@@ -1654,6 +1654,11 @@ app.get(['/dinein', '/dine-in', '/dinein.html'], (req, res) => {
   res.sendFile(path.join(__dirname, 'dinein.html'));
 });
 
+// Official Privacy Policy for PhonePe Appstore, Indus Appstore & Play Store
+app.get(['/privacy', '/privacy-policy', '/privacy-policy.html', '/privacypolicy'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'privacy-policy.html'));
+});
+
 // ========== SITEMAP & ROBOTS.TXT FOR SEARCH ENGINES ==========
 app.get(['/sitemap', '/sitemap.xml'], (req, res) => {
   res.header('Content-Type', 'application/xml');
