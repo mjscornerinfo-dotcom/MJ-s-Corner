@@ -531,6 +531,9 @@ async function findOrCreateUser({ name, phone = '', email = '', countryCode = '+
   };
 }
 
+const mountMobileAuth = require('./mobile-auth-addon');
+mountMobileAuth(app, { getDb, findOrCreateUser });
+
 // ========== API ROUTES ==========
 
 // Public configuration for frontend (Phone.Email client ID, Razorpay Key ID, store settings, etc.)
