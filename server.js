@@ -532,7 +532,7 @@ async function findOrCreateUser({ name, phone = '', email = '', countryCode = '+
 }
 
 const mountMobileAuth = require('./mobile-auth-addon');
-mountMobileAuth(app, { getDb, findOrCreateUser });
+mountMobileAuth(app, { getDb, findOrCreateUser, getNextOrderId, getRazorpayInstance });
 
 // ========== API ROUTES ==========
 
