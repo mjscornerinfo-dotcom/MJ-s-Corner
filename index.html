@@ -298,8 +298,27 @@
             <span id="checkoutSubtotal">₹0</span>
           </div>
           <div class="cart-summary-row hidden" id="checkoutDeliveryRow" style="color:var(--text-secondary);">
-            <span>Delivery Fee</span>
-            <span id="checkoutDeliveryFee">₹50</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span>Delivery Fee</span>
+              <span id="checkoutDistanceBadge" class="checkout-distance-badge hidden">🚗 0 km</span>
+            </div>
+            <span id="checkoutDeliveryFee">₹20</span>
+          </div>
+
+          <!-- Outside Delivery Range Warning / Prompt -->
+          <div class="delivery-out-of-range-box hidden" id="checkoutOutOfRangeBox">
+            <div style="display:flex;align-items:flex-start;gap:10px;">
+              <span style="font-size:1.2rem;line-height:1.2;">⚠️</span>
+              <div style="flex:1;">
+                <strong style="color:#b91c1c;font-size:0.86rem;display:block;">Outside Delivery Zone</strong>
+                <p id="checkoutOutOfRangeText" style="margin:2px 0 8px 0;font-size:0.78rem;color:#7f1d1d;line-height:1.35;">
+                  This address is outside our maximum delivery radius. You can still order for Express Counter Pickup!
+                </p>
+                <button type="button" class="btn-switch-to-pickup" id="btnSwitchToPickup">
+                  🥡 Switch to Pickup / Takeout
+                </button>
+              </div>
+            </div>
           </div>
           <div class="cart-summary-row hidden" id="checkoutCouponRow" style="color:var(--success);">
             <span id="checkoutCouponLabel">Coupon Discount</span>

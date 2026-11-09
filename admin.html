@@ -107,16 +107,25 @@
 
           <div class="store-control-card delivery-setting-card">
             <div class="store-control-header">
-              <span class="store-control-badge">Delivery Settings</span>
+              <span class="store-control-badge">🗺️ Automated Delivery Fee</span>
+              <span style="font-size:0.75rem;font-weight:700;color:var(--success);">Mapbox GPS Active</span>
             </div>
-            <div class="store-control-title">Delivery Charge</div>
-            <p class="store-control-desc">Set the delivery fee added to delivery orders at checkout.</p>
-            <div class="delivery-charge-form">
-              <div class="delivery-input-wrap">
-                <span class="currency-symbol">₹</span>
-                <input type="number" id="inputDeliveryFee" min="0" max="500" value="50" step="5" placeholder="50">
-              </div>
-              <button type="button" class="btn-admin primary" id="btnSaveDeliveryFee">Save Fee</button>
+            <div class="store-control-title">Distance-Based Delivery Rates</div>
+            <p class="store-control-desc">Automated driving distance calculation from MJ's Corner using Mapbox API.</p>
+            
+            <div class="delivery-rates-summary" style="display:flex;flex-wrap:wrap;gap:12px;margin:10px 0;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border);">
+              <div><span style="font-size:0.7rem;color:var(--text-tertiary);text-transform:uppercase;font-weight:700;display:block;">Base (0 – 2.2 km)</span><strong id="displayBaseRate" style="color:var(--accent);font-size:0.92rem;">₹20</strong></div>
+              <div><span style="font-size:0.7rem;color:var(--text-tertiary);text-transform:uppercase;font-weight:700;display:block;">Additional Rate</span><strong id="displayPerKmRate" style="color:var(--accent);font-size:0.92rem;">₹15 / km</strong></div>
+              <div><span style="font-size:0.7rem;color:var(--text-tertiary);text-transform:uppercase;font-weight:700;display:block;">Max Radius</span><strong id="displayMaxRadius" style="color:var(--text-primary);font-size:0.92rem;">15 km</strong></div>
+            </div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn-admin primary" id="btnOpenDeliverySettingsModal" style="padding:7px 14px;font-size:0.8rem;">
+                ⚙️ Configure Rates & GPS
+              </button>
+              <button type="button" class="btn-admin secondary" id="btnOpenDeliveryTestModal" style="padding:7px 14px;font-size:0.8rem;">
+                🧪 Test Calculator
+              </button>
             </div>
           </div>
 
@@ -766,6 +775,115 @@
             <button type="submit" class="btn-admin primary" id="btnSaveBannerSubmit">Save Banner</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DELIVERY SETTINGS MODAL ========== -->
+  <div class="modal-overlay" id="deliverySettingsModal">
+    <div class="modal" style="max-width:540px;">
+      <div class="modal-header">
+        <h2 style="font-size:1.2rem;display:flex;align-items:center;gap:8px;">
+          <span>🗺️</span> Configure Mapbox Delivery Fee Rules
+        </h2>
+        <button class="cart-close-btn" id="closeDeliverySettingsModalBtn">✕</button>
+      </div>
+
+      <form id="deliverySettingsForm" style="padding:16px 20px 20px 20px;">
+        <div style="font-size:0.8rem;color:var(--text-tertiary);margin-bottom:14px;background:var(--bg-secondary);padding:10px 12px;border-radius:var(--radius-md);border:1px solid var(--border);">
+          📍 <strong>Fixed Kitchen Origin:</strong> Driving distances are calculated using real roads via Mapbox Directions API from these coordinates.
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-group">
+            <label for="inputStoreLat" style="font-size:0.8rem;font-weight:700;">Store Latitude *</label>
+            <input type="number" step="0.0000001" id="inputStoreLat" value="26.4026888" required>
+          </div>
+          <div class="form-group">
+            <label for="inputStoreLng" style="font-size:0.8rem;font-weight:700;">Store Longitude *</label>
+            <input type="number" step="0.0000001" id="inputStoreLng" value="91.0646843" required>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label for="inputStoreAddress" style="font-size:0.8rem;font-weight:700;">Physical Address Label</label>
+          <input type="text" id="inputStoreAddress" value="Banbahar Road, Kayakuchi, Barpeta District, Assam - 781352, India">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-group">
+            <label for="inputBaseDeliveryFee" style="font-size:0.8rem;font-weight:700;">Base Delivery Fee (₹) *</label>
+            <input type="number" id="inputBaseDeliveryFee" min="0" max="500" value="20" required>
+            <small style="color:var(--text-tertiary);font-size:0.72rem;">Charged for initial distance</small>
+          </div>
+          <div class="form-group">
+            <label for="inputBaseDistanceKm" style="font-size:0.8rem;font-weight:700;">Base Distance (km) *</label>
+            <input type="number" step="0.1" id="inputBaseDistanceKm" min="0.1" max="50" value="2.2" required>
+            <small style="color:var(--text-tertiary);font-size:0.72rem;">Default: 2.2 km</small>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-group">
+            <label for="inputPerKmFee" style="font-size:0.8rem;font-weight:700;">Additional Fee / km (₹) *</label>
+            <input type="number" id="inputPerKmFee" min="0" max="100" value="15" required>
+            <small style="color:var(--text-tertiary);font-size:0.72rem;">Added for each extra km</small>
+          </div>
+          <div class="form-group">
+            <label for="inputMaxRadiusKm" style="font-size:0.8rem;font-weight:700;">Max Delivery Radius (km) *</label>
+            <input type="number" step="0.5" id="inputMaxRadiusKm" min="1" max="50" value="15.0" required>
+            <small style="color:var(--text-tertiary);font-size:0.72rem;">Orders beyond this prompt Pickup</small>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div class="form-group">
+            <label for="inputFreeDeliveryThreshold" style="font-size:0.8rem;font-weight:700;">Free Delivery Min Order (₹)</label>
+            <input type="number" id="inputFreeDeliveryThreshold" min="0" max="5000" value="0" placeholder="0 to disable">
+            <small style="color:var(--text-tertiary);font-size:0.72rem;">Set 0 to disable free delivery</small>
+          </div>
+          <div class="form-group">
+            <label for="inputFallbackFee" style="font-size:0.8rem;font-weight:700;">Fallback Flat Fee (₹)</label>
+            <input type="number" id="inputFallbackFee" min="0" max="500" value="50" required>
+            <small style="color:var(--text-tertiary);font-size:0.72rem;">If address cannot be geocoded</small>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+          <button type="button" class="btn-admin secondary" id="btnCancelDeliverySettings">Cancel</button>
+          <button type="submit" class="btn-admin primary" id="btnSaveDeliverySettings">💾 Save Delivery Rules</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== DELIVERY TEST CALCULATOR MODAL ========== -->
+  <div class="modal-overlay" id="deliveryTestModal">
+    <div class="modal" style="max-width:500px;">
+      <div class="modal-header">
+        <h2 style="font-size:1.2rem;display:flex;align-items:center;gap:8px;">
+          <span>🧪</span> Test Mapbox Distance & Fee
+        </h2>
+        <button class="cart-close-btn" id="closeDeliveryTestModalBtn">✕</button>
+      </div>
+
+      <div style="padding:16px 20px 20px 20px;">
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;">
+          Enter any village, street, landmark, or PIN to test the live Mapbox driving calculation from MJ's Corner:
+        </p>
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label for="inputTestAddress" style="font-size:0.8rem;font-weight:700;">Delivery Address / Landmark</label>
+          <input type="text" id="inputTestAddress" placeholder="e.g. Sarthebari, Kayakuchi, Barpeta, 781301">
+        </div>
+
+        <button type="button" class="btn-admin primary" id="btnRunDeliveryTest" style="width:100%;justify-content:center;padding:10px;font-weight:700;">
+          ⚡ Calculate Driving Distance & Fee
+        </button>
+
+        <div id="deliveryTestResults" class="hidden" style="margin-top:16px;padding:14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);">
+          <!-- Populated by JS -->
+        </div>
       </div>
     </div>
   </div>

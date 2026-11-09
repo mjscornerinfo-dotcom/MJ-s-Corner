@@ -30,7 +30,9 @@
     menuFilterCategory: 'All',
     banners: [],
     highlightedCategories: [],
-    categoryHighlightTheme: 'gold'
+    categoryHighlightTheme: 'gold',
+    deliveryFeeConfig: null,
+    storeLocation: null
   };
 
   // ========== DOM REFERENCES ==========
@@ -55,6 +57,30 @@
     inputDeliveryFee: $('#inputDeliveryFee'),
     btnSaveDeliveryFee: $('#btnSaveDeliveryFee'),
     btnOpenPosModal: $('#btnOpenPosModal'),
+    // Automated Delivery Fee Controls
+    displayBaseRate: $('#displayBaseRate'),
+    displayPerKmRate: $('#displayPerKmRate'),
+    displayMaxRadius: $('#displayMaxRadius'),
+    btnOpenDeliverySettingsModal: $('#btnOpenDeliverySettingsModal'),
+    deliverySettingsModal: $('#deliverySettingsModal'),
+    closeDeliverySettingsModalBtn: $('#closeDeliverySettingsModalBtn'),
+    btnCancelDeliverySettings: $('#btnCancelDeliverySettings'),
+    deliverySettingsForm: $('#deliverySettingsForm'),
+    inputStoreLat: $('#inputStoreLat'),
+    inputStoreLng: $('#inputStoreLng'),
+    inputStoreAddress: $('#inputStoreAddress'),
+    inputBaseDeliveryFee: $('#inputBaseDeliveryFee'),
+    inputBaseDistanceKm: $('#inputBaseDistanceKm'),
+    inputPerKmFee: $('#inputPerKmFee'),
+    inputMaxRadiusKm: $('#inputMaxRadiusKm'),
+    inputFreeDeliveryThreshold: $('#inputFreeDeliveryThreshold'),
+    inputFallbackFee: $('#inputFallbackFee'),
+    btnOpenDeliveryTestModal: $('#btnOpenDeliveryTestModal'),
+    deliveryTestModal: $('#deliveryTestModal'),
+    closeDeliveryTestModalBtn: $('#closeDeliveryTestModalBtn'),
+    inputTestAddress: $('#inputTestAddress'),
+    btnRunDeliveryTest: $('#btnRunDeliveryTest'),
+    deliveryTestResults: $('#deliveryTestResults'),
     // Orders
     dashboardOrdersBody: $('#dashboardOrdersBody'),
     ordersBody: $('#ordersBody'),
@@ -250,6 +276,8 @@
         if (data.success && data.settings) {
           if (data.settings.storeOnline !== undefined) state.storeOnline = data.settings.storeOnline;
           if (data.settings.deliveryCharge !== undefined) state.deliveryFee = data.settings.deliveryCharge;
+          if (data.settings.deliveryFeeConfig) state.deliveryFeeConfig = data.settings.deliveryFeeConfig;
+          if (data.settings.storeLocation) state.storeLocation = data.settings.storeLocation;
           if (Array.isArray(data.settings.categories) && data.settings.categories.length > 0) {
             state.categories = data.settings.categories;
           }
@@ -608,6 +636,175 @@
     if (els.btnBillingCreatePos) {
       els.btnBillingCreatePos.addEventListener('click', openPosModal);
     }
+
+    // Automated Delivery Settings Modal
+    if (els.btnOpenDeliverySettingsModal && els.deliverySettingsModal) {
+      els.btnOpenDeliverySettingsModal.addEventListener('click', () => {
+        const storeLoc = state.storeLocation || {};
+        const feeCfg = state.deliveryFeeConfig || {};
+        if (els.inputStoreLat) els.inputStoreLat.value = storeLoc.latitude !== undefined ? storeLoc.latitude : 26.4026889;
+        if (els.inputStoreLng) els.inputStoreLng.value = storeLoc.longitude !== undefined ? storeLoc.longitude : 91.0646843;
+        if (els.inputStoreAddress) els.inputStoreAddress.value = storeLoc.address || 'Banbahar Road, Kayakuchi, Barpeta District, Assam - 781352, India';
+        if (els.inputBaseDeliveryFee) els.inputBaseDeliveryFee.value = feeCfg.baseFee !== undefined ? feeCfg.baseFee : 20;
+        if (els.inputBaseDistanceKm) els.inputBaseDistanceKm.value = feeCfg.baseDistanceKm !== undefined ? feeCfg.baseDistanceKm : 2.2;
+        if (els.inputPerKmFee) els.inputPerKmFee.value = feeCfg.perKmFee !== undefined ? feeCfg.perKmFee : 15;
+        if (els.inputMaxRadiusKm) els.inputMaxRadiusKm.value = feeCfg.maxDeliveryRadiusKm !== undefined ? feeCfg.maxDeliveryRadiusKm : 15.0;
+        if (els.inputFreeDeliveryThreshold) els.inputFreeDeliveryThreshold.value = feeCfg.freeDeliveryThreshold !== undefined ? feeCfg.freeDeliveryThreshold : 0;
+        if (els.inputFallbackFee) els.inputFallbackFee.value = feeCfg.fallbackFee !== undefined ? feeCfg.fallbackFee : 50;
+
+        els.deliverySettingsModal.classList.add('open');
+      });
+    }
+
+    if (els.closeDeliverySettingsModalBtn && els.deliverySettingsModal) {
+      els.closeDeliverySettingsModalBtn.addEventListener('click', () => {
+        els.deliverySettingsModal.classList.remove('open');
+      });
+    }
+    if (els.btnCancelDeliverySettings && els.deliverySettingsModal) {
+      els.btnCancelDeliverySettings.addEventListener('click', () => {
+        els.deliverySettingsModal.classList.remove('open');
+      });
+    }
+    if (els.deliverySettingsModal) {
+      els.deliverySettingsModal.addEventListener('click', (e) => {
+        if (e.target === els.deliverySettingsModal) els.deliverySettingsModal.classList.remove('open');
+      });
+    }
+
+    if (els.deliverySettingsForm) {
+      els.deliverySettingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newConfig = {
+          baseFee: parseFloat(els.inputBaseDeliveryFee.value) || 20,
+          baseDistanceKm: parseFloat(els.inputBaseDistanceKm.value) || 2.2,
+          perKmFee: parseFloat(els.inputPerKmFee.value) || 15,
+          maxDeliveryRadiusKm: parseFloat(els.inputMaxRadiusKm.value) || 15.0,
+          freeDeliveryThreshold: parseFloat(els.inputFreeDeliveryThreshold.value) || 0,
+          fallbackFee: parseFloat(els.inputFallbackFee.value) || 50
+        };
+        const newStoreLocation = {
+          latitude: parseFloat(els.inputStoreLat.value) || 26.402688880316525,
+          longitude: parseFloat(els.inputStoreLng.value) || 91.06468429950438,
+          address: els.inputStoreAddress.value.trim() || 'Banbahar Road, Kayakuchi, Barpeta District, Assam - 781352, India'
+        };
+
+        state.deliveryFeeConfig = newConfig;
+        state.storeLocation = newStoreLocation;
+        updateStoreControlsUI();
+
+        try {
+          const res = await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              deliveryFeeConfig: newConfig,
+              storeLocation: newStoreLocation
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Mapbox delivery fee rules saved!', 'success');
+            els.deliverySettingsModal.classList.remove('open');
+          } else {
+            showToast('Failed to save settings: ' + (data.error || 'Server error'), 'error');
+          }
+        } catch (err) {
+          console.error('Error saving delivery settings:', err);
+          showToast('Network error saving delivery settings', 'error');
+        }
+      });
+    }
+
+    // Delivery Test Calculator Modal
+    if (els.btnOpenDeliveryTestModal && els.deliveryTestModal) {
+      els.btnOpenDeliveryTestModal.addEventListener('click', () => {
+        if (els.deliveryTestResults) {
+          els.deliveryTestResults.classList.add('hidden');
+          els.deliveryTestResults.innerHTML = '';
+        }
+        if (els.inputTestAddress) els.inputTestAddress.focus();
+        els.deliveryTestModal.classList.add('open');
+      });
+    }
+
+    if (els.closeDeliveryTestModalBtn && els.deliveryTestModal) {
+      els.closeDeliveryTestModalBtn.addEventListener('click', () => {
+        els.deliveryTestModal.classList.remove('open');
+      });
+    }
+    if (els.deliveryTestModal) {
+      els.deliveryTestModal.addEventListener('click', (e) => {
+        if (e.target === els.deliveryTestModal) els.deliveryTestModal.classList.remove('open');
+      });
+    }
+
+    if (els.btnRunDeliveryTest && els.inputTestAddress && els.deliveryTestResults) {
+      const runTestCalc = async () => {
+        const address = els.inputTestAddress.value.trim();
+        if (!address) {
+          showToast('Please enter an address or village to test', 'info');
+          return;
+        }
+
+        const originalBtnText = els.btnRunDeliveryTest.innerHTML;
+        els.btnRunDeliveryTest.disabled = true;
+        els.btnRunDeliveryTest.innerHTML = '⏳ Calculating route via Mapbox...';
+
+        try {
+          const res = await fetch('/api/delivery-fee/calculate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            const isOutOfRange = !data.deliverable;
+            els.deliveryTestResults.innerHTML = `
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <strong style="font-size:0.9rem;">📍 Calculation Results:</strong>
+                <span class="badge ${isOutOfRange ? 'badge-cancelled' : 'badge-completed'}" style="font-size:0.75rem;padding:4px 8px;">
+                  ${isOutOfRange ? '⚠️ Beyond Radius' : '✅ Within Delivery Zone'}
+                </span>
+              </div>
+              <div style="font-size:0.82rem;line-height:1.6;color:var(--text-secondary);">
+                <div><strong>Resolved Destination:</strong> ${data.resolvedAddress || address}</div>
+                <div><strong>Driving Distance:</strong> <span style="color:var(--accent);font-weight:700;">${data.distanceKm} km</span></div>
+                <div><strong>Estimated Road Time:</strong> ${data.durationMinutes} mins</div>
+                <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:0.92rem;display:flex;justify-content:space-between;">
+                  <span><strong>Calculated Delivery Fee:</strong></span>
+                  <span style="font-weight:700;color:var(--accent);font-size:1.05rem;">₹${data.deliveryFee}</span>
+                </div>
+                ${isOutOfRange ? `<div style="margin-top:8px;font-size:0.75rem;color:#e53e3e;">Note: This location exceeds the maximum delivery radius of ${data.maxRadiusKm || 15} km. Customer will be prompted to choose Pickup.</div>` : ''}
+              </div>
+            `;
+            els.deliveryTestResults.classList.remove('hidden');
+          } else {
+            els.deliveryTestResults.innerHTML = `
+              <div style="color:#e53e3e;font-size:0.85rem;">
+                ❌ Calculation Failed: ${data.error || 'Could not find driving route'}
+              </div>
+            `;
+            els.deliveryTestResults.classList.remove('hidden');
+          }
+        } catch (err) {
+          console.error('Test calculation error:', err);
+          showToast('Failed to calculate test delivery fee', 'error');
+        } finally {
+          els.btnRunDeliveryTest.disabled = false;
+          els.btnRunDeliveryTest.innerHTML = originalBtnText;
+        }
+      };
+
+      els.btnRunDeliveryTest.addEventListener('click', runTestCalc);
+      els.inputTestAddress.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          runTestCalc();
+        }
+      });
+    }
   }
 
   function updateStoreControlsUI() {
@@ -631,6 +828,17 @@
 
     if (els.inputDeliveryFee) {
       els.inputDeliveryFee.value = state.deliveryFee || 50;
+    }
+
+    const cfg = state.deliveryFeeConfig || { baseFee: 20, baseDistanceKm: 2.2, perKmFee: 15, maxDeliveryRadiusKm: 15.0 };
+    if (els.displayBaseRate) {
+      els.displayBaseRate.textContent = `₹${cfg.baseFee} (≤ ${cfg.baseDistanceKm} km)`;
+    }
+    if (els.displayPerKmRate) {
+      els.displayPerKmRate.textContent = `₹${cfg.perKmFee} / km`;
+    }
+    if (els.displayMaxRadius) {
+      els.displayMaxRadius.textContent = `${cfg.maxDeliveryRadiusKm} km`;
     }
   }
 
@@ -1188,7 +1396,7 @@
             <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Subtotal:</span><span>₹${subtotal.toFixed(2)}</span></div>
             <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Packaging & Container Fee:</span><span>₹0.00</span></div>
             <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>GST (5%):</span><span>Included (₹${gstAmount.toFixed(2)})</span></div>
-            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Delivery Fee:</span><span>₹${deliveryFee.toFixed(2)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Delivery Fee${order.distanceKm ? ` (${order.distanceKm} km)` : ''}:</span><span>₹${deliveryFee.toFixed(2)}</span></div>
             ${discount > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;color:#10b981;font-weight:600;"><span>Promo Discount (${escapeHtml((order.coupon && order.coupon.code) || 'OFFER')}):</span><span>-₹${discount.toFixed(2)}</span></div>` : ''}
             <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Tip / Delivery Partner Contribution:</span><span>₹0.00</span></div>
             <div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:6px;border-top:2px solid #0f172a;font-size:1.15rem;font-weight:900;color:#e63946;">

@@ -250,6 +250,15 @@
         if (typeof data.deliveryCharge === 'number') {
           state.deliveryCharge = data.deliveryCharge;
         }
+        if (data.deliveryFeeConfig) {
+          state.deliveryFeeConfig = data.deliveryFeeConfig;
+        }
+        if (data.storeLocation) {
+          state.storeLocation = data.storeLocation;
+        }
+        if (data.mapboxPublicToken) {
+          state.mapboxPublicToken = data.mapboxPublicToken;
+        }
         updateStoreOnlineUI();
       }
     } catch (e) {
@@ -277,6 +286,15 @@
     orderCounter: parseInt(localStorage.getItem('mj_orderCounter') || '0'),
     storeOnline: true,
     deliveryCharge: 50,
+    deliveryFeeConfig: null,
+    storeLocation: null,
+    mapboxPublicToken: '',
+    calculatedDeliveryFee: null,
+    calculatedDistanceKm: null,
+    calculatedDurationMins: null,
+    calculatedResolvedAddress: null,
+    deliveryInRange: true,
+    isCalculatingFee: false,
     lastCreatedOrder: null,
     currentInvoiceOrder: null,
     pendingCheckout: false,
@@ -471,6 +489,10 @@
     checkoutSubtotal: $('#checkoutSubtotal'),
     checkoutDeliveryRow: $('#checkoutDeliveryRow'),
     checkoutDeliveryFee: $('#checkoutDeliveryFee'),
+    checkoutDistanceBadge: $('#checkoutDistanceBadge'),
+    checkoutOutOfRangeBox: $('#checkoutOutOfRangeBox'),
+    checkoutOutOfRangeText: $('#checkoutOutOfRangeText'),
+    btnSwitchToPickup: $('#btnSwitchToPickup'),
     checkoutCouponRow: $('#checkoutCouponRow'),
     checkoutCouponLabel: $('#checkoutCouponLabel'),
     checkoutCouponDiscount: $('#checkoutCouponDiscount'),
@@ -2167,7 +2189,18 @@
     });
 
     const savings = Math.max(0, originalTotal - subtotal);
-    const deliveryFee = (!window.IS_DINE_IN && state.orderType === 'delivery') ? (state.deliveryCharge !== undefined ? state.deliveryCharge : 50) : 0;
+    let deliveryFee = 0;
+    if (!window.IS_DINE_IN && state.orderType === 'delivery') {
+      if (typeof state.calculatedDeliveryFee === 'number') {
+        deliveryFee = state.calculatedDeliveryFee;
+      } else if (state.deliveryFeeConfig && typeof state.deliveryFeeConfig.baseFee === 'number') {
+        deliveryFee = state.deliveryFeeConfig.baseFee;
+      } else if (state.deliveryCharge !== undefined) {
+        deliveryFee = state.deliveryCharge;
+      } else {
+        deliveryFee = 20;
+      }
+    }
     const total = subtotal + deliveryFee;
     return { subtotal, savings, deliveryFee, total, itemCount };
   }
@@ -2673,6 +2706,98 @@
     });
   }
 
+  const clientFeeCache = new Map();
+
+  async function triggerDeliveryFeeCalculation(forceAddress) {
+    if (state.orderType !== 'delivery') {
+      state.deliveryInRange = true;
+      state.calculatedDeliveryFee = null;
+      state.calculatedDistanceKm = null;
+      state.calculatedDurationMins = null;
+      updateCheckoutBreakdown();
+      return;
+    }
+
+    let addressToCalc = '';
+    if (forceAddress) {
+      addressToCalc = forceAddress;
+    } else {
+      const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+      if (user && state.selectedDeliveryAddressId) {
+        const addresses = MJAuth.getUserAddresses(user.id);
+        const sel = addresses.find(a => a.id === state.selectedDeliveryAddressId);
+        if (sel) addressToCalc = sel.fullAddress;
+      }
+      if (!addressToCalc && els.newAddrFull && els.newAddrFull.value.trim()) {
+        addressToCalc = els.newAddrFull.value.trim();
+      }
+    }
+
+    if (!addressToCalc || addressToCalc.trim().length < 3) {
+      state.calculatedDeliveryFee = null;
+      state.calculatedDistanceKm = null;
+      state.calculatedDurationMins = null;
+      state.deliveryInRange = true;
+      updateCheckoutBreakdown();
+      return;
+    }
+
+    const cacheKey = addressToCalc.trim().toLowerCase();
+    if (clientFeeCache.has(cacheKey)) {
+      const cached = clientFeeCache.get(cacheKey);
+      state.calculatedDeliveryFee = cached.deliveryFee;
+      state.calculatedDistanceKm = cached.distanceKm;
+      state.calculatedDurationMins = cached.durationMinutes;
+      state.calculatedResolvedAddress = cached.resolvedAddress;
+      state.deliveryInRange = !!cached.deliverable;
+      state.isCalculatingFee = false;
+      updateCheckoutBreakdown();
+      return;
+    }
+
+    state.isCalculatingFee = true;
+    updateCheckoutBreakdown();
+
+    try {
+      const res = await fetch('/api/delivery-fee/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: addressToCalc.trim() })
+      });
+      const data = await res.json();
+      if (data.success) {
+        clientFeeCache.set(cacheKey, data);
+        state.calculatedDeliveryFee = data.deliveryFee;
+        state.calculatedDistanceKm = data.distanceKm;
+        state.calculatedDurationMins = data.durationMinutes;
+        state.calculatedResolvedAddress = data.resolvedAddress;
+        state.deliveryInRange = !!data.deliverable;
+      } else {
+        state.calculatedDeliveryFee = (state.deliveryFeeConfig && state.deliveryFeeConfig.fallbackFee) || 50;
+        state.deliveryInRange = true;
+      }
+    } catch (err) {
+      console.warn('Delivery fee calc error:', err);
+      state.calculatedDeliveryFee = (state.deliveryFeeConfig && state.deliveryFeeConfig.fallbackFee) || 50;
+      state.deliveryInRange = true;
+    } finally {
+      state.isCalculatingFee = false;
+      updateCheckoutBreakdown();
+    }
+  }
+
+  function switchToPickup() {
+    state.orderType = 'pickup';
+    if (els.checkoutOrderTypeGrid) {
+      const cards = els.checkoutOrderTypeGrid.querySelectorAll('.order-type-card');
+      cards.forEach(c => {
+        c.classList.toggle('selected', c.dataset.type === 'pickup');
+      });
+    }
+    applyOrderTypeView('pickup');
+    showToast('Switched to Express Counter Pickup (No delivery fee!)', 'info');
+  }
+
   function applyOrderTypeView(type) {
     if (type === 'dine-in') {
       if (els.dineInNoticeGroup) els.dineInNoticeGroup.classList.remove('hidden');
@@ -2705,6 +2830,9 @@
         </div>
       `;
       els.newAddressPanel.classList.remove('hidden');
+      if (els.newAddrFull && els.newAddrFull.value.trim()) {
+        triggerDeliveryFeeCalculation(els.newAddrFull.value.trim());
+      }
       return;
     }
 
@@ -2733,6 +2861,8 @@
         renderCheckoutAddresses();
       });
     });
+
+    triggerDeliveryFeeCalculation();
   }
 
   function openCheckout() {
@@ -2870,6 +3000,18 @@
     const discount = state.appliedPromo ? state.appliedPromo.discountAmount : 0;
     const finalPayable = Math.max(0, totals.subtotal - discount + totals.deliveryFee);
 
+    if (state.orderType === 'delivery' && state.deliveryInRange === false) {
+      els.btnPlaceOrder.disabled = true;
+      els.btnPlaceOrder.style.opacity = '0.65';
+      els.btnPlaceOrder.style.cursor = 'not-allowed';
+      els.btnPlaceOrder.innerHTML = `⚠️ Outside Delivery Zone · Switch to Pickup`;
+      return;
+    }
+
+    els.btnPlaceOrder.disabled = false;
+    els.btnPlaceOrder.style.opacity = '1';
+    els.btnPlaceOrder.style.cursor = 'pointer';
+
     if (window.IS_DINE_IN) {
       const isCounter = !state.dineinPaymentMethod || state.dineinPaymentMethod === 'Cash on Counter';
       if (finalPayable === 0) {
@@ -2907,8 +3049,34 @@
       if (state.orderType === 'delivery') {
         els.checkoutDeliveryRow.classList.remove('hidden');
         els.checkoutDeliveryFee.textContent = `₹${totals.deliveryFee}`;
+
+        if (els.checkoutDistanceBadge) {
+          if (state.isCalculatingFee) {
+            els.checkoutDistanceBadge.classList.remove('hidden');
+            els.checkoutDistanceBadge.textContent = '⏳ Calculating distance...';
+          } else if (state.calculatedDistanceKm !== null) {
+            els.checkoutDistanceBadge.classList.remove('hidden');
+            els.checkoutDistanceBadge.textContent = `🚗 ${state.calculatedDistanceKm} km (${state.calculatedDurationMins || '~'}m)`;
+          } else {
+            els.checkoutDistanceBadge.classList.add('hidden');
+          }
+        }
+
+        if (els.checkoutOutOfRangeBox) {
+          if (!state.deliveryInRange) {
+            els.checkoutOutOfRangeBox.classList.remove('hidden');
+            if (els.checkoutOutOfRangeText && state.calculatedDistanceKm) {
+              const maxR = (state.deliveryFeeConfig && state.deliveryFeeConfig.maxDeliveryRadiusKm) || 15;
+              els.checkoutOutOfRangeText.textContent = `Your address is ${state.calculatedDistanceKm} km away, which exceeds our ${maxR} km maximum delivery radius. Switch to Express Counter Pickup to complete your order!`;
+            }
+          } else {
+            els.checkoutOutOfRangeBox.classList.add('hidden');
+          }
+        }
       } else {
         els.checkoutDeliveryRow.classList.add('hidden');
+        if (els.checkoutDistanceBadge) els.checkoutDistanceBadge.classList.add('hidden');
+        if (els.checkoutOutOfRangeBox) els.checkoutOutOfRangeBox.classList.add('hidden');
       }
     }
 
@@ -2947,6 +3115,10 @@
       const selected = addresses.find(a => a.id === state.selectedDeliveryAddressId);
       if (!selected) {
         showToast('Please select or add a delivery address', 'error');
+        return;
+      }
+      if (!state.deliveryInRange) {
+        showToast('This address is beyond our delivery range. Please select Express Counter Pickup!', 'error');
         return;
       }
       deliveryAddress = `${selected.title}: ${selected.fullAddress}`;
@@ -2988,6 +3160,8 @@
       items: [...state.cart],
       subtotal: totals.subtotal,
       deliveryFee: totals.deliveryFee,
+      distanceKm: state.calculatedDistanceKm || null,
+      durationMinutes: state.calculatedDurationMins || null,
       total: finalTotal,
       coupon: state.appliedPromo ? { ...state.appliedPromo } : null,
       customer: {
@@ -3411,7 +3585,7 @@
             <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Subtotal:</span><span>₹${subtotal.toFixed(2)}</span></div>
             <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Packaging & Container Fee:</span><span>₹${packagingFee.toFixed(2)}</span></div>
             <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>GST (5%):</span><span>Included (₹${gstAmount.toFixed(2)})</span></div>
-            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Delivery Fee:</span><span>₹${deliveryFee.toFixed(2)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Delivery Fee${order.distanceKm ? ` (${order.distanceKm} km)` : ''}:</span><span>₹${deliveryFee.toFixed(2)}</span></div>
             ${discount > 0 ? `<div style="display:flex;justify-content:space-between;padding:4px 0;color:#10b981;font-weight:600;"><span>Promo Discount (${escapeHtml((order.coupon && order.coupon.code) || 'OFFER')}):</span><span>-₹${discount.toFixed(2)}</span></div>` : ''}
             <div style="display:flex;justify-content:space-between;padding:4px 0;"><span>Tip / Delivery Partner Contribution:</span><span>₹0.00</span></div>
             <div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:6px;border-top:2px solid #0f172a;font-size:1.15rem;font-weight:900;color:#e63946;">
@@ -3799,6 +3973,27 @@
       });
     }
 
+    if (els.btnSwitchToPickup) {
+      els.btnSwitchToPickup.addEventListener('click', switchToPickup);
+    }
+
+    if (els.newAddrFull) {
+      let typingTimer = null;
+      els.newAddrFull.addEventListener('input', () => {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+          if (state.orderType === 'delivery') {
+            triggerDeliveryFeeCalculation(els.newAddrFull.value.trim());
+          }
+        }, 800);
+      });
+      els.newAddrFull.addEventListener('blur', () => {
+        if (state.orderType === 'delivery') {
+          triggerDeliveryFeeCalculation(els.newAddrFull.value.trim());
+        }
+      });
+    }
+
     if (els.btnSaveNewAddress) {
       els.btnSaveNewAddress.addEventListener('click', () => {
         const user = MJAuth.getCurrentUser();
@@ -3815,6 +4010,7 @@
           if (els.newAddrFull) els.newAddrFull.value = '';
           if (els.newAddressPanel) els.newAddressPanel.classList.add('hidden');
           renderCheckoutAddresses();
+          triggerDeliveryFeeCalculation(newAddr.fullAddress);
           showToast(`Saved '${title}' address to your account!`, 'success');
         }
       });

@@ -534,6 +534,8 @@ async function findOrCreateUser({ name, phone = '', email = '', countryCode = '+
 const mountMobileAuth = require('./mobile-auth-addon');
 mountMobileAuth(app, { getDb, findOrCreateUser, getNextOrderId, getRazorpayInstance });
 
+const { calculateDeliveryForAddress } = require('./mapbox-service');
+
 // ========== API ROUTES ==========
 
 // Public configuration for frontend (Phone.Email client ID, Razorpay Key ID, store settings, etc.)
@@ -548,7 +550,21 @@ app.get('/api/config', async (req, res) => {
       storeOnline: settings.storeOnline !== undefined ? settings.storeOnline : true,
       deliveryCharge: settings.deliveryCharge !== undefined ? settings.deliveryCharge : 50,
       packagingFee: settings.packagingFee || 0,
-      gstPercent: settings.gstPercent || 5
+      gstPercent: settings.gstPercent || 5,
+      storeLocation: settings.storeLocation || {
+        address: 'Banbahar Road, Kayakuchi, Barpeta District, Assam - 781352, India',
+        latitude: 26.402688880316525,
+        longitude: 91.06468429950438
+      },
+      deliveryFeeConfig: settings.deliveryFeeConfig || {
+        enabled: true,
+        baseFee: 20,
+        baseDistanceKm: 2.2,
+        perKmFee: 15,
+        maxDeliveryRadiusKm: 15.0,
+        fallbackFee: 50
+      },
+      mapboxPublicToken: process.env.MAPBOX_ACCESS_TOKEN || ''
     });
   } catch (err) {
     res.json({
@@ -558,7 +574,62 @@ app.get('/api/config', async (req, res) => {
       storeOnline: true,
       deliveryCharge: 50,
       packagingFee: 0,
-      gstPercent: 5
+      gstPercent: 5,
+      storeLocation: {
+        address: 'Banbahar Road, Kayakuchi, Barpeta District, Assam - 781352, India',
+        latitude: 26.402688880316525,
+        longitude: 91.06468429950438
+      },
+      deliveryFeeConfig: {
+        enabled: true,
+        baseFee: 20,
+        baseDistanceKm: 2.2,
+        perKmFee: 15,
+        maxDeliveryRadiusKm: 15.0,
+        fallbackFee: 50
+      },
+      mapboxPublicToken: process.env.MAPBOX_ACCESS_TOKEN || ''
+    });
+  }
+});
+
+// Automated Delivery Fee Calculation via Mapbox (Distance-based)
+app.post('/api/delivery-fee/calculate', async (req, res) => {
+  try {
+    const db = getDb();
+    const settings = (await db.collection('settings').findOne({ key: 'app_settings' })) || {};
+    const storeLocation = settings.storeLocation || {
+      address: 'Banbahar Road, Kayakuchi, Barpeta District, Assam - 781352, India',
+      latitude: 26.402688880316525,
+      longitude: 91.06468429950438
+    };
+    const config = settings.deliveryFeeConfig || {
+      enabled: true,
+      baseFee: 20,
+      baseDistanceKm: 2.2,
+      perKmFee: 15,
+      maxDeliveryRadiusKm: 15.0,
+      fallbackFee: 50
+    };
+
+    const { address, coordinates, subtotal } = req.body;
+    const result = await calculateDeliveryForAddress({
+      address,
+      coordinates,
+      subtotal: Number(subtotal) || 0,
+      storeLocation,
+      config
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('Delivery fee calculation error:', err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      deliveryFee: 50,
+      isFallback: true,
+      inRange: true
     });
   }
 });
