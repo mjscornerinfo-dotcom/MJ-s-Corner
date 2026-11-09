@@ -1057,9 +1057,17 @@ app.get('/api/categories', async (req, res) => {
     const defaultCats = ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
 
     const merged = Array.from(new Set([...savedCats, ...menuCats, ...defaultCats])).filter(Boolean);
-    res.json({ success: true, categories: merged });
+    const highlightedCategories = (settings && Array.isArray(settings.highlightedCategories)) ? settings.highlightedCategories : [];
+    const categoryHighlightTheme = (settings && settings.categoryHighlightTheme) || 'gold';
+
+    res.json({
+      success: true,
+      categories: merged,
+      highlightedCategories,
+      categoryHighlightTheme
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message, categories: [] });
+    res.status(500).json({ success: false, message: err.message, categories: [], highlightedCategories: [] });
   }
 });
 
@@ -1094,6 +1102,46 @@ app.post('/api/categories', async (req, res) => {
   }
 });
 
+// Category Highlighting (Shiny effect on customer menu)
+app.post('/api/categories/highlight', async (req, res) => {
+  try {
+    const db = getDb();
+    const { category, highlighted, highlightedCategories, theme } = req.body;
+    const settings = await db.collection('settings').findOne({ key: 'app_settings' }) || {};
+    let currentHighlights = (settings && Array.isArray(settings.highlightedCategories))
+      ? [...settings.highlightedCategories]
+      : [];
+
+    if (Array.isArray(highlightedCategories)) {
+      currentHighlights = Array.from(new Set(highlightedCategories.map(c => String(c).trim()).filter(Boolean)));
+    } else if (category) {
+      const cleanCat = String(category).trim();
+      if (highlighted === false) {
+        currentHighlights = currentHighlights.filter(c => c !== cleanCat);
+      } else {
+        if (!currentHighlights.includes(cleanCat)) currentHighlights.push(cleanCat);
+      }
+    }
+
+    const currentTheme = theme || settings.categoryHighlightTheme || 'gold';
+
+    await db.collection('settings').updateOne(
+      { key: 'app_settings' },
+      { $set: { highlightedCategories: currentHighlights, categoryHighlightTheme: currentTheme, updatedAt: new Date() } },
+      { upsert: true }
+    );
+
+    res.json({
+      success: true,
+      highlightedCategories: currentHighlights,
+      categoryHighlightTheme: currentTheme,
+      message: 'Category highlight settings saved in MongoDB Atlas'
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.put('/api/categories/rename', async (req, res) => {
   try {
     const db = getDb();
@@ -1116,7 +1164,7 @@ app.put('/api/categories/rename', async (req, res) => {
       { $set: { targetCategory: cleanNew } }
     );
 
-    // 3. Update category list in settings
+    // 3. Update category list and highlightedCategories in settings
     const settings = await db.collection('settings').findOne({ key: 'app_settings' });
     let currentCats = (settings && Array.isArray(settings.categories))
       ? [...settings.categories]
@@ -1126,13 +1174,20 @@ app.put('/api/categories/rename', async (req, res) => {
     if (!currentCats.includes(cleanNew)) currentCats.push(cleanNew);
     currentCats = Array.from(new Set(currentCats));
 
+    let currentHighlights = (settings && Array.isArray(settings.highlightedCategories))
+      ? [...settings.highlightedCategories]
+      : [];
+    if (currentHighlights.includes(cleanOld)) {
+      currentHighlights = currentHighlights.map(c => c === cleanOld ? cleanNew : c);
+    }
+
     await db.collection('settings').updateOne(
       { key: 'app_settings' },
-      { $set: { categories: currentCats, updatedAt: new Date() } },
+      { $set: { categories: currentCats, highlightedCategories: currentHighlights, updatedAt: new Date() } },
       { upsert: true }
     );
 
-    res.json({ success: true, categories: currentCats, message: `Category '${cleanOld}' renamed to '${cleanNew}'` });
+    res.json({ success: true, categories: currentCats, highlightedCategories: currentHighlights, message: `Category '${cleanOld}' renamed to '${cleanNew}'` });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1149,19 +1204,23 @@ app.delete('/api/categories/:name', async (req, res) => {
       { $set: { category: 'Uncategorized' } }
     );
 
-    // Remove from settings.categories
+    // Remove from settings.categories and settings.highlightedCategories
     const settings = await db.collection('settings').findOne({ key: 'app_settings' });
     let currentCats = (settings && Array.isArray(settings.categories))
       ? settings.categories.filter(c => c !== catName)
       : [];
 
+    let currentHighlights = (settings && Array.isArray(settings.highlightedCategories))
+      ? settings.highlightedCategories.filter(c => c !== catName)
+      : [];
+
     await db.collection('settings').updateOne(
       { key: 'app_settings' },
-      { $set: { categories: currentCats, updatedAt: new Date() } },
+      { $set: { categories: currentCats, highlightedCategories: currentHighlights, updatedAt: new Date() } },
       { upsert: true }
     );
 
-    res.json({ success: true, categories: currentCats, message: `Category '${catName}' removed and items reassigned` });
+    res.json({ success: true, categories: currentCats, highlightedCategories: currentHighlights, message: `Category '${catName}' removed and items reassigned` });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

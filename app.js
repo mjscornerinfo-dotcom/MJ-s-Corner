@@ -1509,11 +1509,23 @@
 
   function renderCategories() {
     const categories = getCategories();
-    els.categoryNavInner.innerHTML = categories.map(cat => `
-      <button class="category-pill ${cat === state.activeCategory ? 'active' : ''}" data-category="${cat}">
-        ${getCategoryIcon(cat)} ${cat}
-      </button>
-    `).join('');
+    const highlighted = (window.MJData && MJData.getHighlightedCategories)
+      ? MJData.getHighlightedCategories()
+      : (state.highlightedCategories || []);
+    const theme = (window.MJData && MJData.getCategoryHighlightTheme)
+      ? MJData.getCategoryHighlightTheme()
+      : (state.categoryHighlightTheme || 'gold');
+
+    els.categoryNavInner.innerHTML = categories.map(cat => {
+      const isHilite = highlighted.includes(cat);
+      const activeClass = cat === state.activeCategory ? 'active' : '';
+      const hiliteClass = isHilite ? `category-pill--highlighted theme-${theme}` : '';
+      return `
+        <button class="category-pill ${activeClass} ${hiliteClass}" data-category="${cat}" ${isHilite ? 'data-highlighted="true"' : ''}>
+          ${isHilite ? '<span class="pill-sparkle">✨</span>' : getCategoryIcon(cat)} <span>${cat}</span>
+        </button>
+      `;
+    }).join('');
 
     els.categoryNavInner.querySelectorAll('.category-pill').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1571,6 +1583,13 @@
     let html = '';
     let renderedCount = 0;
 
+    const highlighted = (window.MJData && MJData.getHighlightedCategories)
+      ? MJData.getHighlightedCategories()
+      : (state.highlightedCategories || []);
+    const theme = (window.MJData && MJData.getCategoryHighlightTheme)
+      ? MJData.getCategoryHighlightTheme()
+      : (state.categoryHighlightTheme || 'gold');
+
     categories.forEach(cat => {
       let items = state.menu.filter(i => i.category === cat && i.available);
 
@@ -1584,10 +1603,15 @@
       if (items.length === 0) return;
       renderedCount += items.length;
 
+      const isHilite = highlighted.includes(cat);
+      const spotlightBadge = isHilite
+        ? `<span class="category-spotlight-badge theme-${theme}">✨ Spotlight</span>`
+        : '';
+
       html += `
-        <section class="menu-section" id="category-${cat}">
-          <div class="menu-section-header">
-            <h2>${getCategoryIcon(cat)} ${cat}</h2>
+        <section class="menu-section ${isHilite ? 'menu-section--highlighted theme-' + theme : ''}" id="category-${cat}">
+          <div class="menu-section-header ${isHilite ? 'is-highlighted-header' : ''}">
+            <h2>${getCategoryIcon(cat)} ${cat} ${spotlightBadge}</h2>
             <span class="count">${items.length} items</span>
           </div>
           <div class="menu-grid">
@@ -4024,7 +4048,7 @@
 
     // Listen for storage changes from other tabs
     window.addEventListener('storage', (e) => {
-      if (e.key === 'mj_menu' || e.key === 'mj_promos' || e.key === 'mj_promoPopup' || e.key === 'mj_banners') {
+      if (e.key === 'mj_menu' || e.key === 'mj_promos' || e.key === 'mj_promoPopup' || e.key === 'mj_banners' || e.key === 'mj_categories' || e.key === 'mj_highlighted_categories' || e.key === 'mj_category_highlight_theme') {
         handleDataUpdate();
       }
       if (e.key === 'mj_orders') {

@@ -28,7 +28,9 @@
     invoiceFormat: 'tax-invoice',
     categories: [],
     menuFilterCategory: 'All',
-    banners: []
+    banners: [],
+    highlightedCategories: [],
+    categoryHighlightTheme: 'gold'
   };
 
   // ========== DOM REFERENCES ==========
@@ -102,6 +104,7 @@
     categoryManagerCard: $('#categoryManagerCard'),
     categoryChipsList: $('#categoryChipsList'),
     categoryFilterActiveHint: $('#categoryFilterActiveHint'),
+    categoryHighlightThemeSelect: $('#categoryHighlightThemeSelect'),
     newCategoryInput: $('#newCategoryInput'),
     btnAddCategoryBtn: $('#btnAddCategoryBtn'),
     renameCategoryModal: $('#renameCategoryModal'),
@@ -249,9 +252,18 @@
           if (data.settings.deliveryCharge !== undefined) state.deliveryFee = data.settings.deliveryCharge;
           if (Array.isArray(data.settings.categories) && data.settings.categories.length > 0) {
             state.categories = data.settings.categories;
-            if (state.currentPage === 'menu-editor') {
-              renderCategoryManager();
+          }
+          if (Array.isArray(data.settings.highlightedCategories)) {
+            state.highlightedCategories = data.settings.highlightedCategories;
+          }
+          if (data.settings.categoryHighlightTheme) {
+            state.categoryHighlightTheme = data.settings.categoryHighlightTheme;
+            if (els.categoryHighlightThemeSelect) {
+              els.categoryHighlightThemeSelect.value = state.categoryHighlightTheme;
             }
+          }
+          if (state.currentPage === 'menu-editor') {
+            renderCategoryManager();
           }
           updateStoreControlsUI();
         }
@@ -1515,6 +1527,16 @@
   function renderCategoryManager() {
     if (!els.categoryChipsList) return;
     const cats = getActiveCategories();
+    const highlighted = (window.MJData && MJData.getHighlightedCategories)
+      ? MJData.getHighlightedCategories()
+      : (state.highlightedCategories || []);
+    const currentTheme = (window.MJData && MJData.getCategoryHighlightTheme)
+      ? MJData.getCategoryHighlightTheme()
+      : (state.categoryHighlightTheme || 'gold');
+
+    if (els.categoryHighlightThemeSelect) {
+      els.categoryHighlightThemeSelect.value = currentTheme;
+    }
 
     // Calculate count of items in each category
     const countMap = {};
@@ -1539,11 +1561,13 @@
     cats.forEach(cat => {
       const count = countMap[cat] || 0;
       const isActive = state.menuFilterCategory === cat;
+      const isHilite = highlighted.includes(cat);
       chipsHtml += `
-        <div class="category-chip ${isActive ? 'active' : ''}" data-cat-filter="${cat}">
-          <span>${getCategoryIcon(cat)} ${cat}</span>
+        <div class="category-chip ${isActive ? 'active' : ''} ${isHilite ? 'is-highlighted theme-' + currentTheme : ''}" data-cat-filter="${cat}">
+          <span>${isHilite ? '✨' : getCategoryIcon(cat)} ${cat}</span>
           <span class="category-chip-count">${count}</span>
           <span class="category-chip-actions">
+            <button type="button" class="category-chip-btn btn-cat-highlight ${isHilite ? 'active' : ''}" data-cat="${cat}" title="${isHilite ? 'Remove shiny highlight from ' + cat : 'Highlight & make ' + cat + ' shiny on customer menu'}">${isHilite ? '✨' : '⭐'}</button>
             <button type="button" class="category-chip-btn btn-cat-rename" data-cat="${cat}" title="Rename '${cat}'">✏️</button>
             <button type="button" class="category-chip-btn btn-cat-delete" data-cat="${cat}" title="Delete '${cat}'">🗑️</button>
           </span>
@@ -1575,6 +1599,38 @@
         }
         renderCategoryManager();
         renderMenuEditor();
+      });
+    });
+
+    // Highlight button
+    els.categoryChipsList.querySelectorAll('.btn-cat-highlight').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const catName = btn.dataset.cat;
+        let list = (window.MJData && MJData.getHighlightedCategories)
+          ? MJData.getHighlightedCategories()
+          : (state.highlightedCategories || []);
+        const wasHighlighted = list.includes(catName);
+
+        if (window.MJData && MJData.toggleCategoryHighlight) {
+          list = MJData.toggleCategoryHighlight(catName, currentTheme);
+        } else {
+          list = wasHighlighted ? list.filter(c => c !== catName) : [...list, catName];
+          fetch('/api/categories/highlight', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ highlightedCategories: list, theme: currentTheme })
+          }).catch(err => console.warn(err));
+        }
+
+        state.highlightedCategories = list;
+        renderCategoryManager();
+        showToast(
+          wasHighlighted
+            ? `Category '${catName}' highlight removed.`
+            : `✨ Category '${catName}' is now SHINY and highlighted on customer menu!`,
+          'success'
+        );
       });
     });
 
@@ -2667,6 +2723,23 @@
 
     if (els.btnAddCategoryBtn) {
       els.btnAddCategoryBtn.addEventListener('click', handleAddCategory);
+    }
+    if (els.categoryHighlightThemeSelect) {
+      els.categoryHighlightThemeSelect.addEventListener('change', () => {
+        const theme = els.categoryHighlightThemeSelect.value || 'gold';
+        state.categoryHighlightTheme = theme;
+        if (window.MJData && MJData.setCategoryHighlightTheme) {
+          MJData.setCategoryHighlightTheme(theme);
+        } else {
+          fetch('/api/categories/highlight', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ highlightedCategories: state.highlightedCategories || [], theme })
+          }).catch(err => console.warn(err));
+        }
+        renderCategoryManager();
+        showToast(`🎨 Category shine style updated!`, 'info');
+      });
     }
     if (els.newCategoryInput) {
       els.newCategoryInput.addEventListener('keydown', (e) => {

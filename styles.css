@@ -684,6 +684,182 @@ input, select, textarea {
   box-shadow: var(--shadow-accent);
 }
 
+/* ===== SHINY & HIGHLIGHTED CATEGORY PILL ===== */
+.category-pill--highlighted {
+  position: relative;
+  overflow: hidden;
+  font-weight: 700 !important;
+  letter-spacing: 0.25px;
+  border-width: 1.5px !important;
+  animation: category-pill-pulse 3s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+/* Continuous liquid light sheen sweep across the button */
+.category-pill--highlighted::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -130%;
+  width: 60%;
+  height: 220%;
+  background: linear-gradient(
+    105deg,
+    transparent 15%,
+    rgba(255, 255, 255, 0.85) 50%,
+    transparent 85%
+  );
+  transform: rotate(25deg);
+  animation: category-sheen-sweep 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes category-sheen-sweep {
+  0% { left: -130%; }
+  35%, 100% { left: 160%; }
+}
+
+@keyframes category-pill-pulse {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+.pill-sparkle {
+  display: inline-block;
+  animation: sparkle-twinkle 1.8s ease-in-out infinite alternate;
+  font-size: 0.92rem;
+  line-height: 1;
+  margin-right: 3px;
+}
+
+@keyframes sparkle-twinkle {
+  0% { transform: scale(0.85) rotate(-12deg); opacity: 0.85; }
+  100% { transform: scale(1.25) rotate(15deg); opacity: 1; }
+}
+
+/* Theme: Radiant Gold Shimmer (Default) */
+.category-pill--highlighted.theme-gold {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 30%, #fffbeb 50%, #f59e0b 70%, #d97706 100%) !important;
+  background-size: 200% 100% !important;
+  color: #451a03 !important;
+  border-color: #fde68a !important;
+  box-shadow: 0 3px 14px rgba(245, 158, 11, 0.5), 0 0 20px rgba(251, 191, 36, 0.35) !important;
+}
+.category-pill--highlighted.theme-gold.active {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 30%, #fef3c7 50%, #d97706 100%) !important;
+  color: #291002 !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.45), 0 4px 18px rgba(217, 119, 6, 0.75) !important;
+}
+
+/* Theme: Neon Flame Pulse */
+.category-pill--highlighted.theme-flame {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 40%, #fef08a 60%, #ef4444 100%) !important;
+  background-size: 200% 100% !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  border-color: #fca5a5 !important;
+  box-shadow: 0 3px 14px rgba(239, 68, 68, 0.55), 0 0 20px rgba(249, 115, 22, 0.4) !important;
+}
+.category-pill--highlighted.theme-flame.active {
+  background: linear-gradient(135deg, #dc2626 0%, #ea580c 40%, #ffedd5 60%, #b91c1c 100%) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.45), 0 4px 20px rgba(220, 38, 38, 0.8) !important;
+}
+
+/* Theme: Electric Ice Glow */
+.category-pill--highlighted.theme-cyan {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 40%, #e0f2fe 60%, #0369a1 100%) !important;
+  background-size: 200% 100% !important;
+  color: #082f49 !important;
+  border-color: #bae6fd !important;
+  box-shadow: 0 3px 14px rgba(56, 189, 248, 0.55), 0 0 20px rgba(14, 165, 233, 0.4) !important;
+}
+.category-pill--highlighted.theme-cyan.active {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 40%, #f0f9ff 60%, #075985 100%) !important;
+  color: #032030 !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.45), 0 4px 20px rgba(3, 105, 161, 0.8) !important;
+}
+
+/* Theme: Fresh Emerald Sheen */
+.category-pill--highlighted.theme-emerald {
+  background: linear-gradient(135deg, #059669 0%, #10b981 40%, #d1fae5 60%, #047857 100%) !important;
+  background-size: 200% 100% !important;
+  color: #064e3b !important;
+  border-color: #a7f3d0 !important;
+  box-shadow: 0 3px 14px rgba(16, 185, 129, 0.55), 0 0 20px rgba(5, 150, 105, 0.4) !important;
+}
+.category-pill--highlighted.theme-emerald.active {
+  background: linear-gradient(135deg, #047857 0%, #059669 40%, #ecfdf5 60%, #065f46 100%) !important;
+  color: #022c22 !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.45), 0 4px 20px rgba(4, 120, 87, 0.8) !important;
+}
+
+/* Theme: Royal Violet Aura */
+.category-pill--highlighted.theme-purple {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 40%, #f3e8ff 60%, #6d28d9 100%) !important;
+  background-size: 200% 100% !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  border-color: #d8b4fe !important;
+  box-shadow: 0 3px 14px rgba(168, 85, 247, 0.55), 0 0 20px rgba(124, 58, 237, 0.4) !important;
+}
+.category-pill--highlighted.theme-purple.active {
+  background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 40%, #faf5ff 60%, #5b21b6 100%) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.45), 0 4px 20px rgba(109, 40, 217, 0.8) !important;
+}
+
+/* Spotlight badge in section headers */
+.category-spotlight-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  margin-left: 8px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: sparkle-twinkle 2.5s ease-in-out infinite alternate;
+}
+.category-spotlight-badge.theme-gold {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35);
+}
+.category-spotlight-badge.theme-flame {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+}
+.category-spotlight-badge.theme-cyan {
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #bae6fd;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.35);
+}
+.category-spotlight-badge.theme-emerald {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+}
+.category-spotlight-badge.theme-purple {
+  background: #f3e8ff;
+  color: #581c87;
+  border: 1px solid #d8b4fe;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+}
+
 /* ---------- Menu Container & Sections ---------- */
 #menuSection {
   width: 100%;
@@ -3925,6 +4101,104 @@ input, select, textarea {
   opacity: 1;
   transform: scale(1.15);
   background: rgba(0, 0, 0, 0.08);
+}
+
+/* Category Highlight in Admin */
+.category-chip.is-highlighted {
+  border-color: #f59e0b !important;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.28)) !important;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.35) !important;
+  font-weight: 700;
+}
+.category-chip.is-highlighted.theme-flame {
+  border-color: #ef4444 !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(249, 115, 22, 0.28)) !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.35) !important;
+}
+.category-chip.is-highlighted.theme-cyan {
+  border-color: #0284c7 !important;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(56, 189, 248, 0.28)) !important;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.35) !important;
+}
+.category-chip.is-highlighted.theme-emerald {
+  border-color: #059669 !important;
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.15), rgba(16, 185, 129, 0.28)) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35) !important;
+}
+.category-chip.is-highlighted.theme-purple {
+  border-color: #7c3aed !important;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(168, 85, 247, 0.28)) !important;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.35) !important;
+}
+
+.category-chip-btn.btn-cat-highlight {
+  font-size: 0.8rem;
+  padding: 2px 4px;
+}
+.category-chip-btn.btn-cat-highlight.active {
+  opacity: 1 !important;
+  transform: scale(1.2) !important;
+  color: #f59e0b !important;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.7);
+}
+
+.category-highlight-bar {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.category-highlight-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.category-highlight-sparkle-icon {
+  font-size: 1.3rem;
+  animation: sparkle-twinkle 2s infinite alternate;
+}
+.category-highlight-headline {
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  display: block;
+}
+.category-highlight-desc {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  display: block;
+  margin-top: 2px;
+}
+.category-highlight-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.category-highlight-actions label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.category-theme-select {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-base);
+}
+.category-theme-select:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 .category-tag-pill {
   display: inline-flex;

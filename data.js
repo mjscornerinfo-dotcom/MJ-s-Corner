@@ -11,6 +11,8 @@ var MJData = (function () {
   const STORAGE_KEY_POPUP = 'mj_promoPopup';
   const STORAGE_KEY_CATEGORIES = 'mj_categories';
   const STORAGE_KEY_BANNERS = 'mj_banners';
+  const STORAGE_KEY_HIGHLIGHTED_CATEGORIES = 'mj_highlighted_categories';
+  const STORAGE_KEY_CATEGORY_HIGHLIGHT_THEME = 'mj_category_highlight_theme';
 
   const DEFAULT_CATEGORIES = [
     'Crispy Fried Chicken',
@@ -679,6 +681,68 @@ var MJData = (function () {
     }).catch(err => console.warn('Could not delete category in MongoDB:', err));
   }
 
+  // ========== CATEGORY HIGHLIGHT & SHINY SPOTLIGHT ==========
+  function getHighlightedCategories() {
+    initStorage();
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_HIGHLIGHTED_CATEGORIES);
+      return data !== null ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function getCategoryHighlightTheme() {
+    initStorage();
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_CATEGORY_HIGHLIGHT_THEME);
+      return data !== null ? JSON.parse(data) : 'gold';
+    } catch (e) {
+      return 'gold';
+    }
+  }
+
+  function saveHighlightedCategories(categories, theme) {
+    if (!Array.isArray(categories)) categories = [];
+    const clean = Array.from(new Set(categories.map(c => String(c).trim()).filter(Boolean)));
+    const cleanTheme = theme || getCategoryHighlightTheme() || 'gold';
+
+    localStorage.setItem(STORAGE_KEY_HIGHLIGHTED_CATEGORIES, JSON.stringify(clean));
+    localStorage.setItem(STORAGE_KEY_CATEGORY_HIGHLIGHT_THEME, JSON.stringify(cleanTheme));
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    fetch('/api/categories/highlight', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ highlightedCategories: clean, theme: cleanTheme })
+    }).catch(err => console.warn('Could not save category highlights to MongoDB:', err));
+  }
+
+  function toggleCategoryHighlight(categoryName, theme) {
+    if (!categoryName) return;
+    const clean = String(categoryName).trim();
+    let list = getHighlightedCategories();
+    if (list.includes(clean)) {
+      list = list.filter(c => c !== clean);
+    } else {
+      list.push(clean);
+    }
+    saveHighlightedCategories(list, theme || getCategoryHighlightTheme());
+    return list;
+  }
+
+  function setCategoryHighlightTheme(theme) {
+    const cleanTheme = theme || 'gold';
+    localStorage.setItem(STORAGE_KEY_CATEGORY_HIGHLIGHT_THEME, JSON.stringify(cleanTheme));
+    window.dispatchEvent(new Event('mj_data_changed'));
+
+    fetch('/api/categories/highlight', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ highlightedCategories: getHighlightedCategories(), theme: cleanTheme })
+    }).catch(err => console.warn('Could not save category highlight theme to MongoDB:', err));
+  }
+
   function resetMenu() {
     localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(DEFAULT_MENU));
     localStorage.setItem('mj_initialized', 'true');
@@ -742,6 +806,12 @@ var MJData = (function () {
         if (catData.success && Array.isArray(catData.categories) && catData.categories.length > 0) {
           localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(catData.categories));
         }
+        if (catData.highlightedCategories) {
+          localStorage.setItem(STORAGE_KEY_HIGHLIGHTED_CATEGORIES, JSON.stringify(catData.highlightedCategories));
+        }
+        if (catData.categoryHighlightTheme) {
+          localStorage.setItem(STORAGE_KEY_CATEGORY_HIGHLIGHT_THEME, JSON.stringify(catData.categoryHighlightTheme));
+        }
       }
 
       // 4. Settings
@@ -754,6 +824,12 @@ var MJData = (function () {
           }
           if (Array.isArray(setData.settings.categories) && setData.settings.categories.length > 0) {
             localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(setData.settings.categories));
+          }
+          if (Array.isArray(setData.settings.highlightedCategories)) {
+            localStorage.setItem(STORAGE_KEY_HIGHLIGHTED_CATEGORIES, JSON.stringify(setData.settings.highlightedCategories));
+          }
+          if (setData.settings.categoryHighlightTheme) {
+            localStorage.setItem(STORAGE_KEY_CATEGORY_HIGHLIGHT_THEME, JSON.stringify(setData.settings.categoryHighlightTheme));
           }
         }
       }
@@ -793,6 +869,11 @@ var MJData = (function () {
     addCategory,
     renameCategory,
     deleteCategory,
+    getHighlightedCategories,
+    saveHighlightedCategories,
+    toggleCategoryHighlight,
+    getCategoryHighlightTheme,
+    setCategoryHighlightTheme,
     isPromoPopupEnabled,
     setPromoPopupEnabled,
     getBanners,
