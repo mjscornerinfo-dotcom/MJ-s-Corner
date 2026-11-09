@@ -59,15 +59,21 @@
     btnSaveDeliveryFee: $('#btnSaveDeliveryFee'),
     btnOpenPosModal: $('#btnOpenPosModal'),
     // Mobile Menu Layout Controls
-    btnSaveMobileLayout: $('#btnSaveMobileLayout'),
+    segBtnList: $('#segBtnList'),
+    segBtnModal: $('#segBtnModal'),
+    segBtnBoth: $('#segBtnBoth'),
     mobileLayoutBadgePill: $('#mobileLayoutBadgePill'),
-    mobileLayoutSaveStatus: $('#mobileLayoutSaveStatus'),
-    radioLayoutHorizontal: $('#radioLayoutHorizontal'),
-    radioLayoutBottomSheet: $('#radioLayoutBottomSheet'),
-    radioLayoutBoth: $('#radioLayoutBoth'),
-    layoutOptCard1: $('#layoutOptCard1'),
-    layoutOptCard2: $('#layoutOptCard2'),
-    layoutOptCard3: $('#layoutOptCard3'),
+    btnOpenMobileLayoutModal: $('#btnOpenMobileLayoutModal'),
+    mobileLayoutModal: $('#mobileLayoutModal'),
+    closeMobileLayoutModalBtn: $('#closeMobileLayoutModalBtn'),
+    btnCancelMobileLayoutModal: $('#btnCancelMobileLayoutModal'),
+    btnApplyMobileLayoutModal: $('#btnApplyMobileLayoutModal'),
+    modalCardOpt1: $('#modalCardOpt1'),
+    modalCardOpt2: $('#modalCardOpt2'),
+    modalCardOpt3: $('#modalCardOpt3'),
+    modalRadioOpt1: $('#modalRadioOpt1'),
+    modalRadioOpt2: $('#modalRadioOpt2'),
+    modalRadioOpt3: $('#modalRadioOpt3'),
     // Automated Delivery Fee Controls
     displayBaseRate: $('#displayBaseRate'),
     displayPerKmRate: $('#displayPerKmRate'),
@@ -658,40 +664,84 @@
       els.btnBillingCreatePos.addEventListener('click', openPosModal);
     }
 
-    // Mobile Menu Layout Radio styling & Save
-    $$('input[name="mobileMenuLayout"]').forEach(radio => {
-      radio.addEventListener('change', () => {
-        const val = radio.value;
-        if (els.layoutOptCard1) els.layoutOptCard1.style.borderColor = (val === 'horizontal_list') ? 'var(--accent)' : 'var(--border)';
-        if (els.layoutOptCard2) els.layoutOptCard2.style.borderColor = (val === 'bottom_sheet') ? 'var(--accent)' : 'var(--border)';
-        if (els.layoutOptCard3) els.layoutOptCard3.style.borderColor = (val === 'both') ? 'var(--accent)' : 'var(--border)';
+    // Mobile Menu Layout Segmented & Modal Controls
+    async function saveMobileLayout(layout) {
+      state.mobileMenuLayout = layout;
+      updateStoreControlsUI();
+      const layoutName = layout === 'horizontal_list' 
+        ? 'Option 1: Swiggy/Zomato List' 
+        : (layout === 'bottom_sheet' ? 'Option 2: Tap-to-View Modal' : 'Hybrid Mode');
+      showToast(`Mobile layout saved: ${layoutName}`, 'success');
+
+      try {
+        await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mobileMenuLayout: layout })
+        });
+      } catch (e) {
+        console.warn('Could not save mobile menu layout to MongoDB Atlas:', e);
+        showToast('Failed to save setting to server', 'error');
+      }
+    }
+
+    if (els.segBtnList) {
+      els.segBtnList.addEventListener('click', () => saveMobileLayout('horizontal_list'));
+    }
+    if (els.segBtnModal) {
+      els.segBtnModal.addEventListener('click', () => saveMobileLayout('bottom_sheet'));
+    }
+    if (els.segBtnBoth) {
+      els.segBtnBoth.addEventListener('click', () => saveMobileLayout('both'));
+    }
+
+    // Mobile Layout Modal
+    let pendingModalLayout = state.mobileMenuLayout || 'horizontal_list';
+
+    function syncModalCardsUI(selectedLayout) {
+      [els.modalCardOpt1, els.modalCardOpt2, els.modalCardOpt3].forEach(card => {
+        if (!card) return;
+        const val = card.dataset.val;
+        const isSel = (val === selectedLayout);
+        card.classList.toggle('selected', isSel);
+      });
+      if (els.modalRadioOpt1) els.modalRadioOpt1.textContent = (selectedLayout === 'horizontal_list') ? '●' : '○';
+      if (els.modalRadioOpt2) els.modalRadioOpt2.textContent = (selectedLayout === 'bottom_sheet') ? '●' : '○';
+      if (els.modalRadioOpt3) els.modalRadioOpt3.textContent = (selectedLayout === 'both') ? '●' : '○';
+    }
+
+    if (els.btnOpenMobileLayoutModal && els.mobileLayoutModal) {
+      els.btnOpenMobileLayoutModal.addEventListener('click', () => {
+        pendingModalLayout = state.mobileMenuLayout || 'horizontal_list';
+        syncModalCardsUI(pendingModalLayout);
+        els.mobileLayoutModal.classList.add('open');
+      });
+    }
+
+    if (els.closeMobileLayoutModalBtn && els.mobileLayoutModal) {
+      els.closeMobileLayoutModalBtn.addEventListener('click', () => {
+        els.mobileLayoutModal.classList.remove('open');
+      });
+    }
+
+    if (els.btnCancelMobileLayoutModal && els.mobileLayoutModal) {
+      els.btnCancelMobileLayoutModal.addEventListener('click', () => {
+        els.mobileLayoutModal.classList.remove('open');
+      });
+    }
+
+    [els.modalCardOpt1, els.modalCardOpt2, els.modalCardOpt3].forEach(card => {
+      if (!card) return;
+      card.addEventListener('click', () => {
+        pendingModalLayout = card.dataset.val;
+        syncModalCardsUI(pendingModalLayout);
       });
     });
 
-    if (els.btnSaveMobileLayout) {
-      els.btnSaveMobileLayout.addEventListener('click', async () => {
-        const selectedRadio = $('input[name="mobileMenuLayout"]:checked');
-        const layout = selectedRadio ? selectedRadio.value : 'horizontal_list';
-        state.mobileMenuLayout = layout;
-        updateStoreControlsUI();
-        const layoutName = layout === 'horizontal_list' ? 'Option 1: Swiggy/Zomato List' : (layout === 'bottom_sheet' ? 'Option 2: Tap-to-View Modal' : 'Hybrid Mode');
-        showToast(`Mobile layout saved: ${layoutName}`, 'success');
-        
-        if (els.mobileLayoutSaveStatus) {
-          els.mobileLayoutSaveStatus.style.display = 'inline';
-          setTimeout(() => { if (els.mobileLayoutSaveStatus) els.mobileLayoutSaveStatus.style.display = 'none'; }, 3000);
-        }
-
-        try {
-          await fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mobileMenuLayout: layout })
-          });
-        } catch (e) {
-          console.warn('Could not save mobile menu layout to MongoDB Atlas:', e);
-          showToast('Failed to save setting to server', 'error');
-        }
+    if (els.btnApplyMobileLayoutModal && els.mobileLayoutModal) {
+      els.btnApplyMobileLayoutModal.addEventListener('click', () => {
+        els.mobileLayoutModal.classList.remove('open');
+        saveMobileLayout(pendingModalLayout);
       });
     }
 
@@ -901,17 +951,13 @@
 
     // Mobile Menu Layout sync
     const layout = state.mobileMenuLayout || 'horizontal_list';
-    if (els.radioLayoutHorizontal) els.radioLayoutHorizontal.checked = (layout === 'horizontal_list');
-    if (els.radioLayoutBottomSheet) els.radioLayoutBottomSheet.checked = (layout === 'bottom_sheet');
-    if (els.radioLayoutBoth) els.radioLayoutBoth.checked = (layout === 'both');
-
-    if (els.layoutOptCard1) els.layoutOptCard1.style.borderColor = (layout === 'horizontal_list') ? 'var(--accent)' : 'var(--border)';
-    if (els.layoutOptCard2) els.layoutOptCard2.style.borderColor = (layout === 'bottom_sheet') ? 'var(--accent)' : 'var(--border)';
-    if (els.layoutOptCard3) els.layoutOptCard3.style.borderColor = (layout === 'both') ? 'var(--accent)' : 'var(--border)';
+    if (els.segBtnList) els.segBtnList.classList.toggle('active', layout === 'horizontal_list');
+    if (els.segBtnModal) els.segBtnModal.classList.toggle('active', layout === 'bottom_sheet');
+    if (els.segBtnBoth) els.segBtnBoth.classList.toggle('active', layout === 'both');
 
     if (els.mobileLayoutBadgePill) {
-      if (layout === 'horizontal_list') els.mobileLayoutBadgePill.textContent = 'Option 1 Active';
-      else if (layout === 'bottom_sheet') els.mobileLayoutBadgePill.textContent = 'Option 2 Active';
+      if (layout === 'horizontal_list') els.mobileLayoutBadgePill.textContent = 'Swiggy List Active';
+      else if (layout === 'bottom_sheet') els.mobileLayoutBadgePill.textContent = 'Modal Active';
       else if (layout === 'both') els.mobileLayoutBadgePill.textContent = 'Hybrid Active';
     }
   }

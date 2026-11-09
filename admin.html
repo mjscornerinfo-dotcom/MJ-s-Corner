@@ -145,42 +145,24 @@
               <span class="store-control-badge">📱 Mobile Experience</span>
               <span class="store-live-pill" id="mobileLayoutBadgePill">Option 1 Active</span>
             </div>
-            <div class="store-control-title">Mobile Menu Layout & Detail View</div>
-            <p class="store-control-desc">Choose how menu items, ingredients & combo breakdowns are displayed on smartphone screens.</p>
+            <div class="store-control-title">Mobile Menu Experience</div>
+            <p class="store-control-desc">Active layout for smartphone screens. Choose how combos and item details are presented.</p>
 
-            <div class="mobile-layout-selector" style="display:flex;flex-direction:column;gap:8px;margin:12px 0;">
-              <label class="mobile-layout-radio-card" id="layoutOptCard1" style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg-secondary);border:1.5px solid var(--accent);border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition-fast);">
-                <input type="radio" name="mobileMenuLayout" value="horizontal_list" id="radioLayoutHorizontal" checked style="margin-top:3px;accent-color:var(--accent);">
-                <div style="flex:1;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <strong style="font-size:0.86rem;color:var(--text-primary);">Option 1: Swiggy/Zomato List</strong>
-                    <span style="font-size:0.68rem;padding:2px 6px;border-radius:4px;background:var(--success-light);color:var(--success);font-weight:700;">Recommended</span>
-                  </div>
-                  <span style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-top:2px;line-height:1.35;">Full-width rows with bulleted combo items on the left and a square photo with overlapping +ADD on the right.</span>
-                </div>
-              </label>
-
-              <label class="mobile-layout-radio-card" id="layoutOptCard2" style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg-secondary);border:1.5px solid var(--border);border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition-fast);">
-                <input type="radio" name="mobileMenuLayout" value="bottom_sheet" id="radioLayoutBottomSheet" style="margin-top:3px;accent-color:var(--accent);">
-                <div style="flex:1;">
-                  <strong style="font-size:0.86rem;color:var(--text-primary);display:block;">Option 2: Tap-to-View Modal</strong>
-                  <span style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-top:2px;line-height:1.35;">2-column grid. Tapping any item slides open a rich bottom sheet drawer with large photo, untruncated details & sticky cart button.</span>
-                </div>
-              </label>
-
-              <label class="mobile-layout-radio-card" id="layoutOptCard3" style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg-secondary);border:1.5px solid var(--border);border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition-fast);">
-                <input type="radio" name="mobileMenuLayout" value="both" id="radioLayoutBoth" style="margin-top:3px;accent-color:var(--accent);">
-                <div style="flex:1;">
-                  <strong style="font-size:0.86rem;color:var(--text-primary);display:block;">Hybrid (List + Modal on Tap)</strong>
-                  <span style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-top:2px;line-height:1.35;">Full-width list cards on mobile, plus clicking anywhere on the card opens the full Dish Detail Modal.</span>
-                </div>
-              </label>
+            <div class="mobile-layout-seg-control" id="mobileLayoutSegControl">
+              <button type="button" class="seg-btn active" data-layout="horizontal_list" id="segBtnList" title="Option 1: Swiggy/Zomato List Card">
+                <span class="seg-icon">☰</span> List
+              </button>
+              <button type="button" class="seg-btn" data-layout="bottom_sheet" id="segBtnModal" title="Option 2: Tap-to-View Dish Modal">
+                <span class="seg-icon">⊞</span> Modal
+              </button>
+              <button type="button" class="seg-btn" data-layout="both" id="segBtnBoth" title="Hybrid: List with Modal on Tap">
+                <span class="seg-icon">⚡</span> Hybrid
+              </button>
             </div>
 
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;">
-              <span id="mobileLayoutSaveStatus" style="font-size:0.75rem;color:var(--success);font-weight:700;display:none;">Saved to Atlas ✓</span>
-              <button type="button" class="btn-admin primary" id="btnSaveMobileLayout" style="padding:7px 14px;font-size:0.8rem;margin-left:auto;">
-                💾 Save Layout Mode
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+              <button type="button" class="btn-admin secondary" id="btnOpenMobileLayoutModal" style="padding:7px 14px;font-size:0.8rem;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span>⚙️ Configure & Preview</span>
               </button>
             </div>
           </div>
@@ -928,6 +910,80 @@
 
         <div id="deliveryTestResults" class="hidden" style="margin-top:16px;padding:14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);">
           <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MOBILE LAYOUT SETTINGS MODAL ========== -->
+  <div class="modal-overlay" id="mobileLayoutModal">
+    <div class="modal" style="max-width:560px;">
+      <div class="modal-header">
+        <h2 style="font-size:1.2rem;display:flex;align-items:center;gap:8px;">
+          <span>📱</span> Mobile Menu Layout & Experience
+        </h2>
+        <button class="cart-close-btn" id="closeMobileLayoutModalBtn">✕</button>
+      </div>
+
+      <div class="modal-body" style="padding:20px;">
+        <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.45;">
+          Choose how food items, descriptions, and combo breakdowns are presented to customers on mobile devices (&lt; 600px width).
+        </p>
+
+        <div class="mobile-layout-modal-options" style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+          <!-- Option 1 -->
+          <div class="layout-modal-card selected" id="modalCardOpt1" data-val="horizontal_list">
+            <div class="layout-card-header">
+              <span class="layout-card-radio" id="modalRadioOpt1">●</span>
+              <strong class="layout-card-title">Option 1: Swiggy / Zomato Horizontal List Card</strong>
+              <span class="badge-recommended">Recommended</span>
+            </div>
+            <p class="layout-card-desc">
+              Switches mobile screens to full-width row cards. The left side showcases item title, price, and clearly formatted combo bullets. The right side features a square food photo with a floating <strong>+ ADD</strong> button.
+            </p>
+            <div class="layout-card-pills">
+              <span>✓ Zero extra taps needed</span>
+              <span>✓ Complete combo visibility</span>
+              <span>✓ Industry standard UX</span>
+            </div>
+          </div>
+
+          <!-- Option 2 -->
+          <div class="layout-modal-card" id="modalCardOpt2" data-val="bottom_sheet">
+            <div class="layout-card-header">
+              <span class="layout-card-radio" id="modalRadioOpt2">○</span>
+              <strong class="layout-card-title">Option 2: Tap-to-View Dish Detail Modal</strong>
+            </div>
+            <p class="layout-card-desc">
+              Preserves the compact 2-column mobile grid. Tapping any item smoothly slides open a rich bottom sheet drawer with high-resolution hero photo, untruncated combo details, ratings, and a sticky "Add to Cart" button.
+            </p>
+            <div class="layout-card-pills">
+              <span>✓ Compact 2-column browse</span>
+              <span>✓ Rich sliding drawer</span>
+              <span>✓ High-res appetite appeal</span>
+            </div>
+          </div>
+
+          <!-- Option 3 (Hybrid) -->
+          <div class="layout-modal-card" id="modalCardOpt3" data-val="both">
+            <div class="layout-card-header">
+              <span class="layout-card-radio" id="modalRadioOpt3">○</span>
+              <strong class="layout-card-title">Hybrid: Horizontal List + Modal on Tap</strong>
+            </div>
+            <p class="layout-card-desc">
+              Best of both worlds! Full-width horizontal list cards for instant scannability on mobile, plus tapping the card opens the full Dish Detail bottom sheet modal.
+            </p>
+            <div class="layout-card-pills">
+              <span>✓ Instant scannability</span>
+              <span>✓ Full details on demand</span>
+              <span>✓ Maximum flexibility</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--border);padding-top:16px;">
+          <button type="button" class="btn-admin secondary" id="btnCancelMobileLayoutModal">Cancel</button>
+          <button type="button" class="btn-admin primary" id="btnApplyMobileLayoutModal">💾 Save & Apply</button>
         </div>
       </div>
     </div>
