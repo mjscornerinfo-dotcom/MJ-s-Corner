@@ -548,6 +548,7 @@
     customItemTitle: $('#customItemTitle'),
     customItemCategory: $('#customItemCategory'),
     customItemDesc: $('#customItemDesc'),
+    customItemHeroBadges: $('#customItemHeroBadges'),
     customSizesGroup: $('#customSizesGroup'),
     customSizesList: $('#customSizesList'),
     customAddonsGroup: $('#customAddonsGroup'),
@@ -1736,18 +1737,39 @@
       customizationState.selectedSize = null;
     }
 
-    if (els.customItemImg) els.customItemImg.src = item.image || 'images/burger.jpg';
-    if (els.customItemTitle) {
-      const isVeg = item.isVeg !== undefined ? item.isVeg : (item.dietary === 'veg');
-      els.customItemTitle.innerHTML = `
-        <span class="dietary-mini-badge ${isVeg ? 'veg' : 'non-veg'}" style="margin-right:8px;" title="${isVeg ? 'Pure Veg' : 'Non-Veg'}">
-          <span class="dietary-dot"></span>
-        </span>
-        <span>${escapeHtml(item.name)}</span>
-      `;
+    if (els.customItemImg) {
+      els.customItemImg.src = item.image || 'images/burger.jpg';
+      els.customItemImg.alt = item.name || '';
     }
-    if (els.customItemCategory) els.customItemCategory.textContent = item.category;
-    if (els.customItemDesc) els.customItemDesc.textContent = item.description || '';
+
+    const isVeg = item.isVeg !== undefined ? item.isVeg : (item.dietary === 'veg');
+    const dietaryClass = isVeg ? 'veg' : 'non-veg';
+    const dietaryTitle = isVeg ? 'Pure Veg' : 'Non-Veg';
+
+    // High-resolution Hero Badges (consistent with standard item preview pop-up)
+    if (els.customItemHeroBadges) {
+      let badgesHtml = `
+        <div class="dietary-badge ${dietaryClass}" title="${dietaryTitle}">
+          <span class="dietary-dot"></span>
+        </div>
+      `;
+      if (item.category) {
+        badgesHtml += `<span class="detail-category-badge" id="customItemCategory">${escapeHtml(item.category)}</span>`;
+      }
+      if (item.badge) {
+        badgesHtml += `<span class="detail-special-badge">${escapeHtml(item.badge)}</span>`;
+      }
+      els.customItemHeroBadges.innerHTML = badgesHtml;
+    } else if (els.customItemCategory) {
+      els.customItemCategory.textContent = item.category || '';
+    }
+
+    if (els.customItemTitle) {
+      els.customItemTitle.textContent = item.name || '';
+    }
+    if (els.customItemDesc) {
+      els.customItemDesc.innerHTML = formatMenuDescription(item.description || '');
+    }
 
     // Render Sizes
     if (Array.isArray(item.sizes) && item.sizes.length > 0) {
@@ -1771,13 +1793,17 @@
 
     if (els.customizationModal) {
       els.customizationModal.classList.add('open');
+      els.customizationModal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+      const scrollBody = els.customizationModal.querySelector('.custom-modal-scroll-body') || els.customizationModalBody;
+      if (scrollBody) scrollBody.scrollTop = 0;
     }
   }
 
   function closeCustomizationModal() {
     if (els.customizationModal) {
       els.customizationModal.classList.remove('open');
+      els.customizationModal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
     }
     customizationState.item = null;

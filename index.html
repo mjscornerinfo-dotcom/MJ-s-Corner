@@ -359,43 +359,54 @@
   </div>
 
   <!-- ========== ITEM CUSTOMIZATION MODAL ========== -->
-  <div class="modal-overlay" id="customizationModal">
-    <div class="modal customization-modal">
-      <div class="modal-header">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <img id="customItemImg" src="images/burger.jpg" alt="" class="custom-modal-img">
-          <div>
-            <h2 id="customItemTitle" style="font-size:1.15rem;margin:0;font-family:var(--font-display);">Customize Item</h2>
-            <div id="customItemCategory" style="font-size:0.75rem;color:var(--text-tertiary);margin-top:2px;">Category</div>
-          </div>
-        </div>
-        <button class="cart-close-btn" id="customizationCloseBtn">✕</button>
-      </div>
-      <div class="modal-body" id="customizationModalBody" style="max-height:65vh;overflow-y:auto;padding:20px;">
-        <p id="customItemDesc" style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:16px;line-height:1.45;"></p>
+  <div class="modal-overlay customization-overlay" id="customizationModal" aria-hidden="true">
+    <div class="modal customization-modal" id="customizationModalSheet">
+      <div class="sheet-drag-handle"><span></span></div>
+      <button class="sheet-close-btn" id="customizationCloseBtn" aria-label="Close customization">✕</button>
 
-        <!-- Sizes Selection -->
-        <div id="customSizesGroup" class="custom-section hidden">
-          <div class="custom-section-header">
-            <span class="custom-section-title">📏 Select Size</span>
-            <span class="custom-badge required">Required</span>
-          </div>
-          <div class="custom-options-list" id="customSizesList">
-            <!-- Rendered by JS -->
+      <!-- Scrollable Modal Body containing the Hero Image & Options -->
+      <div class="modal-body custom-modal-scroll-body" id="customizationModalBody">
+        <!-- High-resolution Product Hero Image Header (Consistent with Standard Item Preview Pop-up) -->
+        <div class="dish-detail-hero custom-modal-hero">
+          <img id="customItemImg" src="images/burger.jpg" alt="Dish Hero" loading="lazy">
+          <div class="dish-detail-hero-gradient"></div>
+          <div class="dish-detail-hero-badges" id="customItemHeroBadges">
+            <!-- Populated by JS: Dietary badge, Category badge & Special badge -->
           </div>
         </div>
 
-        <!-- Add-ons Selection -->
-        <div id="customAddonsGroup" class="custom-section hidden">
-          <div class="custom-section-header">
-            <span class="custom-section-title">🧀 Extra Add-ons</span>
-            <span class="custom-badge optional">Optional</span>
+        <div class="custom-item-main-info">
+          <div class="custom-item-title-row">
+            <h2 id="customItemTitle" class="custom-item-title">Customize Item</h2>
           </div>
-          <div class="custom-options-list" id="customAddonsList">
-            <!-- Rendered by JS -->
+          <div id="customItemDesc" class="custom-item-desc"></div>
+        </div>
+
+        <div class="custom-sections-wrap">
+          <!-- Sizes Selection -->
+          <div id="customSizesGroup" class="custom-section hidden">
+            <div class="custom-section-header">
+              <span class="custom-section-title">📏 Select Size</span>
+              <span class="custom-badge required">Required</span>
+            </div>
+            <div class="custom-options-list" id="customSizesList">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Add-ons Selection -->
+          <div id="customAddonsGroup" class="custom-section hidden">
+            <div class="custom-section-header">
+              <span class="custom-section-title">🧀 Extra Add-ons</span>
+              <span class="custom-badge optional">Optional</span>
+            </div>
+            <div class="custom-options-list" id="customAddonsList">
+              <!-- Rendered by JS -->
+            </div>
           </div>
         </div>
       </div>
+
       <div class="customization-modal-footer">
         <div class="custom-qty-selector">
           <button type="button" class="btn-qty" id="btnCustomQtyDec" aria-label="Decrease quantity">−</button>

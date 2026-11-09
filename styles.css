@@ -3088,13 +3088,97 @@ input, select, textarea {
   margin-top: 4px;
 }
 
-/* Customization Modal */
+/* ==========================================================================
+   ITEM CUSTOMIZATION MODAL (With Hero Image, consistent with Preview Pop-up)
+   ========================================================================== */
+.customization-overlay {
+  z-index: 99999;
+}
+
 .customization-modal {
-  max-width: 500px;
-  width: 95%;
-  max-height: 90vh;
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  background: var(--bg-card);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  border-top: 1px solid var(--border-strong);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
+  overflow: hidden !important;
+  position: relative;
+  padding: 0;
+}
+
+@media (min-width: 641px) {
+  .modal-overlay.customization-overlay {
+    align-items: center;
+  }
+  .customization-modal {
+    border-radius: 22px;
+    border: 1px solid var(--border-strong);
+    max-height: 85vh;
+  }
+}
+
+.custom-modal-hero {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.custom-modal-hero img,
+.custom-modal-hero #customItemImg {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border: none !important;
+  border-radius: 0 !important;
+  display: block;
+}
+
+.custom-modal-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 !important;
+  max-height: none !important;
+}
+
+.custom-item-main-info {
+  padding: 16px 20px 10px;
+}
+
+.custom-item-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.custom-item-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+  font-family: var(--font-display);
+}
+
+.custom-item-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+.custom-sections-wrap {
+  padding: 8px 20px 16px;
 }
 
 .custom-modal-img {
