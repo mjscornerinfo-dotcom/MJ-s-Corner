@@ -1016,6 +1016,23 @@ input, select, textarea {
   background: #dc2626;
 }
 
+/* Inline / Title-Row Dietary Badge overrides: strictly in-flow flex item to prevent text overlap */
+.dietary-badge.inline,
+.menu-card-title-wrap .dietary-badge,
+.dish-detail-title-row .dietary-badge {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  flex-shrink: 0 !important;
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  min-height: 17px;
+  margin: 2px 0 0 0 !important;
+  box-shadow: none;
+  z-index: 1;
+}
+
 /* Mini Dietary Badge for filters, dropdowns, admin */
 .dietary-mini-badge {
   display: inline-flex;
@@ -5444,21 +5461,32 @@ input, select, textarea {
 
 .menu-card-title-wrap {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 8px;
   flex: 1;
+  min-width: 0;
+  position: relative;
 }
 
 .dietary-badge.inline {
   display: none;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  flex-shrink: 0 !important;
+  width: 17px;
+  height: 17px;
+  margin: 2px 0 0 0 !important;
 }
 
 @media (max-width: 600px) {
   body[data-mobile-layout="horizontal_list"] .dietary-badge.inline,
   body[data-mobile-layout="both"] .dietary-badge.inline,
-  body:not([data-mobile-layout="bottom_sheet"]) .dietary-badge.inline {
-    display: inline-flex;
-    margin-right: 2px;
+  body:not([data-mobile-layout="bottom_sheet"]) .dietary-badge.inline,
+  body[data-mobile-layout="horizontal_list"] .menu-card-title-wrap .dietary-badge,
+  body[data-mobile-layout="both"] .menu-card-title-wrap .dietary-badge,
+  body:not([data-mobile-layout="bottom_sheet"]) .menu-card-title-wrap .dietary-badge {
+    display: inline-flex !important;
   }
 
   body[data-mobile-layout="horizontal_list"] .menu-grid,
@@ -5531,9 +5559,12 @@ input, select, textarea {
   body:not([data-mobile-layout="bottom_sheet"]) .menu-card-title {
     font-size: 0.96rem;
     font-weight: 700;
-    line-height: 1.32;
+    line-height: 1.35;
     -webkit-line-clamp: 3;
     margin-bottom: 2px;
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
   }
 
   body[data-mobile-layout="horizontal_list"] .menu-card-desc,
