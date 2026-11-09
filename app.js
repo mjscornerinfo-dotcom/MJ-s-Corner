@@ -2820,7 +2820,11 @@
     if (!els.btnUseCurrentLocation) return;
     const originalHtml = els.btnUseCurrentLocation.innerHTML;
     els.btnUseCurrentLocation.disabled = true;
-    els.btnUseCurrentLocation.innerHTML = '<span class="loc-icon">⏳</span> Acquiring GPS...';
+
+    const actionTextEl = els.btnUseCurrentLocation.querySelector('.btn-detect-action');
+    const subtitleEl = els.btnUseCurrentLocation.querySelector('.current-loc-subtitle');
+    if (actionTextEl) actionTextEl.textContent = 'Acquiring GPS...';
+    if (subtitleEl) subtitleEl.textContent = 'Connecting to satellite GPS...';
 
     try {
       const pos = await getCurrentPositionAsync();
@@ -2828,7 +2832,8 @@
       const lng = pos.coords.longitude;
       const accuracyMeters = Math.round(pos.coords.accuracy || 0);
 
-      els.btnUseCurrentLocation.innerHTML = '<span class="loc-icon">🔄</span> Resolving address...';
+      if (actionTextEl) actionTextEl.textContent = 'Resolving...';
+      if (subtitleEl) subtitleEl.textContent = 'Looking up street/village...';
 
       const res = await fetch('/api/delivery-fee/reverse-geocode', {
         method: 'POST',

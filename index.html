@@ -216,17 +216,30 @@
 
           <!-- Delivery: Saved Addresses according to account -->
           <div class="form-group" id="deliveryAddressGroup">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
               <label class="form-section-label" style="margin-bottom:0;">Select Delivery Address</label>
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <button type="button" class="btn-current-location" id="btnUseCurrentLocation" title="Auto-detect exact GPS location for delivery">
-                  <span class="loc-icon">📍</span> Use Current Location
-                </button>
-                <button type="button" class="btn-add-address-toggle" id="btnToggleAddAddress">
-                  <span>➕</span> Add New
-                </button>
-              </div>
+              <button type="button" class="btn-add-address-toggle" id="btnToggleAddAddress">
+                <span>➕</span> Add Manually
+              </button>
             </div>
+
+            <!-- Prominent Highlighted "Use Current Location" Card -->
+            <button type="button" class="use-current-location-card" id="btnUseCurrentLocation" title="Auto-detect exact GPS location for delivery">
+              <div class="current-loc-radar">
+                <span class="radar-ping"></span>
+                <span class="radar-icon">📍</span>
+              </div>
+              <div class="current-loc-content">
+                <div class="current-loc-header">
+                  <span class="current-loc-title">Use My Current Location</span>
+                  <span class="current-loc-badge">⚡ Instant GPS</span>
+                </div>
+                <div class="current-loc-subtitle">Auto-detect exact location for accurate delivery fee &amp; live route</div>
+              </div>
+              <div class="current-loc-btn-wrap">
+                <span class="btn-detect-action">Detect GPS 🎯</span>
+              </div>
+            </button>
 
             <!-- Saved Addresses Radio Cards (per account) -->
             <div class="saved-addresses-list" id="savedAddressesList">
