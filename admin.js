@@ -1535,7 +1535,7 @@
         <!-- Footer & Customer Notes -->
         <div class="invoice-footer" style="margin-top:24px;border-top:1.5px solid #e2e8f0;padding-top:14px;font-size:0.82rem;color:#64748b;line-height:1.45;">
           <div style="font-weight:700;color:#1e293b;margin-bottom:4px;">Thank you for ordering with us! We hope you enjoy your meal.</div>
-          <div>Got an issue with your order? Reach out to our support team immediately at <strong>support@mjscorner.in</strong> or call us directly at <strong>+91 88119 29283</strong>.</div>
+          <div>Got an issue with your order? Reach out to our support team immediately at <strong>mjscorner.info@gmail.com</strong> or call us directly at <strong>+91 88119 29283</strong>.</div>
           <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
             <span>Follow us on Instagram:</span>
             <a href="https://instagram.com/mjscorner___/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;color:#d62976;text-decoration:none;font-weight:700;">

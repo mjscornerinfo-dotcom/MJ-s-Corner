@@ -660,6 +660,13 @@ input, select, textarea {
 }
 
 .category-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  min-width: max-content;
   padding: 8px 20px;
   border-radius: var(--radius-full);
   font-size: 0.875rem;
@@ -667,9 +674,10 @@ input, select, textarea {
   color: var(--text-secondary);
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  white-space: nowrap;
   transition: all var(--transition-base);
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .category-pill:hover {
@@ -684,8 +692,15 @@ input, select, textarea {
   box-shadow: var(--shadow-accent);
 }
 
+.category-pill span {
+  white-space: nowrap;
+}
+
 /* ===== SHINY & HIGHLIGHTED CATEGORY PILL ===== */
 .category-pill--highlighted {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   position: relative;
   overflow: hidden;
   font-weight: 700 !important;
@@ -693,6 +708,9 @@ input, select, textarea {
   border-width: 1.5px !important;
   animation: category-pill-pulse 3s ease-in-out infinite alternate;
   z-index: 1;
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  min-width: max-content;
 }
 
 /* Continuous liquid light sheen sweep across the button */
