@@ -419,6 +419,13 @@
           ${order.customer && order.customer.address ? `
             <div class="order-item-chip-address">
               <strong>📍 Delivery Address:</strong> ${escapeHtml(order.customer.address)}
+              ${order.customer.coordinates && Array.isArray(order.customer.coordinates) && order.customer.coordinates.length === 2 ? `
+                <div style="margin-top:4px;">
+                  <a href="https://www.google.com/maps?q=${order.customer.coordinates[1]},${order.customer.coordinates[0]}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;font-size:0.75rem;color:var(--accent);font-weight:700;text-decoration:none;background:var(--bg-secondary);padding:3px 8px;border-radius:4px;border:1px solid var(--border);">
+                    🗺️ Open Exact GPS in Google Maps
+                  </a>
+                </div>
+              ` : ''}
             </div>
           ` : ''}
           ${order.coupon ? `
@@ -1329,7 +1336,13 @@
           <div>
             <div style="margin-bottom:6px;"><strong>Customer Name:</strong> ${escapeHtml(customer.name || 'Walk-in Customer')}</div>
             <div style="margin-bottom:6px;"><strong>Phone Number:</strong> ${escapeHtml(customer.phone || 'N/A')}</div>
-            ${isDelivery ? `<div style="margin-bottom:6px;"><strong>Delivery Address:</strong> ${escapeHtml(customer.address || 'Address provided at order')}</div>` : ''}
+            ${isDelivery ? `
+              <div style="margin-bottom:6px;">
+                <strong>Delivery Address:</strong> ${escapeHtml(customer.address || 'Address provided at order')}
+                ${customer.coordinates && Array.isArray(customer.coordinates) && customer.coordinates.length === 2 ? `
+                  <span style="margin-left:6px;"><a href="https://www.google.com/maps?q=${customer.coordinates[1]},${customer.coordinates[0]}" target="_blank" rel="noopener noreferrer" style="color:#0284c7;font-weight:700;text-decoration:underline;">[🗺️ Open in Google Maps]</a></span>
+                ` : ''}
+              </div>` : ''}
             ${isDineIn && order.tableNo ? `<div style="margin-bottom:6px;"><strong>Table / Seat:</strong> <span style="font-weight:700;color:#e63946;">${escapeHtml(order.tableNo)}</span></div>` : ''}
             <div><strong>${isDineIn ? 'Kitchen / Table Notes:' : 'Delivery Instructions:'}</strong> “${escapeHtml(customer.notes || (isDineIn ? 'Serve freshly to table.' : 'Please prepare freshly and ring the doorbell.'))}”</div>
           </div>

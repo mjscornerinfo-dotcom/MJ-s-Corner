@@ -295,6 +295,7 @@
     calculatedResolvedAddress: null,
     deliveryInRange: true,
     isCalculatingFee: false,
+    currentLocationCoords: null,
     lastCreatedOrder: null,
     currentInvoiceOrder: null,
     pendingCheckout: false,
@@ -471,7 +472,9 @@
     deliveryAddressGroup: $('#deliveryAddressGroup'),
     savedAddressesList: $('#savedAddressesList'),
     btnToggleAddAddress: $('#btnToggleAddAddress'),
+    btnUseCurrentLocation: $('#btnUseCurrentLocation'),
     newAddressPanel: $('#newAddressPanel'),
+    btnDetectGpsInForm: $('#btnDetectGpsInForm'),
     newAddrTitle: $('#newAddrTitle'),
     newAddrFull: $('#newAddrFull'),
     btnSaveNewAddress: $('#btnSaveNewAddress'),
@@ -514,6 +517,7 @@
     btnProfileSignOut: $('#btnProfileSignOut'),
     btnProfileAddAddress: $('#btnProfileAddAddress'),
     profileAddAddressPanel: $('#profileAddAddressPanel'),
+    btnProfileDetectGps: $('#btnProfileDetectGps'),
     profileNewAddrTitle: $('#profileNewAddrTitle'),
     profileNewAddrFull: $('#profileNewAddrFull'),
     btnProfileSaveNewAddress: $('#btnProfileSaveNewAddress'),
@@ -734,6 +738,7 @@
         <div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
             <span class="address-tag">${addr.title}</span>
+            ${addr.coordinates ? '<span class="address-gps-badge">📍 Exact GPS</span>' : ''}
             ${addr.isDefault ? '<span class="address-default-badge">★ Default</span>' : ''}
           </div>
           <div style="font-size:0.85rem;color:var(--text-secondary);">${addr.fullAddress}</div>
@@ -2708,7 +2713,16 @@
 
   const clientFeeCache = new Map();
 
-  async function triggerDeliveryFeeCalculation(forceAddress) {
+  function getCurrentPositionAsync(options = { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }) {
+    return new Promise((resolve, reject) => {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        return reject(new Error('Geolocation is not supported by your browser'));
+      }
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
+    });
+  }
+
+  async function triggerDeliveryFeeCalculation(forceAddress, forceCoordinates) {
     if (state.orderType !== 'delivery') {
       state.deliveryInRange = true;
       state.calculatedDeliveryFee = null;
@@ -2719,6 +2733,8 @@
     }
 
     let addressToCalc = '';
+    let coordsToCalc = forceCoordinates || null;
+
     if (forceAddress) {
       addressToCalc = forceAddress;
     } else {
@@ -2726,14 +2742,22 @@
       if (user && state.selectedDeliveryAddressId) {
         const addresses = MJAuth.getUserAddresses(user.id);
         const sel = addresses.find(a => a.id === state.selectedDeliveryAddressId);
-        if (sel) addressToCalc = sel.fullAddress;
+        if (sel) {
+          addressToCalc = sel.fullAddress;
+          if (Array.isArray(sel.coordinates) && sel.coordinates.length === 2) {
+            coordsToCalc = sel.coordinates;
+          }
+        }
       }
       if (!addressToCalc && els.newAddrFull && els.newAddrFull.value.trim()) {
         addressToCalc = els.newAddrFull.value.trim();
+        if (els.newAddrFull.dataset.lng && els.newAddrFull.dataset.lat) {
+          coordsToCalc = [parseFloat(els.newAddrFull.dataset.lng), parseFloat(els.newAddrFull.dataset.lat)];
+        }
       }
     }
 
-    if (!addressToCalc || addressToCalc.trim().length < 3) {
+    if (!coordsToCalc && (!addressToCalc || addressToCalc.trim().length < 3)) {
       state.calculatedDeliveryFee = null;
       state.calculatedDistanceKm = null;
       state.calculatedDurationMins = null;
@@ -2742,7 +2766,10 @@
       return;
     }
 
-    const cacheKey = addressToCalc.trim().toLowerCase();
+    const cacheKey = coordsToCalc
+      ? `coord_${coordsToCalc[0].toFixed(4)}_${coordsToCalc[1].toFixed(4)}`
+      : addressToCalc.trim().toLowerCase();
+
     if (clientFeeCache.has(cacheKey)) {
       const cached = clientFeeCache.get(cacheKey);
       state.calculatedDeliveryFee = cached.deliveryFee;
@@ -2762,7 +2789,10 @@
       const res = await fetch('/api/delivery-fee/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: addressToCalc.trim() })
+        body: JSON.stringify({
+          address: addressToCalc ? addressToCalc.trim() : undefined,
+          coordinates: coordsToCalc || undefined
+        })
       });
       const data = await res.json();
       if (data.success) {
@@ -2783,6 +2813,151 @@
     } finally {
       state.isCalculatingFee = false;
       updateCheckoutBreakdown();
+    }
+  }
+
+  async function handleUseCurrentLocation() {
+    if (!els.btnUseCurrentLocation) return;
+    const originalHtml = els.btnUseCurrentLocation.innerHTML;
+    els.btnUseCurrentLocation.disabled = true;
+    els.btnUseCurrentLocation.innerHTML = '<span class="loc-icon">⏳</span> Acquiring GPS...';
+
+    try {
+      const pos = await getCurrentPositionAsync();
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const accuracyMeters = Math.round(pos.coords.accuracy || 0);
+
+      els.btnUseCurrentLocation.innerHTML = '<span class="loc-icon">🔄</span> Resolving address...';
+
+      const res = await fetch('/api/delivery-fee/reverse-geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: lat, longitude: lng })
+      });
+      const data = await res.json();
+
+      let placeName = '';
+      let shortName = 'Current Location';
+      if (data.success && data.placeName) {
+        placeName = data.placeName;
+        shortName = data.shortName || 'Current Location';
+      } else {
+        placeName = `GPS Location (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+      }
+
+      state.currentLocationCoords = [lng, lat];
+
+      const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
+      if (user) {
+        const addresses = MJAuth.getUserAddresses(user.id);
+        const existingCurrent = addresses.find(a => a.title === 'Current Location' || (a.coordinates && Math.abs(a.coordinates[0] - lng) < 0.0001 && Math.abs(a.coordinates[1] - lat) < 0.0001));
+
+        let currentAddrObj;
+        if (existingCurrent) {
+          existingCurrent.fullAddress = placeName;
+          existingCurrent.coordinates = [lng, lat];
+          existingCurrent.isDefault = true;
+          addresses.forEach(a => { if (a !== existingCurrent) a.isDefault = false; });
+          user.addresses = addresses;
+          MJAuth.setCurrentUser(user);
+          currentAddrObj = existingCurrent;
+        } else {
+          currentAddrObj = MJAuth.addUserAddress(user.id, {
+            title: 'Current Location',
+            fullAddress: placeName,
+            coordinates: [lng, lat],
+            isDefault: true
+          });
+        }
+
+        if (currentAddrObj) {
+          state.selectedDeliveryAddressId = currentAddrObj.id;
+        }
+        renderCheckoutAddresses();
+        renderProfileAddresses();
+      } else {
+        // Guest mode / pre-auth
+        if (els.newAddrFull) {
+          els.newAddrFull.value = placeName;
+          els.newAddrFull.dataset.lat = lat;
+          els.newAddrFull.dataset.lng = lng;
+        }
+        if (els.newAddrTitle) {
+          els.newAddrTitle.value = 'Current Location';
+        }
+      }
+
+      // Calculate driving distance & delivery fee immediately using exact coordinates
+      await triggerDeliveryFeeCalculation(placeName, [lng, lat]);
+
+      showToast(`📍 Exact location detected: ${shortName} (±${accuracyMeters}m)`, 'success');
+    } catch (err) {
+      console.warn('Geolocation error:', err);
+      let errMsg = 'Could not detect your GPS location.';
+      if (err.code === 1) {
+        errMsg = 'Location permission was denied. Please allow location access in your browser or enter your address manually.';
+      } else if (err.code === 2) {
+        errMsg = 'Location position unavailable. Please ensure GPS/location is enabled or enter address manually.';
+      } else if (err.code === 3) {
+        errMsg = 'Location request timed out. Please try again or type your address manually.';
+      } else if (err.message) {
+        errMsg = err.message;
+      }
+      showToast(errMsg, 'error');
+    } finally {
+      if (els.btnUseCurrentLocation) {
+        els.btnUseCurrentLocation.disabled = false;
+        els.btnUseCurrentLocation.innerHTML = originalHtml;
+      }
+    }
+  }
+
+  async function handleDetectGpsInForm(targetInput, targetTitle, triggerBtn) {
+    if (!targetInput) return;
+    const originalText = triggerBtn ? triggerBtn.innerHTML : '';
+    if (triggerBtn) {
+      triggerBtn.disabled = true;
+      triggerBtn.innerHTML = '<span>⏳ Acquiring GPS...</span>';
+    }
+
+    try {
+      const pos = await getCurrentPositionAsync();
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      if (triggerBtn) triggerBtn.innerHTML = '<span>🔄 Resolving address...</span>';
+
+      const res = await fetch('/api/delivery-fee/reverse-geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latitude: lat, longitude: lng })
+      });
+      const data = await res.json();
+      const placeName = (data.success && data.placeName) ? data.placeName : `GPS Location (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+
+      targetInput.value = placeName;
+      targetInput.dataset.lat = lat;
+      targetInput.dataset.lng = lng;
+
+      if (targetTitle && !targetTitle.value) {
+        targetTitle.value = 'Current Location';
+      }
+
+      state.currentLocationCoords = [lng, lat];
+      showToast('📍 Address populated from GPS coordinates', 'success');
+
+      if (state.orderType === 'delivery') {
+        triggerDeliveryFeeCalculation(placeName, [lng, lat]);
+      }
+    } catch (err) {
+      console.warn('GPS auto-fill error:', err);
+      showToast(err.code === 1 ? 'Location permission was denied in your browser.' : 'Could not detect GPS coordinates.', 'error');
+    } finally {
+      if (triggerBtn) {
+        triggerBtn.disabled = false;
+        triggerBtn.innerHTML = originalText;
+      }
     }
   }
 
@@ -2848,6 +3023,7 @@
         <div class="address-option-info">
           <div class="address-option-header">
             <span class="address-tag">${addr.title}</span>
+            ${addr.coordinates ? '<span class="address-gps-badge">📍 Exact GPS</span>' : ''}
             ${addr.isDefault ? '<span class="address-default-badge">★ Default</span>' : ''}
           </div>
           <div class="address-text">${addr.fullAddress}</div>
@@ -3101,6 +3277,7 @@
 
     const user = window.MJAuth ? MJAuth.getCurrentUser() : null;
     let deliveryAddress = '';
+    let selectedCoordinates = null;
     const tableNo = els.custTableNo ? els.custTableNo.value.trim() : '';
 
     if (window.IS_DINE_IN) {
@@ -3122,6 +3299,11 @@
         return;
       }
       deliveryAddress = `${selected.title}: ${selected.fullAddress}`;
+      if (Array.isArray(selected.coordinates) && selected.coordinates.length === 2) {
+        selectedCoordinates = selected.coordinates;
+      } else if (state.currentLocationCoords) {
+        selectedCoordinates = state.currentLocationCoords;
+      }
     }
 
     const customerPhone = els.custPhone.value.trim() || (user ? user.phone : '');
@@ -3171,6 +3353,7 @@
         rawPhone: last10,
         email: user ? (user.email || '') : '',
         address: deliveryAddress,
+        coordinates: selectedCoordinates || undefined,
         notes: els.custNotes.value.trim()
       },
       paymentStatus: 'paid',
@@ -3518,7 +3701,13 @@
           <div>
             <div style="margin-bottom:6px;"><strong>Customer Name:</strong> ${escapeHtml(customer.name || 'Valued Customer')}</div>
             <div style="margin-bottom:6px;"><strong>Phone Number:</strong> ${escapeHtml(customer.phone || 'N/A')}</div>
-            ${isDelivery ? `<div style="margin-bottom:6px;"><strong>Delivery Address:</strong> ${escapeHtml(customer.address || 'Address provided at order')}</div>` : ''}
+            ${isDelivery ? `
+              <div style="margin-bottom:6px;">
+                <strong>Delivery Address:</strong> ${escapeHtml(customer.address || 'Address provided at order')}
+                ${customer.coordinates && Array.isArray(customer.coordinates) && customer.coordinates.length === 2 ? `
+                  <span style="margin-left:6px;"><a href="https://www.google.com/maps?q=${customer.coordinates[1]},${customer.coordinates[0]}" target="_blank" rel="noopener noreferrer" style="color:#0284c7;font-weight:700;text-decoration:underline;">[🗺️ View on Map]</a></span>
+                ` : ''}
+              </div>` : ''}
             ${isDineIn && order.tableNo ? `<div style="margin-bottom:6px;"><strong>Table / Seat:</strong> <span style="font-weight:700;color:#e63946;">${escapeHtml(order.tableNo)}</span></div>` : ''}
             <div><strong>${isDineIn ? 'Kitchen / Table Notes:' : 'Delivery Instructions:'}</strong> “${escapeHtml(customer.notes || (isDineIn ? 'Serve freshly to table.' : 'Please prepare freshly and ring the doorbell.'))}”</div>
           </div>
@@ -3973,6 +4162,16 @@
       });
     }
 
+    if (els.btnUseCurrentLocation) {
+      els.btnUseCurrentLocation.addEventListener('click', handleUseCurrentLocation);
+    }
+
+    if (els.btnDetectGpsInForm) {
+      els.btnDetectGpsInForm.addEventListener('click', () => {
+        handleDetectGpsInForm(els.newAddrFull, els.newAddrTitle, els.btnDetectGpsInForm);
+      });
+    }
+
     if (els.btnSwitchToPickup) {
       els.btnSwitchToPickup.addEventListener('click', switchToPickup);
     }
@@ -4003,14 +4202,24 @@
           showToast('Please type a complete address', 'error');
           return;
         }
-        const newAddr = MJAuth.addUserAddress(user.id, { title, fullAddress: full, isDefault: true });
+
+        let coords = undefined;
+        if (els.newAddrFull.dataset.lng && els.newAddrFull.dataset.lat) {
+          coords = [parseFloat(els.newAddrFull.dataset.lng), parseFloat(els.newAddrFull.dataset.lat)];
+        }
+
+        const newAddr = MJAuth.addUserAddress(user.id, { title, fullAddress: full, coordinates: coords, isDefault: true });
         if (newAddr) {
           state.selectedDeliveryAddressId = newAddr.id;
           if (els.newAddrTitle) els.newAddrTitle.value = '';
-          if (els.newAddrFull) els.newAddrFull.value = '';
+          if (els.newAddrFull) {
+            els.newAddrFull.value = '';
+            delete els.newAddrFull.dataset.lng;
+            delete els.newAddrFull.dataset.lat;
+          }
           if (els.newAddressPanel) els.newAddressPanel.classList.add('hidden');
           renderCheckoutAddresses();
-          triggerDeliveryFeeCalculation(newAddr.fullAddress);
+          triggerDeliveryFeeCalculation(newAddr.fullAddress, coords);
           showToast(`Saved '${title}' address to your account!`, 'success');
         }
       });
@@ -4057,6 +4266,12 @@
       });
     }
 
+    if (els.btnProfileDetectGps) {
+      els.btnProfileDetectGps.addEventListener('click', () => {
+        handleDetectGpsInForm(els.profileNewAddrFull, els.profileNewAddrTitle, els.btnProfileDetectGps);
+      });
+    }
+
     if (els.btnProfileSaveNewAddress) {
       els.btnProfileSaveNewAddress.addEventListener('click', () => {
         const user = MJAuth.getCurrentUser();
@@ -4066,9 +4281,19 @@
           showToast('Please enter full address', 'error');
           return;
         }
-        MJAuth.addUserAddress(user.id, { title, fullAddress: full, isDefault: false });
+
+        let coords = undefined;
+        if (els.profileNewAddrFull.dataset.lng && els.profileNewAddrFull.dataset.lat) {
+          coords = [parseFloat(els.profileNewAddrFull.dataset.lng), parseFloat(els.profileNewAddrFull.dataset.lat)];
+        }
+
+        MJAuth.addUserAddress(user.id, { title, fullAddress: full, coordinates: coords, isDefault: false });
         if (els.profileNewAddrTitle) els.profileNewAddrTitle.value = '';
-        if (els.profileNewAddrFull) els.profileNewAddrFull.value = '';
+        if (els.profileNewAddrFull) {
+          els.profileNewAddrFull.value = '';
+          delete els.profileNewAddrFull.dataset.lng;
+          delete els.profileNewAddrFull.dataset.lat;
+        }
         if (els.profileAddAddressPanel) els.profileAddAddressPanel.classList.add('hidden');
         renderProfileAddresses();
         renderCheckoutAddresses();

@@ -116,7 +116,7 @@ var MJAuth = (function () {
     }
   }
 
-  function addUserAddress(userId, { title, fullAddress, isDefault }) {
+  function addUserAddress(userId, { title, fullAddress, isDefault, coordinates }) {
     const cur = getCurrentUser();
     if (!cur) return null;
 
@@ -132,6 +132,7 @@ var MJAuth = (function () {
       id: 'addr_' + Date.now(),
       title: title || 'Home',
       fullAddress: fullAddress.trim(),
+      coordinates: Array.isArray(coordinates) && coordinates.length === 2 ? coordinates : undefined,
       isDefault: isDefault || cur.addresses.length === 0
     };
 

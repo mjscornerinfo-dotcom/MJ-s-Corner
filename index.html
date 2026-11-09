@@ -216,11 +216,16 @@
 
           <!-- Delivery: Saved Addresses according to account -->
           <div class="form-group" id="deliveryAddressGroup">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
               <label class="form-section-label" style="margin-bottom:0;">Select Delivery Address</label>
-              <button type="button" class="btn-add-address-toggle" id="btnToggleAddAddress">
-                <span>➕</span> Add New Address
-              </button>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="btn-current-location" id="btnUseCurrentLocation" title="Auto-detect exact GPS location for delivery">
+                  <span class="loc-icon">📍</span> Use Current Location
+                </button>
+                <button type="button" class="btn-add-address-toggle" id="btnToggleAddAddress">
+                  <span>➕</span> Add New
+                </button>
+              </div>
             </div>
 
             <!-- Saved Addresses Radio Cards (per account) -->
@@ -230,7 +235,12 @@
 
             <!-- Inline "+ Add New Address" Form -->
             <div class="add-address-panel hidden" id="newAddressPanel">
-              <div style="font-weight:700;font-size:0.88rem;margin-bottom:8px;color:var(--text-primary);">📍 Add Address to Account</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div style="font-weight:700;font-size:0.88rem;color:var(--text-primary);">📍 Add Address to Account</div>
+                <button type="button" class="btn-detect-gps-subtle" id="btnDetectGpsInForm" title="Auto-fill with current GPS coordinates">
+                  <span>🎯</span> Auto-fill GPS
+                </button>
+              </div>
               <div class="form-group" style="margin-bottom:10px;">
                 <label for="newAddrTitle" style="font-size:0.75rem;">Label (e.g. Home, Office, Other)</label>
                 <input type="text" id="newAddrTitle" placeholder="e.g. Home">
@@ -447,7 +457,12 @@
 
           <!-- Add Address Form in Profile -->
           <div class="add-address-panel hidden" id="profileAddAddressPanel">
-            <h4 style="font-size:0.9rem;margin-bottom:10px;">Add New Address</h4>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <h4 style="font-size:0.9rem;margin:0;">Add New Address</h4>
+              <button type="button" class="btn-detect-gps-subtle" id="btnProfileDetectGps" title="Auto-fill with current GPS coordinates">
+                <span>🎯</span> Auto-fill GPS
+              </button>
+            </div>
             <div class="form-group">
               <label style="font-size:0.75rem;">Address Title (e.g. Home, Office, Beach House)</label>
               <input type="text" id="profileNewAddrTitle" placeholder="e.g. Home">

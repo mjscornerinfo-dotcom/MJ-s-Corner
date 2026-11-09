@@ -534,7 +534,7 @@ async function findOrCreateUser({ name, phone = '', email = '', countryCode = '+
 const mountMobileAuth = require('./mobile-auth-addon');
 mountMobileAuth(app, { getDb, findOrCreateUser, getNextOrderId, getRazorpayInstance });
 
-const { calculateDeliveryForAddress } = require('./mapbox-service');
+const { calculateDeliveryForAddress, reverseGeocode } = require('./mapbox-service');
 
 // ========== API ROUTES ==========
 
@@ -631,6 +631,24 @@ app.post('/api/delivery-fee/calculate', async (req, res) => {
       isFallback: true,
       inRange: true
     });
+  }
+});
+
+// Reverse Geocode GPS Coordinates to Readable Address (Mapbox)
+app.post('/api/delivery-fee/reverse-geocode', async (req, res) => {
+  try {
+    let lng = req.body.longitude !== undefined ? req.body.longitude : (Array.isArray(req.body.coordinates) ? req.body.coordinates[0] : null);
+    let lat = req.body.latitude !== undefined ? req.body.latitude : (Array.isArray(req.body.coordinates) ? req.body.coordinates[1] : null);
+
+    if (lng === null || lat === null) {
+      return res.status(400).json({ success: false, message: 'Latitude and Longitude are required' });
+    }
+
+    const result = await reverseGeocode(lng, lat);
+    res.json(result);
+  } catch (err) {
+    console.error('Reverse geocode endpoint error:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 

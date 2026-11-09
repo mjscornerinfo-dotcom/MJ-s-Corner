@@ -103,6 +103,64 @@ async function geocodeAddress(addressText, proximity = [91.06468, 26.40268]) {
 }
 
 /**
+ * Reverse Geocode coordinates [longitude, latitude] to a readable address string
+ */
+async function reverseGeocode(lng, lat) {
+  const numLng = parseFloat(lng);
+  const numLat = parseFloat(lat);
+  if (isNaN(numLng) || isNaN(numLat)) {
+    return { success: false, message: 'Invalid coordinates for reverse geocoding' };
+  }
+
+  const token = getMapboxToken();
+  if (!token) {
+    return { success: false, message: 'Mapbox token is not configured on server' };
+  }
+
+  const cacheKey = `rev_${numLng.toFixed(5)}_${numLat.toFixed(5)}`;
+  if (geocodeCache.has(cacheKey)) {
+    return geocodeCache.get(cacheKey);
+  }
+
+  try {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${numLng},${numLat}.json?access_token=${token}`;
+    const { status, data } = await httpsGetJson(url);
+
+    if (status !== 200 || !data.features || data.features.length === 0) {
+      return { success: false, message: 'No address could be found for these coordinates' };
+    }
+
+    const addressFeat = data.features.find(f => f.place_type && f.place_type.includes('address'));
+    const localityFeat = data.features.find(f => f.place_type && (f.place_type.includes('locality') || f.place_type.includes('neighborhood')));
+    const placeFeat = data.features.find(f => f.place_type && f.place_type.includes('place'));
+
+    const placeName = (addressFeat && addressFeat.place_name) ||
+                      (localityFeat && localityFeat.place_name) ||
+                      (placeFeat && placeFeat.place_name) ||
+                      data.features[0].place_name;
+
+    const shortName = (localityFeat && localityFeat.text) ||
+                      (placeFeat && placeFeat.text) ||
+                      (addressFeat && addressFeat.text) ||
+                      data.features[0].text;
+
+    const result = {
+      success: true,
+      placeName: placeName,
+      shortName: shortName,
+      coordinates: [numLng, numLat],
+      features: data.features.map(f => ({ name: f.place_name, type: f.place_type }))
+    };
+
+    geocodeCache.set(cacheKey, result);
+    return result;
+  } catch (err) {
+    console.error('[Mapbox Reverse Geocode Error]:', err.message);
+    return { success: false, message: err.message };
+  }
+}
+
+/**
  * Calculate driving distance and duration via Mapbox Directions API
  * Origin and Destination must be [lng, lat]
  */
@@ -212,7 +270,14 @@ async function calculateDeliveryForAddress({
   let formattedAddress = address || '';
 
   // If coordinates not already provided, geocode the address
-  if (!Array.isArray(destCoords) || destCoords.length !== 2) {
+  if (Array.isArray(destCoords) && destCoords.length === 2) {
+    if (!formattedAddress || formattedAddress.trim() === 'Current Location') {
+      const rev = await reverseGeocode(destCoords[0], destCoords[1]);
+      if (rev.success && rev.placeName) {
+        formattedAddress = rev.placeName;
+      }
+    }
+  } else {
     const geoRes = await geocodeAddress(address, storeCoords);
     if (!geoRes.success) {
       // Fallback
@@ -272,6 +337,7 @@ async function calculateDeliveryForAddress({
 
 module.exports = {
   geocodeAddress,
+  reverseGeocode,
   getDrivingDistance,
   computeDeliveryFee,
   calculateDeliveryForAddress
