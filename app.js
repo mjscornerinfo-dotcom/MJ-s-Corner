@@ -259,11 +259,24 @@
         if (data.mapboxPublicToken) {
           state.mapboxPublicToken = data.mapboxPublicToken;
         }
+        if (data.mobileMenuLayout) {
+          state.mobileMenuLayout = data.mobileMenuLayout;
+        }
+        applyMobileMenuLayout(state.mobileMenuLayout);
         updateStoreOnlineUI();
       }
     } catch (e) {
       console.warn('Could not load server config:', e);
+      applyMobileMenuLayout(state.mobileMenuLayout);
     }
+  }
+
+  function applyMobileMenuLayout(layout) {
+    const mode = layout || 'horizontal_list';
+    state.mobileMenuLayout = mode;
+    document.body.setAttribute('data-mobile-layout', mode);
+    document.body.classList.remove('mobile-layout-horizontal-list', 'mobile-layout-bottom-sheet', 'mobile-layout-both');
+    document.body.classList.add('mobile-layout-' + mode.replace('_', '-'));
   }
 
   function updateStoreOnlineUI() {
@@ -288,6 +301,7 @@
     deliveryCharge: 50,
     deliveryFeeConfig: null,
     storeLocation: null,
+    mobileMenuLayout: 'horizontal_list',
     mapboxPublicToken: '',
     calculatedDeliveryFee: null,
     calculatedDistanceKm: null,
@@ -543,6 +557,22 @@
     customQtyVal: $('#customQtyVal'),
     customTotalDisplay: $('#customTotalDisplay'),
     btnConfirmAddToCart: $('#btnConfirmAddToCart'),
+    // Dish Detail Bottom Sheet Modal (Option 2)
+    dishDetailModal: $('#dishDetailModal'),
+    dishDetailSheet: $('#dishDetailSheet'),
+    closeDishDetailBtn: $('#closeDishDetailBtn'),
+    dishDetailHeroImg: $('#dishDetailHeroImg'),
+    dishDetailHeroBadges: $('#dishDetailHeroBadges'),
+    dishDetailTitle: $('#dishDetailTitle'),
+    dishDetailRating: $('#dishDetailRating'),
+    dishDetailPricingRow: $('#dishDetailPricingRow'),
+    dishDetailDesc: $('#dishDetailDesc'),
+    dishDetailQtyVal: $('#dishDetailQtyVal'),
+    btnDishDetailQtyDec: $('#btnDishDetailQtyDec'),
+    btnDishDetailQtyInc: $('#btnDishDetailQtyInc'),
+    btnDishDetailAdd: $('#btnDishDetailAdd'),
+    dishDetailAddLabel: $('#dishDetailAddLabel'),
+    dishDetailAddPrice: $('#dishDetailAddPrice'),
     // Success modal
     successModal: $('#successModal'),
     orderIdDisplay: $('#orderIdDisplay'),
@@ -1922,6 +1952,28 @@
     showToast(`Added ${menuItem.name}${customSummary} to cart!`);
   }
 
+  function formatMenuDescription(desc) {
+    if (!desc) return '';
+    const text = String(desc).trim();
+    if (text.includes('*') || text.includes('•') || text.includes('\n')) {
+      const rawLines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const bulletItems = [];
+      rawLines.forEach(line => {
+        const cleanLine = line.replace(/^[\*\•\-]\s*/, '').trim();
+        if (cleanLine) bulletItems.push(cleanLine);
+      });
+
+      if (bulletItems.length > 0) {
+        return `
+          <ul class="menu-combo-list">
+            ${bulletItems.map(it => `<li><span class="combo-bullet">✔</span><span>${escapeHtml(it)}</span></li>`).join('')}
+          </ul>
+        `;
+      }
+    }
+    return `<p class="menu-card-desc-text">${escapeHtml(text)}</p>`;
+  }
+
   function renderMenuItem(item) {
     const customizable = hasCustomizations(item);
     const discount = item.mrp > 0 ? Math.round(((item.mrp - item.offerPrice) / item.mrp) * 100) : 0;
@@ -2051,10 +2103,15 @@
         </div>
         <div class="menu-card-content">
           <div class="menu-card-header-row">
-            <h3 class="menu-card-title">${item.name}</h3>
+            <div class="menu-card-title-wrap">
+              <div class="dietary-badge inline ${dietaryClass}" title="${dietaryTitle}">
+                <span class="dietary-dot"></span>
+              </div>
+              <h3 class="menu-card-title">${item.name}</h3>
+            </div>
             ${ratingHtml}
           </div>
-          <p class="menu-card-desc">${item.description}</p>
+          <div class="menu-card-desc">${formatMenuDescription(item.description)}</div>
           ${pricingHtml}
           ${promoBadgesHtml}
           <div class="menu-card-actions">
@@ -2063,6 +2120,159 @@
         </div>
       </div>
     `;
+  }
+
+  // ========== DISH DETAIL BOTTOM SHEET MODAL (OPTION 2) ==========
+  let currentDetailItem = null;
+  let currentDetailQty = 1;
+
+  function openDishDetailModal(item) {
+    if (!item) return;
+    currentDetailItem = item;
+    currentDetailQty = 1;
+
+    if (!els.dishDetailModal) return;
+
+    const isVeg = item.isVeg !== undefined ? item.isVeg : (item.dietary === 'veg');
+    const dietaryClass = isVeg ? 'veg' : 'non-veg';
+    const dietaryTitle = isVeg ? 'Pure Veg' : 'Non-Veg';
+
+    // Hero image
+    if (els.dishDetailHeroImg) {
+      els.dishDetailHeroImg.src = item.image || 'images/burger.jpg';
+      els.dishDetailHeroImg.alt = item.name || '';
+    }
+
+    // Hero badges
+    if (els.dishDetailHeroBadges) {
+      let badgesHtml = `
+        <div class="dietary-badge ${dietaryClass}" title="${dietaryTitle}">
+          <span class="dietary-dot"></span>
+        </div>
+      `;
+      if (item.category) {
+        badgesHtml += `<span class="detail-category-badge">${escapeHtml(item.category)}</span>`;
+      }
+      if (item.badge) {
+        badgesHtml += `<span class="detail-special-badge">${escapeHtml(item.badge)}</span>`;
+      }
+      els.dishDetailHeroBadges.innerHTML = badgesHtml;
+    }
+
+    // Title
+    if (els.dishDetailTitle) els.dishDetailTitle.textContent = item.name || '';
+
+    // Rating
+    if (els.dishDetailRating) {
+      if (item.ratingCount && item.ratingCount > 0 && item.averageRating) {
+        const avg = Number(item.averageRating).toFixed(1);
+        els.dishDetailRating.innerHTML = `<span class="detail-rating-pill">★ ${avg} (${item.ratingCount})</span>`;
+      } else {
+        els.dishDetailRating.innerHTML = `<span class="detail-rating-pill new">★ Chef's Special</span>`;
+      }
+    }
+
+    // Pricing
+    if (els.dishDetailPricingRow) {
+      const customizable = hasCustomizations(item);
+      const discount = item.mrp > 0 ? Math.round(((item.mrp - item.offerPrice) / item.mrp) * 100) : 0;
+      let priceText = `₹${item.offerPrice}`;
+      if (customizable && Array.isArray(item.sizes) && item.sizes.length > 0) {
+        const minPrice = Math.min(...item.sizes.map(s => Number(s.price)));
+        priceText = `From ₹${minPrice}`;
+      }
+      els.dishDetailPricingRow.innerHTML = `
+        <span class="detail-price-main">${priceText}</span>
+        ${item.mrp > item.offerPrice ? `<span class="detail-price-mrp">₹${item.mrp}</span>` : ''}
+        ${discount > 0 ? `<span class="detail-discount-tag">${discount}% OFF</span>` : ''}
+      `;
+    }
+
+    // Description & combo items
+    if (els.dishDetailDesc) {
+      els.dishDetailDesc.innerHTML = formatMenuDescription(item.description);
+    }
+
+    // Action button text
+    if (els.dishDetailAddLabel) {
+      els.dishDetailAddLabel.textContent = hasCustomizations(item) ? 'Customize & Add' : 'Add Item to Cart';
+    }
+
+    updateDishDetailQtyDisplay();
+
+    els.dishDetailModal.classList.add('open');
+    els.dishDetailModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDishDetailModal() {
+    if (!els.dishDetailModal) return;
+    els.dishDetailModal.classList.remove('open');
+    els.dishDetailModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  function updateDishDetailQtyDisplay() {
+    if (els.dishDetailQtyVal) els.dishDetailQtyVal.textContent = currentDetailQty;
+
+    if (els.dishDetailAddPrice && currentDetailItem) {
+      const unitPrice = Number(currentDetailItem.offerPrice || currentDetailItem.mrp || 0);
+      els.dishDetailAddPrice.textContent = `₹${unitPrice * currentDetailQty}`;
+    }
+  }
+
+  function initDishDetailModal() {
+    if (els.closeDishDetailBtn) {
+      els.closeDishDetailBtn.addEventListener('click', closeDishDetailModal);
+    }
+
+    if (els.dishDetailModal) {
+      els.dishDetailModal.addEventListener('click', (e) => {
+        if (e.target === els.dishDetailModal) {
+          closeDishDetailModal();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && els.dishDetailModal && els.dishDetailModal.classList.contains('open')) {
+        closeDishDetailModal();
+      }
+    });
+
+    if (els.btnDishDetailQtyDec) {
+      els.btnDishDetailQtyDec.addEventListener('click', () => {
+        if (currentDetailQty > 1) {
+          currentDetailQty--;
+          updateDishDetailQtyDisplay();
+        }
+      });
+    }
+
+    if (els.btnDishDetailQtyInc) {
+      els.btnDishDetailQtyInc.addEventListener('click', () => {
+        if (currentDetailQty < 99) {
+          currentDetailQty++;
+          updateDishDetailQtyDisplay();
+        }
+      });
+    }
+
+    if (els.btnDishDetailAdd) {
+      els.btnDishDetailAdd.addEventListener('click', () => {
+        if (!currentDetailItem) return;
+        const item = currentDetailItem;
+        const qtyToAdd = currentDetailQty;
+        closeDishDetailModal();
+
+        if (hasCustomizations(item)) {
+          openCustomizationModal(item);
+        } else {
+          addItemToCart(item, null, [], qtyToAdd);
+          notifyActivePromosForItem(item);
+        }
+      });
+    }
   }
 
   function bindMenuActions() {
@@ -2083,12 +2293,29 @@
       });
     });
 
-    // Also clicking customizable card anywhere opens customization modal
-    els.menuContainer.querySelectorAll('.menu-card.is-customizable').forEach(card => {
+    // Also clicking card opens modal (Customization for customizable, or Dish Detail for Option 2 / Hybrid / photo tap)
+    els.menuContainer.querySelectorAll('.menu-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('button')) return;
+        if (e.target.closest('button') || e.target.closest('.qty-control') || e.target.closest('a')) {
+          return;
+        }
         const item = state.menu.find(i => i.id === parseInt(card.dataset.id));
-        if (item) openCustomizationModal(item);
+        if (!item) return;
+
+        if (hasCustomizations(item)) {
+          openCustomizationModal(item);
+          return;
+        }
+
+        const currentLayout = state.mobileMenuLayout || 'horizontal_list';
+        if (currentLayout === 'bottom_sheet' || currentLayout === 'both') {
+          openDishDetailModal(item);
+        } else {
+          // If in Option 1 horizontal list, clicking the food photo also opens the detail sheet
+          if (e.target.closest('.menu-card-img-wrap')) {
+            openDishDetailModal(item);
+          }
+        }
       });
     });
 
@@ -4429,9 +4656,13 @@
       els.btnConfirmAddToCart.addEventListener('click', confirmCustomAddToCart);
     }
 
+    // Dish Detail Bottom Sheet Modal init
+    initDishDetailModal();
+
     // Close on Escape key
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        closeDishDetailModal();
         closeCustomizationModal();
         closeCart();
         closeCheckout();

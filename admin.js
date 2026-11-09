@@ -32,7 +32,8 @@
     highlightedCategories: [],
     categoryHighlightTheme: 'gold',
     deliveryFeeConfig: null,
-    storeLocation: null
+    storeLocation: null,
+    mobileMenuLayout: 'horizontal_list'
   };
 
   // ========== DOM REFERENCES ==========
@@ -57,6 +58,16 @@
     inputDeliveryFee: $('#inputDeliveryFee'),
     btnSaveDeliveryFee: $('#btnSaveDeliveryFee'),
     btnOpenPosModal: $('#btnOpenPosModal'),
+    // Mobile Menu Layout Controls
+    btnSaveMobileLayout: $('#btnSaveMobileLayout'),
+    mobileLayoutBadgePill: $('#mobileLayoutBadgePill'),
+    mobileLayoutSaveStatus: $('#mobileLayoutSaveStatus'),
+    radioLayoutHorizontal: $('#radioLayoutHorizontal'),
+    radioLayoutBottomSheet: $('#radioLayoutBottomSheet'),
+    radioLayoutBoth: $('#radioLayoutBoth'),
+    layoutOptCard1: $('#layoutOptCard1'),
+    layoutOptCard2: $('#layoutOptCard2'),
+    layoutOptCard3: $('#layoutOptCard3'),
     // Automated Delivery Fee Controls
     displayBaseRate: $('#displayBaseRate'),
     displayPerKmRate: $('#displayPerKmRate'),
@@ -289,6 +300,9 @@
             if (els.categoryHighlightThemeSelect) {
               els.categoryHighlightThemeSelect.value = state.categoryHighlightTheme;
             }
+          }
+          if (data.settings.mobileMenuLayout) {
+            state.mobileMenuLayout = data.settings.mobileMenuLayout;
           }
           if (state.currentPage === 'menu-editor') {
             renderCategoryManager();
@@ -644,6 +658,43 @@
       els.btnBillingCreatePos.addEventListener('click', openPosModal);
     }
 
+    // Mobile Menu Layout Radio styling & Save
+    $$('input[name="mobileMenuLayout"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const val = radio.value;
+        if (els.layoutOptCard1) els.layoutOptCard1.style.borderColor = (val === 'horizontal_list') ? 'var(--accent)' : 'var(--border)';
+        if (els.layoutOptCard2) els.layoutOptCard2.style.borderColor = (val === 'bottom_sheet') ? 'var(--accent)' : 'var(--border)';
+        if (els.layoutOptCard3) els.layoutOptCard3.style.borderColor = (val === 'both') ? 'var(--accent)' : 'var(--border)';
+      });
+    });
+
+    if (els.btnSaveMobileLayout) {
+      els.btnSaveMobileLayout.addEventListener('click', async () => {
+        const selectedRadio = $('input[name="mobileMenuLayout"]:checked');
+        const layout = selectedRadio ? selectedRadio.value : 'horizontal_list';
+        state.mobileMenuLayout = layout;
+        updateStoreControlsUI();
+        const layoutName = layout === 'horizontal_list' ? 'Option 1: Swiggy/Zomato List' : (layout === 'bottom_sheet' ? 'Option 2: Tap-to-View Modal' : 'Hybrid Mode');
+        showToast(`Mobile layout saved: ${layoutName}`, 'success');
+        
+        if (els.mobileLayoutSaveStatus) {
+          els.mobileLayoutSaveStatus.style.display = 'inline';
+          setTimeout(() => { if (els.mobileLayoutSaveStatus) els.mobileLayoutSaveStatus.style.display = 'none'; }, 3000);
+        }
+
+        try {
+          await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobileMenuLayout: layout })
+          });
+        } catch (e) {
+          console.warn('Could not save mobile menu layout to MongoDB Atlas:', e);
+          showToast('Failed to save setting to server', 'error');
+        }
+      });
+    }
+
     // Automated Delivery Settings Modal
     if (els.btnOpenDeliverySettingsModal && els.deliverySettingsModal) {
       els.btnOpenDeliverySettingsModal.addEventListener('click', () => {
@@ -846,6 +897,22 @@
     }
     if (els.displayMaxRadius) {
       els.displayMaxRadius.textContent = `${cfg.maxDeliveryRadiusKm} km`;
+    }
+
+    // Mobile Menu Layout sync
+    const layout = state.mobileMenuLayout || 'horizontal_list';
+    if (els.radioLayoutHorizontal) els.radioLayoutHorizontal.checked = (layout === 'horizontal_list');
+    if (els.radioLayoutBottomSheet) els.radioLayoutBottomSheet.checked = (layout === 'bottom_sheet');
+    if (els.radioLayoutBoth) els.radioLayoutBoth.checked = (layout === 'both');
+
+    if (els.layoutOptCard1) els.layoutOptCard1.style.borderColor = (layout === 'horizontal_list') ? 'var(--accent)' : 'var(--border)';
+    if (els.layoutOptCard2) els.layoutOptCard2.style.borderColor = (layout === 'bottom_sheet') ? 'var(--accent)' : 'var(--border)';
+    if (els.layoutOptCard3) els.layoutOptCard3.style.borderColor = (layout === 'both') ? 'var(--accent)' : 'var(--border)';
+
+    if (els.mobileLayoutBadgePill) {
+      if (layout === 'horizontal_list') els.mobileLayoutBadgePill.textContent = 'Option 1 Active';
+      else if (layout === 'bottom_sheet') els.mobileLayoutBadgePill.textContent = 'Option 2 Active';
+      else if (layout === 'both') els.mobileLayoutBadgePill.textContent = 'Hybrid Active';
     }
   }
 

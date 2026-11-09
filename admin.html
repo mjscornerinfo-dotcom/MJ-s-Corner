@@ -139,6 +139,51 @@
               <span>➕ Create Offline / POS Order</span>
             </button>
           </div>
+
+          <div class="store-control-card mobile-layout-card">
+            <div class="store-control-header">
+              <span class="store-control-badge">📱 Mobile Experience</span>
+              <span class="store-live-pill" id="mobileLayoutBadgePill">Option 1 Active</span>
+            </div>
+            <div class="store-control-title">Mobile Menu Layout & Detail View</div>
+            <p class="store-control-desc">Choose how menu items, ingredients & combo breakdowns are displayed on smartphone screens.</p>
+
+            <div class="mobile-layout-selector" style="display:flex;flex-direction:column;gap:8px;margin:12px 0;">
+              <label class="mobile-layout-radio-card" id="layoutOptCard1" style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg-secondary);border:1.5px solid var(--accent);border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition-fast);">
+                <input type="radio" name="mobileMenuLayout" value="horizontal_list" id="radioLayoutHorizontal" checked style="margin-top:3px;accent-color:var(--accent);">
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <strong style="font-size:0.86rem;color:var(--text-primary);">Option 1: Swiggy/Zomato List</strong>
+                    <span style="font-size:0.68rem;padding:2px 6px;border-radius:4px;background:var(--success-light);color:var(--success);font-weight:700;">Recommended</span>
+                  </div>
+                  <span style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-top:2px;line-height:1.35;">Full-width rows with bulleted combo items on the left and a square photo with overlapping +ADD on the right.</span>
+                </div>
+              </label>
+
+              <label class="mobile-layout-radio-card" id="layoutOptCard2" style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg-secondary);border:1.5px solid var(--border);border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition-fast);">
+                <input type="radio" name="mobileMenuLayout" value="bottom_sheet" id="radioLayoutBottomSheet" style="margin-top:3px;accent-color:var(--accent);">
+                <div style="flex:1;">
+                  <strong style="font-size:0.86rem;color:var(--text-primary);display:block;">Option 2: Tap-to-View Modal</strong>
+                  <span style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-top:2px;line-height:1.35;">2-column grid. Tapping any item slides open a rich bottom sheet drawer with large photo, untruncated details & sticky cart button.</span>
+                </div>
+              </label>
+
+              <label class="mobile-layout-radio-card" id="layoutOptCard3" style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--bg-secondary);border:1.5px solid var(--border);border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition-fast);">
+                <input type="radio" name="mobileMenuLayout" value="both" id="radioLayoutBoth" style="margin-top:3px;accent-color:var(--accent);">
+                <div style="flex:1;">
+                  <strong style="font-size:0.86rem;color:var(--text-primary);display:block;">Hybrid (List + Modal on Tap)</strong>
+                  <span style="display:block;font-size:0.75rem;color:var(--text-tertiary);margin-top:2px;line-height:1.35;">Full-width list cards on mobile, plus clicking anywhere on the card opens the full Dish Detail Modal.</span>
+                </div>
+              </label>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;">
+              <span id="mobileLayoutSaveStatus" style="font-size:0.75rem;color:var(--success);font-weight:700;display:none;">Saved to Atlas ✓</span>
+              <button type="button" class="btn-admin primary" id="btnSaveMobileLayout" style="padding:7px 14px;font-size:0.8rem;margin-left:auto;">
+                💾 Save Layout Mode
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Stats -->

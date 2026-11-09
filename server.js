@@ -564,6 +564,7 @@ app.get('/api/config', async (req, res) => {
         maxDeliveryRadiusKm: 15.0,
         fallbackFee: 50
       },
+      mobileMenuLayout: settings.mobileMenuLayout || 'horizontal_list',
       mapboxPublicToken: process.env.MAPBOX_ACCESS_TOKEN || ''
     });
   } catch (err) {
@@ -575,6 +576,7 @@ app.get('/api/config', async (req, res) => {
       deliveryCharge: 50,
       packagingFee: 0,
       gstPercent: 5,
+      mobileMenuLayout: 'horizontal_list',
       storeLocation: {
         address: 'Banbahar Road, Kayakuchi, Barpeta District, Assam - 781352, India',
         latitude: 26.402688880316525,

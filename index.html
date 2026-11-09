@@ -648,6 +648,57 @@
     </div>
   </div>
 
+  <!-- ========== DISH DETAIL BOTTOM SHEET MODAL (OPTION 2) ========== -->
+  <div class="modal-overlay dish-detail-overlay" id="dishDetailModal" aria-hidden="true">
+    <div class="dish-detail-sheet" id="dishDetailSheet">
+      <div class="sheet-drag-handle"><span></span></div>
+      <button class="sheet-close-btn" id="closeDishDetailBtn" aria-label="Close dish details">✕</button>
+      
+      <div class="dish-detail-scroll-body" id="dishDetailScrollBody">
+        <div class="dish-detail-hero">
+          <img id="dishDetailHeroImg" src="" alt="Dish Hero" loading="lazy">
+          <div class="dish-detail-hero-gradient"></div>
+          <div class="dish-detail-hero-badges" id="dishDetailHeroBadges">
+            <!-- Dietary badge & category badge -->
+          </div>
+        </div>
+
+        <div class="dish-detail-main-info">
+          <div class="dish-detail-title-row">
+            <h2 class="dish-detail-title" id="dishDetailTitle"></h2>
+            <div class="dish-detail-rating" id="dishDetailRating"></div>
+          </div>
+
+          <div class="dish-detail-pricing-row" id="dishDetailPricingRow"></div>
+
+          <div class="dish-detail-divider"></div>
+
+          <div class="dish-detail-section">
+            <h3 class="dish-detail-section-title">Description & Combo Inclusions</h3>
+            <div class="dish-detail-desc" id="dishDetailDesc"></div>
+          </div>
+
+          <div class="dish-detail-meta-box">
+            <div class="meta-row"><span class="meta-icon">⚡</span><span>Freshly prepared on order</span></div>
+            <div class="meta-row"><span class="meta-icon">🛵</span><span>Contactless delivery available</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dish-detail-footer" id="dishDetailFooter">
+        <div class="dish-detail-qty-control" id="dishDetailQtyControl">
+          <button type="button" class="btn-sheet-qty" id="btnDishDetailQtyDec" aria-label="Decrease quantity">−</button>
+          <span class="sheet-qty-val" id="dishDetailQtyVal">1</span>
+          <button type="button" class="btn-sheet-qty" id="btnDishDetailQtyInc" aria-label="Increase quantity">+</button>
+        </div>
+        <button type="button" class="btn-sheet-add" id="btnDishDetailAdd">
+          <span id="dishDetailAddLabel">Add Item to Cart</span>
+          <span class="sheet-add-price" id="dishDetailAddPrice"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ========== TOAST CONTAINER ========== -->
   <div class="toast-container" id="toastContainer"></div>
 
