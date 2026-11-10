@@ -2212,7 +2212,7 @@
                     <input type="checkbox" ${item.available ? 'checked' : ''} data-field="available" data-id="${item.id}">
                     <span class="toggle-slider"></span>
                   </label>
-                  <span style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);">${item.available ? 'Available to Order' : 'Hidden from Menu'}</span>
+                  <span class="avail-label" style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);">${item.available ? 'Available to Order' : 'Out of Stock (Black & White)'}</span>
                 </div>
                 <button type="button" class="btn-admin danger" data-delete-item="${item.id}" style="padding:4px 10px;font-size:0.78rem;">
                   🗑️ Delete Item
@@ -2366,6 +2366,10 @@
       if (availInput) {
         availInput.addEventListener('change', () => {
           item.available = availInput.checked;
+          const label = card.querySelector('.avail-label');
+          if (label) {
+            label.textContent = availInput.checked ? 'Available to Order' : 'Out of Stock (Black & White)';
+          }
         });
       }
 

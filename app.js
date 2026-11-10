@@ -1549,16 +1549,16 @@
       ? MJData.getCategories()
       : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
 
-    // Display categories in order of knownCats if they have available items
+    // Display categories in order of knownCats if they have menu items
     knownCats.forEach(cat => {
-      if (state.menu.some(item => item.category === cat && item.available) && !cats.includes(cat)) {
+      if (state.menu.some(item => item.category === cat) && !cats.includes(cat)) {
         cats.push(cat);
       }
     });
 
     // Also include any other category present in menu items
     state.menu.forEach(item => {
-      if (item.available && item.category && !cats.includes(item.category)) {
+      if (item.category && !cats.includes(item.category)) {
         cats.push(item.category);
       }
     });
@@ -1624,7 +1624,7 @@
   }
 
   function renderMenu() {
-    if (!state.menu || state.menu.length === 0 || !state.menu.some(i => i.available)) {
+    if (!state.menu || state.menu.length === 0) {
       els.menuContainer.innerHTML = `
         <div style="text-align:center;padding:80px 20px;color:var(--text-tertiary);">
           <div style="font-size:3.5rem;margin-bottom:12px;">🍽️</div>
@@ -1651,7 +1651,7 @@
       : (state.categoryHighlightTheme || 'gold');
 
     categories.forEach(cat => {
-      let items = state.menu.filter(i => i.category === cat && i.available);
+      let items = state.menu.filter(i => i.category === cat);
 
       // Filter by dietary preference ('all' | 'veg' | 'non-veg')
       if (state.dietaryFilter === 'veg') {
@@ -1662,6 +1662,13 @@
 
       if (items.length === 0) return;
       renderedCount += items.length;
+
+      // Smart Auto-Sink: Available items at top, Out of Stock items sink to the bottom
+      items.sort((a, b) => {
+        const aAvail = a.available !== false ? 1 : 0;
+        const bAvail = b.available !== false ? 1 : 0;
+        return bAvail - aAvail;
+      });
 
       const isHilite = highlighted.includes(cat);
       const spotlightBadge = isHilite
@@ -1726,6 +1733,10 @@
 
   function openCustomizationModal(item) {
     if (!item) return;
+    if (item.available === false) {
+      showToast(`${item.name} is currently out of stock`, 'info');
+      return;
+    }
     customizationState.item = item;
     customizationState.qty = 1;
     customizationState.selectedAddons = [];
@@ -2003,15 +2014,16 @@
   }
 
   function renderMenuItem(item) {
+    const isOutOfStock = item.available === false;
     const customizable = hasCustomizations(item);
     const discount = item.mrp > 0 ? Math.round(((item.mrp - item.offerPrice) / item.mrp) * 100) : 0;
     
     // For non-customizable items, direct cart item matching:
-    const cartItem = !customizable ? state.cart.find(c => c.id === item.id) : null;
+    const cartItem = (!customizable && !isOutOfStock) ? state.cart.find(c => c.id === item.id) : null;
     const qty = cartItem ? cartItem.qty : 0;
 
     // For customizable items, sum total qty across all variants in cart:
-    const variantQtyInCart = customizable 
+    const variantQtyInCart = (customizable && !isOutOfStock)
       ? state.cart.filter(c => c.id === item.id).reduce((sum, c) => sum + c.qty, 0)
       : 0;
 
@@ -2024,7 +2036,7 @@
           <span class="price-offer">From ₹${minPrice}</span>
           ${item.mrp > minPrice ? `<span class="price-mrp">₹${item.mrp}</span>` : ''}
         </div>
-        <div class="customizable-tag">✨ Customizable options</div>
+        ${!isOutOfStock ? `<div class="customizable-tag">✨ Customizable options</div>` : ''}
       `;
     } else {
       pricingHtml = `
@@ -2032,12 +2044,18 @@
           <span class="price-offer">₹${item.offerPrice}</span>
           ${item.mrp > item.offerPrice ? `<span class="price-mrp">₹${item.mrp}</span>` : ''}
         </div>
-        ${customizable ? `<div class="customizable-tag">✨ Extra add-ons available</div>` : ''}
+        ${(customizable && !isOutOfStock) ? `<div class="customizable-tag">✨ Extra add-ons available</div>` : ''}
       `;
     }
 
     let actionsHtml = '';
-    if (customizable) {
+    if (isOutOfStock) {
+      actionsHtml = `
+        <button class="btn-add-cart is-out-of-stock-btn" data-action="out-of-stock" data-id="${item.id}" aria-disabled="true">
+          Out of Stock
+        </button>
+      `;
+    } else if (customizable) {
       actionsHtml = `
         <button class="btn-add-cart" data-action="customize" data-id="${item.id}">
           ${variantQtyInCart > 0 ? `+ Add More (${variantQtyInCart} in cart)` : '✨ Customize & Add'}
@@ -2120,14 +2138,15 @@
     }
 
     return `
-      <div class="menu-card ${customizable ? 'is-customizable' : ''}" data-id="${item.id}">
+      <div class="menu-card ${customizable ? 'is-customizable' : ''} ${isOutOfStock ? 'is-out-of-stock' : ''}" data-id="${item.id}">
         <div class="menu-card-img-wrap">
           <div class="dietary-badge ${dietaryClass}" title="${dietaryTitle}">
             <span class="dietary-dot"></span>
           </div>
           <img src="${item.image}" alt="${item.name}" loading="lazy">
-          ${item.badge ? `<span class="menu-card-badge">${item.badge}</span>` : ''}
-          ${discount > 0 ? `<span class="discount-pill">${discount}% OFF</span>` : ''}
+          ${item.badge && !isOutOfStock ? `<span class="menu-card-badge">${item.badge}</span>` : ''}
+          ${discount > 0 && !isOutOfStock ? `<span class="discount-pill">${discount}% OFF</span>` : ''}
+          ${isOutOfStock ? `<div class="out-of-stock-overlay"><span class="out-of-stock-badge">OUT OF STOCK</span></div>` : ''}
         </div>
         <div class="menu-card-content">
           <div class="menu-card-header-row">
@@ -2141,7 +2160,7 @@
           </div>
           <div class="menu-card-desc">${formatMenuDescription(item.description)}</div>
           ${pricingHtml}
-          ${promoBadgesHtml}
+          ${!isOutOfStock ? promoBadgesHtml : ''}
           <div class="menu-card-actions">
             ${actionsHtml}
           </div>
@@ -2156,6 +2175,10 @@
 
   function openDishDetailModal(item) {
     if (!item) return;
+    if (item.available === false) {
+      showToast(`${item.name} is currently out of stock`, 'info');
+      return;
+    }
     currentDetailItem = item;
     currentDetailQty = 1;
 
@@ -2304,6 +2327,16 @@
   }
 
   function bindMenuActions() {
+    // Out of Stock button click feedback
+    els.menuContainer.querySelectorAll('[data-action="out-of-stock"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const item = state.menu.find(i => i.id === parseInt(btn.dataset.id));
+        const name = item ? item.name : 'This item';
+        showToast(`${name} is currently out of stock`, 'info');
+      });
+    });
+
     // Add to Cart for non-customizable items
     els.menuContainer.querySelectorAll('[data-action="add"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -2329,6 +2362,11 @@
         }
         const item = state.menu.find(i => i.id === parseInt(card.dataset.id));
         if (!item) return;
+
+        if (card.classList.contains('is-out-of-stock') || item.available === false) {
+          showToast(`${item.name} is currently out of stock`, 'info');
+          return;
+        }
 
         if (hasCustomizations(item)) {
           openCustomizationModal(item);
@@ -2402,6 +2440,10 @@
   function addToCart(itemId) {
     const menuItem = state.menu.find(i => i.id === itemId);
     if (!menuItem) return;
+    if (menuItem.available === false) {
+      showToast(`${menuItem.name} is currently out of stock`, 'info');
+      return;
+    }
 
     if (hasCustomizations(menuItem)) {
       openCustomizationModal(menuItem);

@@ -1205,6 +1205,84 @@ input, select, textarea {
   box-shadow: var(--shadow-accent);
 }
 
+/* ---------- Out of Stock Menu Card (Black & White) ---------- */
+.menu-card.is-out-of-stock {
+  filter: grayscale(100%);
+  opacity: 0.68;
+  cursor: not-allowed;
+  transition: all var(--transition-base);
+}
+
+.menu-card.is-out-of-stock:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: var(--border) !important;
+}
+
+.menu-card.is-out-of-stock:hover .menu-card-img img,
+.menu-card.is-out-of-stock:hover .menu-card-img-wrap img {
+  transform: none !important;
+}
+
+.menu-card.is-out-of-stock .menu-card-title {
+  color: var(--text-secondary);
+}
+
+.menu-card.is-out-of-stock .price-offer {
+  color: var(--text-secondary);
+}
+
+/* Frosted glass / bold Out of Stock badge overlay on food image */
+.out-of-stock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border-radius: inherit;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.out-of-stock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: rgba(15, 23, 42, 0.88);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+/* Disabled Out of Stock button */
+.btn-add-cart.is-out-of-stock-btn,
+.menu-card.is-out-of-stock .btn-add-cart {
+  background: rgba(100, 116, 139, 0.22) !important;
+  color: var(--text-tertiary) !important;
+  border: 1px solid var(--border-strong) !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 0.9;
+  font-weight: 700;
+}
+
+.btn-add-cart.is-out-of-stock-btn:hover,
+.menu-card.is-out-of-stock .btn-add-cart:hover {
+  background: rgba(100, 116, 139, 0.22) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
 /* Quantity controls in card */
 .qty-control {
   display: flex;
@@ -5704,6 +5782,22 @@ input, select, textarea {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     text-transform: uppercase;
     letter-spacing: 0.03em;
+  }
+
+  body[data-mobile-layout="horizontal_list"] .menu-card.is-out-of-stock .menu-card-actions .btn-add-cart,
+  body[data-mobile-layout="both"] .menu-card.is-out-of-stock .menu-card-actions .btn-add-cart,
+  body:not([data-mobile-layout="bottom_sheet"]) .menu-card.is-out-of-stock .menu-card-actions .btn-add-cart {
+    width: auto;
+    min-width: 95px;
+    padding: 6px 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: rgba(100, 116, 139, 0.22) !important;
+    color: var(--text-tertiary) !important;
+    border: 1.5px solid var(--border-strong) !important;
+    box-shadow: none !important;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
 
   body[data-mobile-layout="horizontal_list"] .menu-card-actions .qty-control,
