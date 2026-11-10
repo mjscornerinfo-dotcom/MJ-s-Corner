@@ -100,8 +100,12 @@
     deliveryTestResults: $('#deliveryTestResults'),
     // Orders
     dashboardOrdersBody: $('#dashboardOrdersBody'),
+    dashboardOrdersCardsList: $('#dashboardOrdersCardsList'),
     ordersBody: $('#ordersBody'),
+    ordersCardsList: $('#ordersCardsList'),
     btnRefreshOrders: $('#btnRefreshOrders'),
+    bottomNavOrdersBadge: $('#bottomNavOrdersBadge'),
+    menuEditorSearchInput: $('#menuEditorSearchInput'),
     // Billing & Reports
     pageBilling: $('#pageBilling'),
     billingTotalSales: $('#billingTotalSales'),
@@ -240,15 +244,23 @@
   function navigateTo(page) {
     state.currentPage = page;
 
-    // Update nav items
+    // Update desktop sidebar nav items
     $$('.admin-nav-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.page === page);
+    });
+
+    // Update mobile bottom nav items
+    $$('.admin-bottom-nav-item').forEach(item => {
       item.classList.toggle('active', item.dataset.page === page);
     });
 
     // Show/hide pages
     $$('.admin-page').forEach(p => p.classList.add('hidden'));
     const pageEl = $(`#page${capitalize(page)}`);
-    if (pageEl) pageEl.classList.remove('hidden');
+    if (pageEl) {
+      pageEl.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     // Load page data
     loadData();
@@ -366,6 +378,16 @@
     els.statPending.textContent = pending;
     els.statMenuItems.textContent = menuItems;
 
+    // Update bottom nav badge for pending orders
+    if (els.bottomNavOrdersBadge) {
+      if (pending > 0) {
+        els.bottomNavOrdersBadge.textContent = pending;
+        els.bottomNavOrdersBadge.style.display = 'inline-block';
+      } else {
+        els.bottomNavOrdersBadge.style.display = 'none';
+      }
+    }
+
     // Recent orders (last 5)
     const recent = orders.slice(0, 5);
     if (recent.length === 0) {
@@ -373,9 +395,20 @@
         <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-tertiary);">
           No orders yet. Orders placed on the customer portal will appear here.
         </td></tr>`;
+      if (els.dashboardOrdersCardsList) {
+        els.dashboardOrdersCardsList.innerHTML = `
+          <div style="text-align:center;padding:24px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);color:var(--text-tertiary);font-size:0.88rem;">
+            No orders yet. Orders placed on the customer portal will appear here.
+          </div>
+        `;
+      }
     } else {
       els.dashboardOrdersBody.innerHTML = recent.map(order => renderOrderRow(order, false)).join('');
       bindOrderActions(els.dashboardOrdersBody);
+      if (els.dashboardOrdersCardsList) {
+        els.dashboardOrdersCardsList.innerHTML = recent.map(order => renderOrderCard(order)).join('');
+        bindOrderActions(els.dashboardOrdersCardsList);
+      }
     }
   }
 
@@ -387,14 +420,37 @@
       orders = orders.filter(o => o.status === filter);
     }
 
+    const pending = state.orders.filter(o => o.status === 'pending').length;
+    if (els.bottomNavOrdersBadge) {
+      if (pending > 0) {
+        els.bottomNavOrdersBadge.textContent = pending;
+        els.bottomNavOrdersBadge.style.display = 'inline-block';
+      } else {
+        els.bottomNavOrdersBadge.style.display = 'none';
+      }
+    }
+
     if (orders.length === 0) {
+      const emptyMsg = `No ${filter === 'all' ? '' : filter} orders found`;
       els.ordersBody.innerHTML = `
         <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-tertiary);">
-          No ${filter === 'all' ? '' : filter} orders found
+          ${emptyMsg}
         </td></tr>`;
+      if (els.ordersCardsList) {
+        els.ordersCardsList.innerHTML = `
+          <div style="text-align:center;padding:36px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);color:var(--text-tertiary);font-size:0.9rem;">
+            ${emptyMsg}
+          </div>
+        `;
+      }
     } else {
       els.ordersBody.innerHTML = orders.map(order => renderOrderRow(order, true)).join('');
       bindOrderActions(els.ordersBody);
+
+      if (els.ordersCardsList) {
+        els.ordersCardsList.innerHTML = orders.map(order => renderOrderCard(order)).join('');
+        bindOrderActions(els.ordersCardsList);
+      }
     }
   }
 
@@ -516,6 +572,115 @@
         </td>
         <td>${actionsHtml}</td>
       </tr>
+    `;
+  }
+
+  // ========== MOBILE ORDER CARD (TOUCH VIEW) ==========
+  function renderOrderCard(order) {
+    const items = order.items || [];
+    const typeIcons = { 'dine-in': '🍽️', 'pickup': '🥡', 'delivery': '🚗' };
+    const nextStatus = getNextStatus(order.status);
+
+    const nextBtn = (nextStatus && order.status !== 'cancelled')
+      ? `<button class="btn-admin primary" data-order-id="${order.id}" data-next-status="${nextStatus}" data-action="update-status" title="Advance to ${nextStatus}">
+           ${getStatusAction(nextStatus)}
+         </button>`
+      : '';
+
+    const cancelBtn = (order.status !== 'cancelled')
+      ? `<button class="btn-admin danger" data-order-id="${order.id}" data-action="cancel-order" title="Cancel this order">❌ Cancel</button>`
+      : `<span style="font-size:0.78rem;color:var(--danger);font-weight:700;">Cancelled</span>`;
+
+    const invoiceBtn = `<button class="btn-admin secondary" data-order-id="${order.id}" data-action="print-invoice" title="View & Print Invoice" style="padding:6px 12px;font-size:0.78rem;">🖨️ Invoice</button>`;
+    const deleteBtn = `<button class="btn-admin danger delete-order-btn" data-order-id="${order.id}" data-action="delete-order" title="Permanently delete this order" style="padding:6px 10px;font-size:0.75rem;">🗑️</button>`;
+
+    const statusBadgeClass = `status-badge ${order.status}`;
+    const statusLabel = {
+      pending: '⏳ Pending',
+      preparing: '👨‍🍳 Preparing',
+      ready: '✅ Ready',
+      delivered: '🚗 Delivered',
+      cancelled: '❌ Cancelled'
+    }[order.status] || order.status;
+
+    const phoneLink = order.customer && order.customer.phone
+      ? `<a href="tel:${escapeHtml(order.customer.phone)}" class="admin-order-card-call-btn" title="Call Customer">📞</a>`
+      : '';
+
+    const typeLabel = order.type === 'dine-in' && order.tableNo
+      ? `🍽️ Dine-In <strong>(Table ${escapeHtml(order.tableNo)})</strong>`
+      : `${typeIcons[order.type] || '📦'} ${capitalize(order.type || 'Order')}`;
+
+    const itemsSummaryHtml = items.map(item => {
+      const sizeTag = item.selectedSize ? ` <span style="color:var(--accent);font-weight:700;">(${escapeHtml(item.selectedSize.name)})</span>` : '';
+      const addonsTag = item.selectedAddons && item.selectedAddons.length > 0
+        ? `<div style="font-size:0.72rem;color:var(--text-secondary);font-weight:600;margin-top:1px;">+ ${item.selectedAddons.map(a => escapeHtml(a.name)).join(', ')}</div>`
+        : '';
+      return `
+        <div class="admin-order-card-item-line">
+          <div class="admin-order-card-item-name">
+            <div><span class="admin-order-card-item-qty">${item.qty || 1}x</span><strong>${escapeHtml(item.name)}</strong>${sizeTag}</div>
+            ${addonsTag}
+          </div>
+          <div class="admin-order-card-item-price">₹${((item.offerPrice || item.price || 0) * (item.qty || 1))}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="admin-order-card ${order.status}" data-order-id="${order.id}">
+        <div class="admin-order-card-header">
+          <div class="admin-order-card-id-group">
+            <span class="admin-order-card-id">#${order.id}</span>
+            <span class="admin-order-card-time">⏱️ ${formatTime(order.timestamp)}</span>
+          </div>
+          <span class="${statusBadgeClass}">${statusLabel}</span>
+        </div>
+
+        <div class="admin-order-card-customer-row">
+          <div class="admin-order-card-cust-info">
+            <div class="admin-order-card-cust-name">${escapeHtml(order.customer ? order.customer.name : 'Customer')}</div>
+            <div class="admin-order-card-cust-type">${typeLabel} • ${escapeHtml(order.customer ? (order.customer.phone || '') : '')}</div>
+          </div>
+          ${phoneLink}
+        </div>
+
+        <div class="admin-order-card-items-wrap">
+          <div class="admin-order-card-items-list">
+            ${itemsSummaryHtml}
+          </div>
+          ${order.customer && order.customer.notes ? `
+            <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);">
+              <strong>📝 Notes:</strong> ${escapeHtml(order.customer.notes)}
+            </div>
+          ` : ''}
+          ${order.customer && order.customer.address ? `
+            <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:6px;">
+              <strong>📍 Delivery:</strong> ${escapeHtml(order.customer.address)}
+              ${order.customer.coordinates && Array.isArray(order.customer.coordinates) && order.customer.coordinates.length === 2 ? `
+                <a href="https://www.google.com/maps?q=${order.customer.coordinates[1]},${order.customer.coordinates[0]}" target="_blank" rel="noopener noreferrer" style="margin-left:6px;color:var(--accent);font-weight:700;text-decoration:none;">🗺️ Map</a>
+              ` : ''}
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="admin-order-card-footer">
+          <div class="admin-order-card-total-group">
+            <span style="font-size:0.7rem;color:var(--text-tertiary);font-weight:700;text-transform:uppercase;">Total</span>
+            <span class="admin-order-card-total">₹${order.total}</span>
+          </div>
+          <span class="order-payment-badge ${order.paymentStatus === 'paid' ? 'paid' : 'pending'}">
+            ${order.paymentMethod === 'Cash on Counter' || order.paymentMethod === 'cash' ? '💵 Cash' : (order.paymentMethod === 'promo_free' ? '🎟️ Free' : (order.paymentStatus === 'paid' ? '💳 Paid' : '💳 Pending'))}
+          </span>
+        </div>
+
+        <div class="admin-order-card-actions">
+          ${nextBtn}
+          ${invoiceBtn}
+          ${cancelBtn}
+          ${deleteBtn}
+        </div>
+      </div>
     `;
   }
 
@@ -2964,6 +3129,44 @@
     $$('.admin-nav-item').forEach(item => {
       item.addEventListener('click', () => navigateTo(item.dataset.page));
     });
+
+    // Mobile Bottom Navigation Bar
+    $$('.admin-bottom-nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const page = item.dataset.page;
+        if (page === 'more') {
+          toggleSidebar();
+        } else {
+          navigateTo(page);
+        }
+      });
+    });
+
+    // Mobile refresh buttons
+    $$('.btn-refresh-mobile-orders').forEach(btn => {
+      btn.addEventListener('click', () => {
+        loadData();
+        showToast('Orders refreshed', 'info');
+      });
+    });
+
+    // Quick stock search filter in Menu Editor
+    if (els.menuEditorSearchInput) {
+      els.menuEditorSearchInput.addEventListener('input', () => {
+        const query = els.menuEditorSearchInput.value.toLowerCase().trim();
+        $$('.menu-editor-item').forEach(card => {
+          const nameInput = card.querySelector('[data-field="name"]');
+          const catSelect = card.querySelector('[data-field="category"]');
+          const name = nameInput ? nameInput.value.toLowerCase() : '';
+          const cat = catSelect ? catSelect.value.toLowerCase() : '';
+          if (!query || name.includes(query) || cat.includes(query)) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    }
 
     // Order filters
     $$('[data-filter]').forEach(btn => {

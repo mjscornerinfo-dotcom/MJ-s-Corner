@@ -2468,6 +2468,306 @@ input, select, textarea {
   font-weight: 600;
 }
 
+/* ==========================================================================
+   ADMIN MOBILE APP VIEW (BOTTOM NAV & RESPONSIVE ORDER CARDS)
+   ========================================================================== */
+
+/* Toggle between Desktop Table and Mobile Cards */
+@media (min-width: 769px) {
+  .mobile-only-orders {
+    display: none !important;
+  }
+  .desktop-only-orders {
+    display: block !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-only-orders {
+    display: none !important;
+  }
+  .mobile-only-orders {
+    display: block !important;
+  }
+  .admin-content {
+    padding: 16px 12px 88px 12px !important; /* Extra bottom clearance for bottom nav bar */
+  }
+  .admin-page-title {
+    font-size: 1.35rem !important;
+    margin-bottom: 16px !important;
+  }
+}
+
+/* Mobile Orders Card List */
+.admin-orders-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-order-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+.admin-order-card.pending { border-left: 4px solid var(--warning); }
+.admin-order-card.preparing { border-left: 4px solid var(--info); }
+.admin-order-card.ready { border-left: 4px solid var(--success); }
+.admin-order-card.delivered { border-left: 4px solid var(--accent); }
+.admin-order-card.cancelled { border-left: 4px solid var(--danger); opacity: 0.85; }
+
+.admin-order-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-order-card-id-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-order-card-id {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.admin-order-card-time {
+  font-size: 0.74rem;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.admin-order-card-customer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.admin-order-card-cust-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-order-card-cust-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+}
+
+.admin-order-card-cust-type {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.admin-order-card-call-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--success-light);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 1rem;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.admin-order-card-call-btn:hover {
+  transform: scale(1.08);
+}
+
+.admin-order-card-items-wrap {
+  margin-bottom: 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+}
+
+.admin-order-card-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-order-card-item-line {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.admin-order-card-item-name {
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-order-card-item-qty {
+  font-weight: 800;
+  background: var(--bg-card);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.74rem;
+  border: 1px solid var(--border);
+  margin-right: 5px;
+  display: inline-block;
+}
+
+.admin-order-card-item-price {
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.admin-order-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.admin-order-card-total-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.admin-order-card-total {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.admin-order-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-order-card-actions .btn-admin {
+  flex: 1;
+  min-height: 38px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+}
+
+.admin-order-card-actions .btn-admin.primary {
+  flex: 2;
+  font-size: 0.84rem;
+}
+
+/* Mobile Bottom Navigation Bar */
+.admin-mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-strong);
+  z-index: 1000;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@media (max-width: 768px) {
+  .admin-mobile-bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+  }
+}
+
+.admin-bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 4px 2px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  position: relative;
+  user-select: none;
+}
+
+.admin-bottom-nav-item .bottom-nav-icon {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  margin-bottom: 2px;
+  position: relative;
+  display: inline-block;
+}
+
+.admin-bottom-nav-item .bottom-nav-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  min-width: 16px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(230, 57, 70, 0.4);
+}
+
+.admin-bottom-nav-item.active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.admin-bottom-nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 0 0 3px 3px;
+}
+
 /* Admin buttons */
 .btn-admin {
   padding: 8px 16px;
