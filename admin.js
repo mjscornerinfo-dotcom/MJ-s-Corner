@@ -280,7 +280,7 @@
     state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
     state.categories = (window.MJData && MJData.getCategories)
       ? MJData.getCategories()
-      : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts'];
+      : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts', 'Cakes', 'Events'];
     state.menuFilterCategory = state.menuFilterCategory || 'All';
 
     switch (state.currentPage) {
@@ -1995,6 +1995,8 @@
   function getCategoryIcon(cat) {
     if (!cat) return '🍽️';
     const c = String(cat).toLowerCase();
+    if (c.includes('cake') || c.includes('pastry') || c.includes('bakery')) return '🎂';
+    if (c.includes('event') || c.includes('party') || c.includes('catering')) return '🎉';
     if (c.includes('chicken') || c.includes('crispy') || c.includes('fried')) return '🍗';
     if (c.includes('burger')) return '🍔';
     if (c.includes('pizza')) return '🍕';
@@ -2018,7 +2020,7 @@
   function getActiveCategories() {
     let cats = (state.categories && state.categories.length > 0)
       ? state.categories
-      : (window.MJData && MJData.getCategories ? MJData.getCategories() : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts']);
+      : (window.MJData && MJData.getCategories ? MJData.getCategories() : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts', 'Cakes', 'Events']);
     state.categories = cats;
     return cats;
   }

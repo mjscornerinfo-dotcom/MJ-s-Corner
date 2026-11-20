@@ -198,6 +198,112 @@
       isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
+    },
+    // ---- Cakes ----
+    {
+      id: 201, name: 'Dutch Chocolate Truffle Cake', category: 'Cakes',
+      description: 'Rich dark chocolate ganache layered with moist sponge and handcrafted chocolate curls. Freshly baked.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 599, offerPrice: 499,
+      badge: 'Bestseller', available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: '0.5 Kg (Small)', price: 499 },
+        { name: '1.0 Kg (Regular)', price: 899 }
+      ],
+      addons: [
+        { name: 'Birthday Candle & Knife Set', price: 20 },
+        { name: 'Sparkler Candle', price: 30 }
+      ]
+    },
+    {
+      id: 202, name: 'Red Velvet Cream Cheese Cake', category: 'Cakes',
+      description: 'Velvety crimson sponge layered with artisanal Philadelphia cream cheese frosting and white chocolate curls.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 649, offerPrice: 549,
+      badge: 'Popular', available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: '0.5 Kg (Small)', price: 549 },
+        { name: '1.0 Kg (Regular)', price: 999 }
+      ],
+      addons: [
+        { name: 'Birthday Candle & Knife Set', price: 20 },
+        { name: 'Sparkler Candle', price: 30 }
+      ]
+    },
+    {
+      id: 203, name: 'Blueberry Glaze Cheesecake', category: 'Cakes',
+      description: 'Classic baked New York cheesecake generously crowned with rich Canadian wild blueberry compote.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 699, offerPrice: 599,
+      badge: "Chef's Pick", available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: '0.5 Kg (Small)', price: 599 },
+        { name: '1.0 Kg (Regular)', price: 1099 }
+      ],
+      addons: [
+        { name: 'Birthday Candle & Knife Set', price: 20 }
+      ]
+    },
+    {
+      id: 204, name: 'Classic Black Forest Cake', category: 'Cakes',
+      description: 'Traditional layered chocolate sponge, fresh vanilla whipped cream, and red cherry compote with dark chocolate shavings.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 529, offerPrice: 449,
+      badge: '', available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: '0.5 Kg (Small)', price: 449 },
+        { name: '1.0 Kg (Regular)', price: 799 }
+      ],
+      addons: [
+        { name: 'Birthday Candle & Knife Set', price: 20 },
+        { name: 'Sparkler Candle', price: 30 }
+      ]
+    },
+    // ---- Events ----
+    {
+      id: 301, name: 'Birthday Celebration Snack Box', category: 'Events',
+      description: 'Individual party box including 1 Mini Burger, crispy golden fries, choice of nuggets, and a refreshing juice pack.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219724/mjs_corner/food/fries.jpg', mrp: 199, offerPrice: 149,
+      badge: 'Party Hit', available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: 'Veg Party Box', price: 149 },
+        { name: 'Non-Veg Party Box', price: 179 }
+      ],
+      addons: [
+        { name: 'Add Chocolate Muffin', price: 40 },
+        { name: 'Add Extra Dip', price: 20 }
+      ]
+    },
+    {
+      id: 302, name: 'Family Pizza & Wings Party Platter', category: 'Events',
+      description: 'Serves 4-6 people: 2 Large Gourmet Pizzas, 12 Crispy Fried Chicken Wings / Garlic Bread, 1 Large Fries & 4 Chilled Drinks.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 1499, offerPrice: 1199,
+      badge: 'Save 20%', available: true,
+      isVeg: false, dietary: 'non-veg',
+      sizes: [
+        { name: 'Regular Platter (4-6 Pax)', price: 1199 },
+        { name: 'Grand Platter (8-10 Pax)', price: 1999 }
+      ],
+      addons: [
+        { name: 'Add Cheese Burst to Pizzas', price: 180 },
+        { name: 'Extra 6 Wings', price: 180 }
+      ]
+    },
+    {
+      id: 303, name: 'Corporate Mini Slider Box (12 Pcs)', category: 'Events',
+      description: 'Box of 12 bite-sized gourmet mini burgers (6 Veg Crispy + 6 Crispy Chicken) served with 3 signature house dips.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 1299, offerPrice: 999,
+      badge: 'Ideal for Office', available: true,
+      isVeg: false, dietary: 'non-veg',
+      sizes: [
+        { name: '12 Pcs Assorted (6 Veg + 6 Non-Veg)', price: 999 },
+        { name: '12 Pcs All Pure Veg', price: 899 },
+        { name: '12 Pcs All Chicken', price: 1049 }
+      ],
+      addons: [
+        { name: 'Add Party Fries Tray', price: 249 }
+      ]
     }
   ];
 
@@ -574,6 +680,16 @@
     btnDishDetailAdd: $('#btnDishDetailAdd'),
     dishDetailAddLabel: $('#dishDetailAddLabel'),
     dishDetailAddPrice: $('#dishDetailAddPrice'),
+    // Custom Inquiry Modal (Cakes & Events WhatsApp)
+    customInquiryModal: $('#customInquiryModal'),
+    customInquirySheet: $('#customInquirySheet'),
+    closeCustomInquiryBtn: $('#closeCustomInquiryBtn'),
+    inquiryHeaderBadge: $('#inquiryHeaderBadge'),
+    inquiryHeaderTitle: $('#inquiryHeaderTitle'),
+    inquiryHeaderSubtitle: $('#inquiryHeaderSubtitle'),
+    customInquiryBody: $('#customInquiryBody'),
+    btnWhatsappSend: $('#btnWhatsappSend'),
+    btnWhatsappSendText: $('#btnWhatsappSendText'),
     // Success modal
     successModal: $('#successModal'),
     orderIdDisplay: $('#orderIdDisplay'),
@@ -1603,6 +1719,8 @@
   function getCategoryIcon(cat) {
     if (!cat) return '🍽️';
     const c = String(cat).toLowerCase();
+    if (c.includes('cake') || c.includes('pastry') || c.includes('bakery')) return '🎂';
+    if (c.includes('event') || c.includes('party') || c.includes('catering')) return '🎉';
     if (c.includes('chicken') || c.includes('crispy') || c.includes('fried')) return '🍗';
     if (c.includes('burger')) return '🍔';
     if (c.includes('pizza')) return '🍕';
@@ -1675,14 +1793,122 @@
         ? `<span class="category-spotlight-badge theme-${theme}">✨ Spotlight</span>`
         : '';
 
+      const isCakes = cat === 'Cakes';
+      const isEvents = cat === 'Events';
+
+      let specialHeroHtml = '';
+      let bespokeCardHtml = '';
+
+      if (isCakes) {
+        specialHeroHtml = `
+          <div class="category-special-hero-banner cakes-hero">
+            <div class="special-hero-content">
+              <div class="special-hero-badge">🎂 Master Bakery Studio</div>
+              <h3 class="special-hero-title">Customise My Cake</h3>
+              <p class="special-hero-desc">Have a theme, photo, multi-tier, or customized flavour in mind? Chat directly with our pastry chef on WhatsApp!</p>
+              <div class="special-hero-features">
+                <span class="hero-chip">✨ Fondant & Theme Cakes</span>
+                <span class="hero-chip">📸 Edible Photo Prints</span>
+                <span class="hero-chip">🌿 100% Eggless Available</span>
+                <span class="hero-chip">⚡ Fast Delivery</span>
+              </div>
+              <div class="special-hero-actions">
+                <button type="button" class="btn-whatsapp-customise" data-whatsapp-action="cakes">
+                  <span class="wa-bubble-icon">💬</span>
+                  <span class="wa-label">Customise My Cake on WhatsApp</span>
+                  <span class="wa-phone-tag">+91 88119 29283</span>
+                </button>
+              </div>
+            </div>
+            <div class="special-hero-art" aria-hidden="true">
+              <div class="hero-art-main">🎂</div>
+              <div class="hero-art-sparkle s1">✨</div>
+              <div class="hero-art-sparkle s2">🍰</div>
+              <div class="hero-art-sparkle s3">🎉</div>
+            </div>
+          </div>
+        `;
+        bespokeCardHtml = `
+          <div class="menu-card special-bespoke-card cake-bespoke-card" data-whatsapp-action="cakes">
+            <div class="bespoke-card-art">
+              <div class="bespoke-badge">Custom Creation</div>
+              <div class="bespoke-big-icon">🎂</div>
+            </div>
+            <div class="menu-card-content bespoke-content">
+              <div class="bespoke-header">
+                <span class="bespoke-sub">Don't see your design?</span>
+                <h3 class="menu-card-title">Custom Theme & Photo Cakes</h3>
+              </div>
+              <p class="menu-card-desc">Send us your reference photo, flavour choice & occasion on WhatsApp. We'll bake it to perfection!</p>
+              <div class="bespoke-footer">
+                <button type="button" class="btn-whatsapp-bespoke" data-whatsapp-action="cakes">
+                  <span>💬 Customise on WhatsApp</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (isEvents) {
+        specialHeroHtml = `
+          <div class="category-special-hero-banner events-hero">
+            <div class="special-hero-content">
+              <div class="special-hero-badge">🎉 Catering & Bulk Orders</div>
+              <h3 class="special-hero-title">Host Your Celebration or Event</h3>
+              <p class="special-hero-desc">Planning a birthday bash, corporate party, family gathering or kitty party? Get customized bulk food boxes and special group discounts!</p>
+              <div class="special-hero-features">
+                <span class="hero-chip">📦 Custom Snack Boxes</span>
+                <span class="hero-chip">🍕 Burger & Pizza Feasts</span>
+                <span class="hero-chip">💰 Exclusive Group Discounts</span>
+                <span class="hero-chip">🛵 Timed Doorstep Delivery</span>
+              </div>
+              <div class="special-hero-actions">
+                <button type="button" class="btn-whatsapp-customise events-wa-btn" data-whatsapp-action="events">
+                  <span class="wa-bubble-icon">💬</span>
+                  <span class="wa-label">Plan / Customise on WhatsApp</span>
+                  <span class="wa-phone-tag">+91 88119 29283</span>
+                </button>
+              </div>
+            </div>
+            <div class="special-hero-art" aria-hidden="true">
+              <div class="hero-art-main">🎉</div>
+              <div class="hero-art-sparkle s1">🎈</div>
+              <div class="hero-art-sparkle s2">🍔</div>
+              <div class="hero-art-sparkle s3">🍕</div>
+            </div>
+          </div>
+        `;
+        bespokeCardHtml = `
+          <div class="menu-card special-bespoke-card event-bespoke-card" data-whatsapp-action="events">
+            <div class="bespoke-card-art event-art">
+              <div class="bespoke-badge">Bulk & Catering</div>
+              <div class="bespoke-big-icon">🎊</div>
+            </div>
+            <div class="menu-card-content bespoke-content">
+              <div class="bespoke-header">
+                <span class="bespoke-sub">Custom Gathering Plan</span>
+                <h3 class="menu-card-title">Tailored Event Catering Package</h3>
+              </div>
+              <p class="menu-card-desc">Need a package for 10 to 200+ guests? Tell us your budget and food preferences directly on WhatsApp.</p>
+              <div class="bespoke-footer">
+                <button type="button" class="btn-whatsapp-bespoke" data-whatsapp-action="events">
+                  <span>💬 Plan on WhatsApp</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       html += `
         <section class="menu-section ${isHilite ? 'menu-section--highlighted theme-' + theme : ''}" id="category-${cat}">
           <div class="menu-section-header ${isHilite ? 'is-highlighted-header' : ''}">
             <h2>${getCategoryIcon(cat)} ${cat} ${spotlightBadge}</h2>
             <span class="count">${items.length} items</span>
           </div>
+          ${specialHeroHtml}
           <div class="menu-grid">
             ${items.map(item => renderMenuItem(item)).join('')}
+            ${bespokeCardHtml}
           </div>
         </section>
       `;
@@ -2326,7 +2552,241 @@
     }
   }
 
+  // ========== CUSTOM INQUIRY MODAL (CAKES & EVENTS WHATSAPP) ==========
+  let inquiryState = {
+    type: 'cakes',
+    occasion: 'Birthday 🎂',
+    size: '1.0 Kg (8-12 Servings)',
+    flavour: 'Dutch Chocolate Truffle 🍫',
+    dietary: '100% Eggless (Pure Veg) 🟢',
+    eventType: 'Birthday Party 🎂',
+    guests: '20 - 50 Guests',
+    meal: 'Snack Box / High Tea 🍿',
+    eventDietary: 'Mixed (Veg & Non-Veg)',
+    notes: ''
+  };
+
+  const WHATSAPP_PHONE = '918811929283';
+
+  function openCustomInquiryModal(type = 'cakes') {
+    inquiryState.type = type;
+    inquiryState.notes = '';
+
+    if (!els.customInquiryModal) return;
+
+    if (type === 'cakes') {
+      if (els.inquiryHeaderBadge) els.inquiryHeaderBadge.textContent = '🎂 MASTER BAKERY STUDIO';
+      if (els.inquiryHeaderTitle) els.inquiryHeaderTitle.textContent = 'Customise My Cake';
+      if (els.inquiryHeaderSubtitle) els.inquiryHeaderSubtitle.textContent = 'Chat directly with our pastry chef on WhatsApp (+91 88119 29283)';
+      if (els.btnWhatsappSendText) els.btnWhatsappSendText.textContent = 'Chat with Baker on WhatsApp (+91 88119 29283)';
+      if (els.customInquirySheet) {
+        els.customInquirySheet.classList.remove('events-inquiry');
+        els.customInquirySheet.classList.add('cakes-inquiry');
+      }
+      renderCakesInquiryBody();
+    } else {
+      if (els.inquiryHeaderBadge) els.inquiryHeaderBadge.textContent = '🎉 PARTY & BULK CATERING';
+      if (els.inquiryHeaderTitle) els.inquiryHeaderTitle.textContent = 'Plan Your Event Catering';
+      if (els.inquiryHeaderSubtitle) els.inquiryHeaderSubtitle.textContent = 'Chat directly with our event planner on WhatsApp (+91 88119 29283)';
+      if (els.btnWhatsappSendText) els.btnWhatsappSendText.textContent = 'Chat with Planner on WhatsApp (+91 88119 29283)';
+      if (els.customInquirySheet) {
+        els.customInquirySheet.classList.remove('cakes-inquiry');
+        els.customInquirySheet.classList.add('events-inquiry');
+      }
+      renderEventsInquiryBody();
+    }
+
+    els.customInquiryModal.classList.add('open');
+    els.customInquiryModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCustomInquiryModal() {
+    if (!els.customInquiryModal) return;
+    els.customInquiryModal.classList.remove('open');
+    els.customInquiryModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  function renderCakesInquiryBody() {
+    if (!els.customInquiryBody) return;
+    const occasions = ['Birthday 🎂', 'Anniversary 💑', 'Baby Shower 🍼', 'Wedding 💒', 'Farewell 👋', 'Festival / Party 🎉'];
+    const sizes = ['0.5 Kg (4-6 Servings)', '1.0 Kg (8-12 Servings)', '1.5 Kg', '2.0 Kg (Party Size)', '3+ Kg Multi-tier'];
+    const flavours = ['Dutch Chocolate Truffle 🍫', 'Red Velvet Cream Cheese 🍒', 'Blueberry Cheesecake 🫐', 'Black Forest 🍒', 'Fresh Fruit 🍓', 'Butterscotch Crunch 🍯', 'Custom Flavour ✨'];
+    const dietaries = ['100% Eggless (Pure Veg) 🟢', 'With Egg 🔴'];
+
+    els.customInquiryBody.innerHTML = `
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">1. Select Occasion</label>
+        <div class="inquiry-chips-wrap" data-group="occasion">
+          ${occasions.map(occ => `<button type="button" class="inquiry-chip ${inquiryState.occasion === occ ? 'selected' : ''}" data-val="${escapeHtml(occ)}">${escapeHtml(occ)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">2. Cake Size / Weight</label>
+        <div class="inquiry-chips-wrap" data-group="size">
+          ${sizes.map(s => `<button type="button" class="inquiry-chip ${inquiryState.size === s ? 'selected' : ''}" data-val="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">3. Desired Flavour</label>
+        <div class="inquiry-chips-wrap" data-group="flavour">
+          ${flavours.map(f => `<button type="button" class="inquiry-chip ${inquiryState.flavour === f ? 'selected' : ''}" data-val="${escapeHtml(f)}">${escapeHtml(f)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">4. Dietary Preference</label>
+        <div class="inquiry-chips-wrap" data-group="dietary">
+          ${dietaries.map(d => `<button type="button" class="inquiry-chip ${inquiryState.dietary === d ? 'selected' : ''}" data-val="${escapeHtml(d)}">${escapeHtml(d)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">5. Message on Cake or Theme Notes (Optional)</label>
+        <textarea class="inquiry-textarea" id="inquiryCakeNotes" placeholder="e.g. Spiderman theme, please write 'Happy 5th Birthday Aarav!' and attach reference photo on WhatsApp...">${escapeHtml(inquiryState.notes || '')}</textarea>
+        <div class="inquiry-info-box">
+          <span>💡</span>
+          <span>Tip: You can send reference photos and theme pictures directly in WhatsApp chat!</span>
+        </div>
+      </div>
+    `;
+
+    bindInquiryChipEvents('cakes');
+  }
+
+  function renderEventsInquiryBody() {
+    if (!els.customInquiryBody) return;
+    const eventTypes = ['Birthday Party 🎂', 'Office / Corporate 💼', 'Family Gathering 👨‍👩‍👧‍👦', 'Kitty Party 🫖', 'House Party 🍕', 'Wedding / Reception 🎊'];
+    const guests = ['10 - 20 Guests', '20 - 50 Guests', '50 - 100 Guests', '100+ Guests'];
+    const meals = ['Snack Box / High Tea 🍿', 'Pizza & Burger Feast 🍔🍕', 'Full Lunch / Dinner 🍱'];
+    const dietaries = ['Mixed (Veg & Non-Veg)', 'All Pure Veg 🟢', 'All Non-Veg 🍗'];
+
+    els.customInquiryBody.innerHTML = `
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">1. Event Type</label>
+        <div class="inquiry-chips-wrap" data-group="eventType">
+          ${eventTypes.map(t => `<button type="button" class="inquiry-chip ${inquiryState.eventType === t ? 'selected' : ''}" data-val="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">2. Estimated Guest Count</label>
+        <div class="inquiry-chips-wrap" data-group="guests">
+          ${guests.map(g => `<button type="button" class="inquiry-chip ${inquiryState.guests === g ? 'selected' : ''}" data-val="${escapeHtml(g)}">${escapeHtml(g)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">3. Meal / Menu Style</label>
+        <div class="inquiry-chips-wrap" data-group="meal">
+          ${meals.map(m => `<button type="button" class="inquiry-chip ${inquiryState.meal === m ? 'selected' : ''}" data-val="${escapeHtml(m)}">${escapeHtml(m)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">4. Food Preference</label>
+        <div class="inquiry-chips-wrap" data-group="eventDietary">
+          ${dietaries.map(d => `<button type="button" class="inquiry-chip ${inquiryState.eventDietary === d ? 'selected' : ''}" data-val="${escapeHtml(d)}">${escapeHtml(d)}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="inquiry-section">
+        <label class="inquiry-section-label">5. Event Date & Special Catering Requests (Optional)</label>
+        <textarea class="inquiry-textarea" id="inquiryEventNotes" placeholder="e.g. Next Saturday around 6 PM. Looking for 30 snack boxes with customized mini burgers and drinks for kids...">${escapeHtml(inquiryState.notes || '')}</textarea>
+        <div class="inquiry-info-box">
+          <span>💰</span>
+          <span>Special group discounts and customized packing available for 15+ guests!</span>
+        </div>
+      </div>
+    `;
+
+    bindInquiryChipEvents('events');
+  }
+
+  function bindInquiryChipEvents(type) {
+    if (!els.customInquiryBody) return;
+    els.customInquiryBody.querySelectorAll('.inquiry-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const wrap = chip.closest('.inquiry-chips-wrap');
+        const group = wrap.dataset.group;
+        const val = chip.dataset.val;
+
+        wrap.querySelectorAll('.inquiry-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+
+        inquiryState[group] = val;
+      });
+    });
+  }
+
+  function submitWhatsappInquiry() {
+    const isCakes = inquiryState.type === 'cakes';
+    let text = '';
+
+    if (isCakes) {
+      const notesEl = document.getElementById('inquiryCakeNotes');
+      const notes = notesEl ? notesEl.value.trim() : '';
+      text = `Hello MJ's Corner! 🎂 I would like to enquire about a Customised Cake:
+• Occasion: ${inquiryState.occasion}
+• Size / Weight: ${inquiryState.size}
+• Flavour: ${inquiryState.flavour}
+• Dietary: ${inquiryState.dietary}${notes ? `\n• Notes / Message: ${notes}` : ''}
+
+Please share the pricing and design options!`;
+    } else {
+      const notesEl = document.getElementById('inquiryEventNotes');
+      const notes = notesEl ? notesEl.value.trim() : '';
+      text = `Hello MJ's Corner! 🎉 I would like to plan catering / bulk food for an event:
+• Event: ${inquiryState.eventType}
+• Guest Count: ${inquiryState.guests}
+• Menu Style: ${inquiryState.meal}
+• Dietary: ${inquiryState.eventDietary}${notes ? `\n• Event Date & Requests: ${notes}` : ''}
+
+Please share customized package options and group discounts!`;
+    }
+
+    const waUrl = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, '_blank');
+    closeCustomInquiryModal();
+  }
+
+  function initCustomInquiryModal() {
+    if (els.closeCustomInquiryBtn) {
+      els.closeCustomInquiryBtn.addEventListener('click', closeCustomInquiryModal);
+    }
+
+    if (els.customInquiryModal) {
+      els.customInquiryModal.addEventListener('click', (e) => {
+        if (e.target === els.customInquiryModal) {
+          closeCustomInquiryModal();
+        }
+      });
+    }
+
+    if (els.btnWhatsappSend) {
+      els.btnWhatsappSend.addEventListener('click', submitWhatsappInquiry);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && els.customInquiryModal && els.customInquiryModal.classList.contains('open')) {
+        closeCustomInquiryModal();
+      }
+    });
+  }
+
   function bindMenuActions() {
+    // Custom WhatsApp Action buttons (Cakes & Events)
+    els.menuContainer.querySelectorAll('[data-whatsapp-action]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const actionType = btn.dataset.whatsappAction || 'cakes';
+        openCustomInquiryModal(actionType);
+      });
+    });
+
     // Out of Stock button click feedback
     els.menuContainer.querySelectorAll('[data-action="out-of-stock"]').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -4728,6 +5188,9 @@
 
     // Dish Detail Bottom Sheet Modal init
     initDishDetailModal();
+
+    // Custom Inquiry (Cakes & Events WhatsApp) Modal init
+    initCustomInquiryModal();
 
     // Close on Escape key
     document.addEventListener('keydown', (e) => {

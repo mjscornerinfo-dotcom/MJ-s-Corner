@@ -22,7 +22,9 @@ var MJData = (function () {
     'Sides',
     'Salads',
     'Drinks',
-    'Desserts'
+    'Desserts',
+    'Cakes',
+    'Events'
   ];
 
   const DEFAULT_MENU = [
@@ -217,6 +219,112 @@ var MJData = (function () {
       isVeg: true, dietary: 'veg',
       sizes: [],
       addons: []
+    },
+    // ---- Cakes ----
+    {
+      id: 201, name: 'Dutch Chocolate Truffle Cake', category: 'Cakes',
+      description: 'Rich dark chocolate ganache layered with moist sponge and handcrafted chocolate curls. Freshly baked.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 599, offerPrice: 499,
+      badge: 'Bestseller', available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: '0.5 Kg (Small)', price: 499 },
+        { name: '1.0 Kg (Regular)', price: 899 }
+      ],
+      addons: [
+        { name: 'Birthday Candle & Knife Set', price: 20 },
+        { name: 'Sparkler Candle', price: 30 }
+      ]
+    },
+    {
+      id: 202, name: 'Red Velvet Cream Cheese Cake', category: 'Cakes',
+      description: 'Velvety crimson sponge layered with artisanal Philadelphia cream cheese frosting and white chocolate curls.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 649, offerPrice: 549,
+      badge: 'Popular', available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: '0.5 Kg (Small)', price: 549 },
+        { name: '1.0 Kg (Regular)', price: 999 }
+      ],
+      addons: [
+        { name: 'Birthday Candle & Knife Set', price: 20 },
+        { name: 'Sparkler Candle', price: 30 }
+      ]
+    },
+    {
+      id: 203, name: 'Blueberry Glaze Cheesecake', category: 'Cakes',
+      description: 'Classic baked New York cheesecake generously crowned with rich Canadian wild blueberry compote.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 699, offerPrice: 599,
+      badge: "Chef's Pick", available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: '0.5 Kg (Small)', price: 599 },
+        { name: '1.0 Kg (Regular)', price: 1099 }
+      ],
+      addons: [
+        { name: 'Birthday Candle & Knife Set', price: 20 }
+      ]
+    },
+    {
+      id: 204, name: 'Classic Black Forest Cake', category: 'Cakes',
+      description: 'Traditional layered chocolate sponge, fresh vanilla whipped cream, and red cherry compote with dark chocolate shavings.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219722/mjs_corner/food/brownie.jpg', mrp: 529, offerPrice: 449,
+      badge: '', available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: '0.5 Kg (Small)', price: 449 },
+        { name: '1.0 Kg (Regular)', price: 799 }
+      ],
+      addons: [
+        { name: 'Birthday Candle & Knife Set', price: 20 },
+        { name: 'Sparkler Candle', price: 30 }
+      ]
+    },
+    // ---- Events ----
+    {
+      id: 301, name: 'Birthday Celebration Snack Box', category: 'Events',
+      description: 'Individual party box including 1 Mini Burger, crispy golden fries, choice of nuggets, and a refreshing juice pack.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219724/mjs_corner/food/fries.jpg', mrp: 199, offerPrice: 149,
+      badge: 'Party Hit', available: true,
+      isVeg: true, dietary: 'veg',
+      sizes: [
+        { name: 'Veg Party Box', price: 149 },
+        { name: 'Non-Veg Party Box', price: 179 }
+      ],
+      addons: [
+        { name: 'Add Chocolate Muffin', price: 40 },
+        { name: 'Add Extra Dip', price: 20 }
+      ]
+    },
+    {
+      id: 302, name: 'Family Pizza & Wings Party Platter', category: 'Events',
+      description: 'Serves 4-6 people: 2 Large Gourmet Pizzas, 12 Crispy Fried Chicken Wings / Garlic Bread, 1 Large Fries & 4 Chilled Drinks.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219726/mjs_corner/food/pizza.jpg', mrp: 1499, offerPrice: 1199,
+      badge: 'Save 20%', available: true,
+      isVeg: false, dietary: 'non-veg',
+      sizes: [
+        { name: 'Regular Platter (4-6 Pax)', price: 1199 },
+        { name: 'Grand Platter (8-10 Pax)', price: 1999 }
+      ],
+      addons: [
+        { name: 'Add Cheese Burst to Pizzas', price: 180 },
+        { name: 'Extra 6 Wings', price: 180 }
+      ]
+    },
+    {
+      id: 303, name: 'Corporate Mini Slider Box (12 Pcs)', category: 'Events',
+      description: 'Box of 12 bite-sized gourmet mini burgers (6 Veg Crispy + 6 Crispy Chicken) served with 3 signature house dips.',
+      image: 'https://res.cloudinary.com/nhpdthsp/image/upload/v1793219704/mjs_corner/food/burger.jpg', mrp: 1299, offerPrice: 999,
+      badge: 'Ideal for Office', available: true,
+      isVeg: false, dietary: 'non-veg',
+      sizes: [
+        { name: '12 Pcs Assorted (6 Veg + 6 Non-Veg)', price: 999 },
+        { name: '12 Pcs All Pure Veg', price: 899 },
+        { name: '12 Pcs All Chicken', price: 1049 }
+      ],
+      addons: [
+        { name: 'Add Party Fries Tray', price: 249 }
+      ]
     }
   ];
 
@@ -365,6 +473,17 @@ var MJData = (function () {
               modified = true;
             }
           });
+          // Ensure Cakes and Events items are present
+          const hasCakes = stored.some(i => i.category === 'Cakes');
+          const hasEvents = stored.some(i => i.category === 'Events');
+          if (!hasCakes || !hasEvents) {
+            const cakeEventItems = DEFAULT_MENU.filter(i => (i.category === 'Cakes' && !hasCakes) || (i.category === 'Events' && !hasEvents));
+            if (cakeEventItems.length > 0) {
+              stored.push(...cakeEventItems);
+              modified = true;
+            }
+          }
+
           if (modified) {
             localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify(stored));
           }
@@ -427,6 +546,18 @@ var MJData = (function () {
     }
     if (localStorage.getItem(STORAGE_KEY_CATEGORIES) === null) {
       localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
+    } else {
+      try {
+        const storedCats = JSON.parse(localStorage.getItem(STORAGE_KEY_CATEGORIES));
+        if (Array.isArray(storedCats)) {
+          let catMod = false;
+          if (!storedCats.includes('Cakes')) { storedCats.push('Cakes'); catMod = true; }
+          if (!storedCats.includes('Events')) { storedCats.push('Events'); catMod = true; }
+          if (catMod) {
+            localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(storedCats));
+          }
+        }
+      } catch (e) {}
     }
     if (localStorage.getItem(STORAGE_KEY_BANNERS) === null) {
       localStorage.setItem(STORAGE_KEY_BANNERS, JSON.stringify(DEFAULT_BANNERS));
