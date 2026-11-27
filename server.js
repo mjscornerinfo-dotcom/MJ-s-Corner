@@ -466,7 +466,7 @@ async function seedDefaultDataIfEmpty() {
     console.log('Seeding default application settings into MongoDB Atlas...');
     await db.collection('settings').insertOne({
       key: 'app_settings',
-      promoPopupEnabled: true,
+      promoPopupEnabled: false,
       storeOnline: true,
       deliveryCharge: 50,
       packagingFee: 0,
@@ -1545,7 +1545,7 @@ app.get('/api/settings', async (req, res) => {
     res.json({
       success: true,
       settings: settings || {
-        promoPopupEnabled: true,
+        promoPopupEnabled: false,
         storeOnline: true,
         deliveryCharge: 50,
         packagingFee: 0,

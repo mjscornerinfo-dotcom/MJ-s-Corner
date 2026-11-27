@@ -491,58 +491,60 @@ var MJData = (function () {
       } catch (e) {}
     }
     if (localStorage.getItem(STORAGE_KEY_PROMOS) === null) {
-      if (!isInitialized) {
-        localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOS));
-      } else {
-        localStorage.setItem(STORAGE_KEY_PROMOS, '[]');
-      }
+      localStorage.setItem(STORAGE_KEY_PROMOS, '[]');
     } else {
-      // Migrate existing promos to support discountType, discountValue, scope, comboCategories
+      // Clear legacy default sample promos if no custom promotions were saved by admin
       try {
         const stored = JSON.parse(localStorage.getItem(STORAGE_KEY_PROMOS));
         if (Array.isArray(stored)) {
-          let modified = false;
-          stored.forEach(promo => {
-            if (!promo.discountType) {
-              if (promo.flatDiscount) {
-                promo.discountType = 'flat';
-                promo.discountValue = promo.flatDiscount;
-              } else {
-                promo.discountType = 'percentage';
-                promo.discountValue = promo.discountPercent || 20;
+          const isOnlySample = stored.length > 0 && stored.every(p => p.code === 'MJOPEN' || p.code === 'PIZZADRINK' || p.code === 'PIZZA50' || p.code === 'BURGERCOMBO');
+          if (isOnlySample && localStorage.getItem('mj_custom_promo_saved') !== 'true') {
+            localStorage.setItem(STORAGE_KEY_PROMOS, '[]');
+          } else {
+            // Migrate existing promos to support discountType, discountValue, scope, comboCategories
+            let modified = false;
+            stored.forEach(promo => {
+              if (!promo.discountType) {
+                if (promo.flatDiscount) {
+                  promo.discountType = 'flat';
+                  promo.discountValue = promo.flatDiscount;
+                } else {
+                  promo.discountType = 'percentage';
+                  promo.discountValue = promo.discountPercent || 20;
+                }
+                modified = true;
               }
-              modified = true;
-            }
-            if (!promo.scope) {
-              if (promo.code === 'PIZZA50') {
-                promo.scope = 'category';
-                promo.targetCategory = 'Pizza';
-              } else if (promo.code === 'PIZZADRINK') {
-                promo.scope = 'combo';
-                promo.comboCategories = ['Pizza', 'Drinks'];
-              } else {
-                promo.scope = 'order';
-                promo.targetCategory = 'All';
+              if (!promo.scope) {
+                if (promo.code === 'PIZZA50') {
+                  promo.scope = 'category';
+                  promo.targetCategory = 'Pizza';
+                } else if (promo.code === 'PIZZADRINK') {
+                  promo.scope = 'combo';
+                  promo.comboCategories = ['Pizza', 'Drinks'];
+                } else {
+                  promo.scope = 'order';
+                  promo.targetCategory = 'All';
+                }
+                modified = true;
               }
-              modified = true;
+              if (promo.comboCategories === undefined) {
+                promo.comboCategories = promo.code === 'PIZZADRINK' ? ['Pizza', 'Drinks'] : [];
+                modified = true;
+              }
+              if (promo.minOrderValue === undefined) {
+                promo.minOrderValue = 0;
+                modified = true;
+              }
+            });
+            if (modified) {
+              localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(stored));
             }
-            if (promo.comboCategories === undefined) {
-              promo.comboCategories = promo.code === 'PIZZADRINK' ? ['Pizza', 'Drinks'] : [];
-              modified = true;
-            }
-            if (promo.minOrderValue === undefined) {
-              promo.minOrderValue = 0;
-              modified = true;
-            }
-          });
-          if (modified) {
-            localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(stored));
           }
         }
       } catch (e) {}
     }
     if (localStorage.getItem(STORAGE_KEY_POPUP) === null) {
-      localStorage.setItem(STORAGE_KEY_POPUP, 'true');
+      localStorage.setItem(STORAGE_KEY_POPUP, 'false');
     }
     if (localStorage.getItem(STORAGE_KEY_CATEGORIES) === null) {
       localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
@@ -590,14 +592,15 @@ var MJData = (function () {
     initStorage();
     try {
       const data = localStorage.getItem(STORAGE_KEY_PROMOS);
-      return data !== null ? JSON.parse(data) : [...DEFAULT_PROMOS];
+      return data !== null ? JSON.parse(data) : [];
     } catch (e) {
-      return [...DEFAULT_PROMOS];
+      return [];
     }
   }
 
   function savePromos(promos) {
     localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(promos));
+    localStorage.setItem('mj_custom_promo_saved', 'true');
     window.dispatchEvent(new Event('mj_data_changed'));
 
     // Persist to MongoDB Atlas
@@ -612,9 +615,9 @@ var MJData = (function () {
     initStorage();
     try {
       const val = localStorage.getItem(STORAGE_KEY_POPUP);
-      return val !== null ? JSON.parse(val) : true;
+      return val !== null ? JSON.parse(val) : false;
     } catch (e) {
-      return true;
+      return false;
     }
   }
 
@@ -887,6 +890,7 @@ var MJData = (function () {
   function resetPromos() {
     localStorage.setItem(STORAGE_KEY_PROMOS, JSON.stringify(DEFAULT_PROMOS));
     localStorage.setItem('mj_initialized', 'true');
+    localStorage.setItem('mj_custom_promo_saved', 'true');
     window.dispatchEvent(new Event('mj_data_changed'));
 
     return fetch('/api/promotions/reset', { method: 'POST' })

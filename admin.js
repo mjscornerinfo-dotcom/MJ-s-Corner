@@ -10,7 +10,7 @@
     orders: [],
     menu: [],
     promos: [],
-    promoPopupEnabled: true,
+    promoPopupEnabled: false,
     currentPage: 'dashboard',
     orderFilter: 'all',
     storeOnline: true,
@@ -277,7 +277,7 @@
     state.menu = window.MJData ? MJData.getMenu() : JSON.parse(localStorage.getItem('mj_menu') || '[]');
     state.promos = window.MJData ? MJData.getPromos() : JSON.parse(localStorage.getItem('mj_promos') || '[]');
     state.banners = window.MJData ? MJData.getBanners() : JSON.parse(localStorage.getItem('mj_banners') || '[]');
-    state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
+    state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : false;
     state.categories = (window.MJData && MJData.getCategories)
       ? MJData.getCategories()
       : ['Crispy Fried Chicken', 'Burgers', 'Pizza', 'Pasta', 'Sides', 'Salads', 'Drinks', 'Desserts', 'Cakes', 'Events'];

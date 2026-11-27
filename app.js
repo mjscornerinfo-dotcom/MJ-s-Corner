@@ -420,7 +420,7 @@
     currentInvoiceOrder: null,
     pendingCheckout: false,
     promos: [],
-    promoPopupEnabled: true,
+    promoPopupEnabled: false,
     appliedPromo: null,
     selectedDeliveryAddressId: null,
     activeReviewOrder: null,
@@ -434,11 +434,13 @@
     try {
       state.menu = window.MJData ? MJData.getMenu() : (JSON.parse(localStorage.getItem('mj_menu')) || [...DEFAULT_MENU]);
       state.promos = window.MJData ? MJData.getPromos() : (JSON.parse(localStorage.getItem('mj_promos')) || []);
-      state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
+      state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : false;
       state.banners = window.MJData ? MJData.getBanners() : (JSON.parse(localStorage.getItem('mj_banners')) || []);
       loadCartForUser();
     } catch (e) {
       state.menu = window.MJData ? MJData.getMenu() : [];
+      state.promos = [];
+      state.promoPopupEnabled = false;
       state.banners = [];
       state.cart = [];
     }
@@ -4360,17 +4362,53 @@ Please share customized package options and group discounts!`;
   }
 
   // ========== PROMO POPUP ==========
+  let promoPopupTimer = null;
+
   function showPromoPopup(promo) {
     if (!promo) return;
-    els.promoTitle.textContent = promo.title;
-    els.promoSubtitle.textContent = promo.subtitle;
-    els.promoCode.textContent = promo.code;
-    els.promoDesc.textContent = promo.description;
-    els.promoPopupOverlay.classList.add('open');
+    // Strict Guard: Never show popup if disabled in settings or no active promos exist
+    if (!state.promoPopupEnabled) return;
+    const isActuallyActive = Array.isArray(state.promos) && state.promos.some(p => p.active && (p.id === promo.id || p.code === promo.code));
+    if (!isActuallyActive) return;
+
+    if (els.promoTitle) els.promoTitle.textContent = promo.title || '🎉 Special Offer!';
+    if (els.promoSubtitle) els.promoSubtitle.textContent = promo.subtitle || '';
+    if (els.promoCode) els.promoCode.textContent = promo.code || '';
+    if (els.promoDesc) els.promoDesc.textContent = promo.description || '';
+    if (els.promoPopupOverlay) els.promoPopupOverlay.classList.add('open');
   }
 
   function closePromoPopup() {
-    els.promoPopupOverlay.classList.remove('open');
+    if (promoPopupTimer) {
+      clearTimeout(promoPopupTimer);
+      promoPopupTimer = null;
+    }
+    if (els.promoPopupOverlay) {
+      els.promoPopupOverlay.classList.remove('open');
+    }
+  }
+
+  function schedulePromoPopupIfEligible() {
+    if (promoPopupTimer) {
+      clearTimeout(promoPopupTimer);
+      promoPopupTimer = null;
+    }
+    if (!state.promoPopupEnabled || !Array.isArray(state.promos) || state.promos.length === 0) {
+      closePromoPopup();
+      return;
+    }
+    const activePromo = state.promos.find(p => p.active);
+    if (!activePromo) {
+      closePromoPopup();
+      return;
+    }
+    promoPopupTimer = setTimeout(() => {
+      if (state.promoPopupEnabled && Array.isArray(state.promos) && state.promos.some(p => p.active && (p.id === activePromo.id || p.code === activePromo.code))) {
+        showPromoPopup(activePromo);
+      } else {
+        closePromoPopup();
+      }
+    }, 1500);
   }
 
   // ========== CUSTOMER INVOICE PRINTING ==========
@@ -5215,8 +5253,14 @@ Please share customized package options and group discounts!`;
     function handleDataUpdate() {
       state.menu = window.MJData ? MJData.getMenu() : (JSON.parse(localStorage.getItem('mj_menu')) || []);
       state.promos = window.MJData ? MJData.getPromos() : (JSON.parse(localStorage.getItem('mj_promos')) || []);
-      state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : true;
+      state.promoPopupEnabled = window.MJData ? MJData.isPromoPopupEnabled() : false;
       state.banners = window.MJData ? MJData.getBanners() : (JSON.parse(localStorage.getItem('mj_banners')) || []);
+
+      // If promo popup disabled or no active promos, cancel timer and close immediately
+      if (!state.promoPopupEnabled || !Array.isArray(state.promos) || !state.promos.some(p => p.active)) {
+        closePromoPopup();
+      }
+
       renderPromotionalCarousel();
       renderCategories();
       renderMenu();
@@ -5341,13 +5385,8 @@ Please share customized package options and group discounts!`;
     // Live config polling for store online status & delivery fee updates
     setInterval(loadServerConfig, 15000);
 
-    // Show promo popup once after a short delay
-    if (state.promoPopupEnabled) {
-      const activePromo = state.promos.find(p => p.active);
-      if (activePromo) {
-        setTimeout(() => showPromoPopup(activePromo), 1500);
-      }
-    }
+    // Show promo popup once after a short delay if enabled and active promo exists
+    schedulePromoPopupIfEligible();
 
     // Show Login Popup on landing page if visitor is not logged in and hasn't dismissed it this session
     if (!window.IS_DINE_IN && !currentUser && !sessionStorage.getItem('mj_login_modal_seen')) {
